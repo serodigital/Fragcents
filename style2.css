@@ -1,0 +1,41 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border;
+}
+
+.container{
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0;
+}
+
+.row{
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+
+.col-md-7{
+    padding: 20px;
+}
+.col-md-5{
+    background-color: #1089ff;
+    padding: 20px;
+    color: white;
+}
+
+.form-control{
+    background: #fff;
+    color: #000;
+    font-size: 14px;
+    border-radius: 2px;
+    box-sizing: none ;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+
+}
+
+.list{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+}
