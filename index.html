@@ -2,213 +2,222 @@
 <html lang="en" data-bs-theme="dark">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fragcents</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
-  <style>
-.feature-icon {
-    width: 4rem;
-    height: 4rem;
-    border-radius: 0.75rem;
-}
-.navbar-brand{
-  font-size: 2rem;
-  color: black;
-}
-.navbar-brand:hover{
-  color: black;
-}
-.nav-link{
-  margin-right: 10px;
-  margin-left: 10px;
-  color: black;
-  text-transform: uppercase;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fragcents</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
+    <style>
+        /* Make all text black */
+        body, h1, h2, h3, h4, h5, h6, p, a, li {
+            color: black !important; /* Ensures all text on the page is black */
+        }
 
-  </style>
+        body {
+            background-color: #f7f1e1; /* Soft beige background */
+        }
+
+        .navbar-brand {
+            font-size: 2rem;
+            color: #d4af37; /* Gold color for brand */
+        }
+
+        .navbar-brand:hover {
+            color: #bfa14b; /* Slightly darker gold on hover */
+        }
+
+        .nav-link {
+            margin-right: 10px;
+            margin-left: 10px;
+            color: #2c2c2c; /* Dark gray text */
+            text-transform: uppercase;
+        }
+
+        .nav-link:hover {
+            color: #d4af37; /* Gold color on hover */
+        }
+
+        .text-body-emphasis {
+            color: #2c2c2c; /* Dark gray emphasis text */
+        }
+
+        .carousel-item img {
+            width: 33.33%; /* Set images to one-third of their original size */
+            height: auto; /* Maintain aspect ratio */
+            margin: auto; /* Center the images */
+        }
+
+        .feature-icon {
+            background-color: #d4af37; /* Gold background for icons */
+            border-radius: 50%;
+        }
+
+        /* Centering the "Why Buy With Us?" section */
+        #featured-3 {
+            text-align: center;
+            margin-top: -50px; /* Adjust this value to move it closer */
+            padding-top: 30px; /* Add some padding to keep it from being too close */
+        }
+
+        .feature h3 {
+            font-weight: bold; /* Make the text bold */
+        }
+
+        .footer {
+            background-color: #2c2c2c; /* Dark footer */
+            color: #f7f1e1; /* Light beige footer text */
+        }
+
+        .icon-link {
+            color: #d4af37; /* Gold color for the links */
+        }
+
+        .icon-link:hover {
+            color: #bfa14b; /* Darker gold on hover */
+        }
+    </style>
 </head>
 
 <body>
 
     <nav class="navbar navbar-expand-lg">
-  <div class="container">
-    <a class="navbar-brand" href="#"><img src="./usb-symbol.svg" alt="temp Logo" height="30"></a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav m-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link " href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="prices.html">Products</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="prices.html">Contact Us</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="prices.html">About us</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="prices.html">Team</a>
-        </li>
-        
-        
-      </ul>
-      
-    </div>
-  </div>
-</nav>
+        <div class="container">
+            <a class="navbar-brand" href="#"><img src="./usb-symbol.svg" alt="temp Logo" height="30"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0"> <!-- Added ms-auto here -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prices.html">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prices.html">Contact Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prices.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="prices.html">Team</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-<div class="px-4 pt-5 my-5 text-center border-bottom">
-  <h1 class="display-4 fw-bold text-body-emphasis">Fragnents Cents</h1>
-  <div class="col-lg-6 mx-auto">
-    <p class="lead mb-4">Welcome to our website, where we are on a mission to provide exceptional services to our customers in the South Africa. As a startup, we believe that feeling and smelling good doesn't have to be stressful or expensive, and we are passionate about making the process as seamless, affordable and enjoyable as possible.
-    </p>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
-      <button type="button" class="btn btn-primary btn-lg px-4 me-sm-3">Order Now</button>
-      <button type="button" class="btn btn-outline-secondary btn-lg px-4">Contact Us</button>
-    </div>
-  </div>
-  <div class="overflow-hidden" style="max-height: 30vh;">
-    <div class="container px-5">
-      <img src="./home1.jpeg" class="img-fluid border rounded-3 shadow-lg mb-1 col-lg-5" alt="Example image"  height="500" loading="lazy">
-    </div>
-  </div>
-</div>
-  </div>
-</div>
-
-<div class="container px-4 py-5" id="featured-3">
-  <h2 class="pb-2 border-bottom">Why Buy With Us?</h2>
-  <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
-    <div class="feature col">
-      <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
-      <img src="./briefcase.svg" alt="briefcase" height="30">
-      </div>
-      <h3 class="fs-2 text-body-emphasis">Professional</h3>
-      <p>Our team of professionals are trained to prioritize efficiency, organization, and attention to detail. We understand that your scent is more than just a smell - they are a reflection of your life, memories, and experiences. That's why we take extra care to ensure that everything is packed and transported with the utmost care and attention.
-      </p>
-      <a href="#" class="icon-link">
-        Get a quote
-        <img src="./chevron-right.svg" alt="chevron-right">
-      </a>
-    </div>
-    <div class="feature col">
-      <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
-        <img src="./bus-front.svg" alt="bus-front" height="30">
-      </div>
-      <h3 class="fs-2 text-body-emphasis">Countrywide</h3>
-      <p>We offer a range of products to suit your individual needs, whether you're locally or across the country. Our team can handle everything from packing and delivery with a negotiable fee, so you can focus on unwrapping and enjoying the perfect scent. And with our transparent pricing and no hidden fees, you can trust that you're getting a fair and competitive rate for our services.</p>
-      <a href="#" class="icon-link">
-        Get a quote
-        <img src="./chevron-right.svg" alt="chevron-right">
-      </a>
-    </div>
-    <div class="feature col">
-      <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
-        <img src="./chat-square-heart.svg" alt="chat-square-heart" height="30">
-      </div>
-      <h3 class="fs-2 text-body-emphasis">Personal Touch</h3>
-      <p>Paragraph of text beneath the heading to explain the heading. We'll add onto it with another sentence and probably just keep going until we run out of words.</p>
-      <a href="#" class="icon-link">
-        Get a quote
-        <img src="./chevron-right.svg" alt="chevron-right">
-      </a>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-
-<div id="carouselExampleIndicators" class="carousel slide">
-  <div class="carousel-indicators">
-    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
-    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
-    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
-
-  </div>
-  <div class="carousel-inner">
-    <div class="carousel-item active">
-      <img src="./cents1.jpeg" class="d-block w-100" alt="dog">
-    </div>
-    <div class="carousel-item">
-      <img src="./home2.jpeg" class="d-block w-100" alt="family">
-    </div>
-    <div class="carousel-item">
-      <img src="./cents3.jpeg" class="d-block w-100" alt="couple">
-    </div>
-    <div class="carousel-item">
-      <img src="./purple1.jpeg" class="d-block w-100 h-100" alt="couple">
-    </div>
-  </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Previous</span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Next</span>
-  </button>
-</div>
-</div>
-
-
-
-
-<div class="container">
-  <footer class="row row-cols-1 row-cols-sm-2 row-cols-md-5 py-5 my-5 border-top">
-    <div class="col mb-3">
-      <a href="/" class="d-flex align-items-center mb-3 link-body-emphasis text-decoration-none">
-        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
-      </a>
-      <p class="text-body-secondary">© 2023</p>
+    <div class="px-4 pt-5 my-5 text-center border-bottom">
+        <div class="container">
+            <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                <div class="carousel-indicators">
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="4" aria-label="Slide 5"></button>
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="5" aria-label="Slide 6"></button>
+                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="6" aria-label="Slide 7"></button>
+                </div>
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="./home1.jpeg" class="d-block" alt="Image 1">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./home2.jpg" class="d-block" alt="Image 2">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./home3.jpg" class="d-block" alt="Image 3">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./black1.jpeg" class="d-block" alt="Black Image">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./cent1.jpeg" class="d-block" alt="Cent Image 1">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./cent2.jpeg" class="d-block" alt="Cent Image 2">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./cent3.jpeg" class="d-block" alt="Cent Image 3">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./home2.jpeg" class="d-block" alt="Home Image 2">
+                    </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="col mb-3">
-
+    <div class="container px-4 py-5" id="featured-3">
+        <h2 class="pb-2">Why Buy With Us?</h2> <!-- Removed border-bottom -->
+        <div class="row g-4 py-5 row-cols-1 row-cols-lg-3 justify-content-center"> <!-- Added justify-content-center -->
+            <div class="feature col">
+                <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
+                    <img src="./briefcase.svg" alt="briefcase" height="30">
+                </div>
+                <h3 class="fs-2">Professional</h3>
+                <p>Our team of professionals are trained to prioritize efficiency, organization, and attention to detail. We understand that your scent is more than just a smell - they are a reflection of your life, memories, and experiences. That's why we take extra care to ensure that everything is packed and transported with the utmost care and attention.</p>
+                <a href="#" class="icon-link">
+                    Get a quote
+                    <img src="./chevron-right.svg" alt="chevron-right">
+                </a>
+            </div>
+            <div class="feature col">
+                <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
+                    <img src="./bus-front.svg" alt="bus-front" height="30">
+                </div>
+                <h3 class="fs-2">Countrywide</h3>
+                <p>No matter where you are in the country, we deliver your fragrance with speed and precision. We guarantee timely delivery, ensuring your items arrive safely and on time.</p>
+                <a href="#" class="icon-link">
+                    Get in touch
+                    <img src="./chevron-right.svg" alt="chevron-right">
+                </a>
+            </div>
+            <div class="feature col">
+                <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
+                    <img src="./shield-lock.svg" alt="shield-lock" height="30">
+                </div>
+                <h3 class="fs-2">Safety</h3>
+                <p>Your safety is our top priority, which is why we make sure that all items are handled with care. Rest assured that your products are in safe hands.</p>
+                <a href="#" class="icon-link">
+                    Get in touch
+                    <img src="./chevron-right.svg" alt="chevron-right">
+                </a>
+            </div>
+        </div>
     </div>
 
-    <div class="col mb-3">
-      <h5>Section</h5>
-      <ul class="nav flex-column">
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
-      </ul>
-    </div>
+    <footer class="footer py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-md">
+                    <h5>Fragcents</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="icon-link">Home</a></li>
+                        <li><a href="prices.html" class="icon-link">Products</a></li>
+                        <li><a href="prices.html" class="icon-link">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-    <div class="col mb-3">
-      <h5>Section</h5>
-      <ul class="nav flex-column">
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
-      </ul>
-    </div>
-
-    <div class="col mb-3">
-      <h5>Section</h5>
-      <ul class="nav flex-column">
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
-      </ul>
-    </div>
-  </footer>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+        integrity="sha384-oBqDVmMz4fnFO9gybB3vsP0m4Re+1tb7IhTtYd6Fupfgq2vDZz9B+yb7pQhU3m2p4" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.min.js"
+        integrity="sha384-pzjw8f+ua7Kw1TIq0zP5uOBxB2zA4pJ3zL2j9uOd3f7H71z7qQ8F12tW1Be8pq0V7"
+        crossorigin="anonymous"></script>
 </body>
 
 </html>
+
