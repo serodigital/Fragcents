@@ -110,3 +110,55 @@ img {
     align-items: center;
       
 }
+.small-text {
+    font-size: 0.9em; /* Slightly smaller font size */
+    line-height: 1;   /* Reduce line height to make it closer */
+  }
+  .thick-text {
+    font-weight: 900; /* Makes the text very bold */
+    font-size: 3.5em; /* Adjust font size as needed */
+
+  }
+
+  /* style.css */
+
+  .features {
+    list-style-type: none;  /* Removes bullets */
+    padding: 0;             /* Removes padding */
+    margin: 0;              /* Removes margin */
+  }
+  
+  .features li {
+    margin-bottom: 5px;     /* Space between list items */
+  }
+  
+  
+  .main-heading {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  .description, .features {
+    font-size: 1rem;
+    color: #666;
+  }
+  
+  .product-img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  
+  .features li::before {
+    content: "●";
+    color: #d4af37;
+    margin-right: 8px;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin-top: 30px;
+  }
+  
