@@ -1,212 +1,592 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fragcents</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
-    <style>
-        body, h1, h2, h3, h4, h5, h6, p, a, li {
-            color: black !important;
-        }
-        
-        body {
-            background-color: #f7f1e1;
-            scroll-behavior: smooth;
-        }
+    <title>Fregcent Perfums</title>
 
-        .navbar {
-            background-color: #2c2c2c;
-        }
+    <!-- Font Awesome CDN Link -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-        .navbar-brand {
-            font-size: 2rem;
-            color: #d4af37;
-            font-weight: bold;
-        }
+    <!-- Custom CSS File Link -->
+    <link rel="stylesheet" href="css/style.css">
+<style>
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        .navbar-brand:hover {
-            color: #bfa14b;
-        }
+/* Body and Font */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+    color: #fff;
+    line-height: 1.6;
+}
 
-        .nav-link {
-            margin: 0 15px;
-            color: #f7f1e1;
-            text-transform: uppercase;
-            transition: color 0.3s;
-        }
+/* Header */
+header {
+    background-color: #2c2c2c;
+    padding: 20px 0;
+}
 
-        .nav-link:hover {
-            color: #d4af37;
-        }
+.header-1, .header-2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
 
-        /* Adjust carousel image size */
-        .carousel-item img {
-            width: 40%; /* Adjusted width */
-            height: auto;
-            margin: auto;
-        }
+.header-1 .logo {
+    font-size: 2em;
+    color: #ffd700;
+    text-decoration: none;
+}
 
-        .carousel-indicators button {
-            background-color: #d4af37;
-        }
+.search-box-container {
+    position: relative;
+}
 
-        .feature-icon {
-            background-color: #d4af37;
-            border-radius: 50%;
-            padding: 10px;
-        }
+#search-box {
+    padding: 10px;
+    width: 250px;
+    background-color: #333;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+}
 
-        #featured-3 {
-            text-align: center;
-            padding-top: 50px;
-        }
+#search-box:focus {
+    outline: none;
+}
 
-        .feature h3 {
-            font-weight: bold;
-        }
+.fas.fa-search {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #fff;
+}
 
-        .feature p {
-            font-size: 1.1rem;
-            color: #4c4c4c;
-        }
+/* Navigation */
+.navbar {
+    display: flex;
+    gap: 20px;
+}
 
-        .btn-cta {
-            background-color: #d4af37;
-            color: #2c2c2c;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
+.navbar a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
 
-        .btn-cta:hover {
-            background-color: #bfa14b;
-            color: #2c2c2c;
-        }
+.navbar a:hover {
+    color: #ffd700;
+}
 
-        .footer {
-            background-color: #2c2c2c;
-            color: #f7f1e1;
-            padding: 30px 0;
-        }
+/* Icons */
+.icons a {
+    color: #fff;
+    font-size: 1.5em;
+    margin-left: 20px;
+    transition: all 0.3s ease;
+}
 
-        .footer h5 {
-            color: #d4af37;
-            font-size: 1.5rem;
-        }
+.icons a:hover {
+    color: #ffd700;
+}
 
-        .footer .icon-link {
-            color: #d4af37;
-            font-size: 1.1rem;
-        }
+/* Home Section */
+.home {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 50px;
+    background-color: #000;
+}
 
-        .footer .icon-link:hover {
-            color: #bfa14b;
-        }
-    </style>
+.home .image img {
+    width: 100%;
+    height: auto;
+    max-width: 500px;
+    border-radius: 15px;
+}
+
+.home .content {
+    max-width: 500px;
+}
+
+.home .content span {
+    color: #ffd700;
+    font-size: 1.5em;
+}
+
+.home .content h3 {
+    font-size: 2.5em;
+    margin: 20px 0;
+}
+
+.home .btn {
+    background-color: #ffd700;
+    color: #000;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.home .btn:hover {
+    background-color: #f5c300;
+}
+
+/* Bulk Purchase Section */
+.bulk-purchase {
+    text-align: center;
+    padding: 50px 20px;
+    background-color: #333;
+}
+
+.bulk-purchase .heading {
+    font-size: 2.5em;
+    color: #ffd700;
+}
+
+.bulk-purchase .description {
+    font-size: 1.2em;
+    margin: 20px 0;
+    color: #ccc;
+}
+
+.bulk-purchase .btn {
+    background-color: #ffd700;
+    color: #000;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.bulk-purchase .btn:hover {
+    background-color: #f5c300;
+}
+
+/* Category Section */
+.category {
+    padding: 50px 20px;
+    text-align: center;
+    background-color: #000;
+}
+
+.category .heading {
+    font-size: 2.5em;
+    color: #ffd700;
+    margin-bottom: 20px;
+}
+
+.category .box-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.category .box {
+    background-color: #222;
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 23%;
+    transition: all 0.3s ease;
+}
+
+.category .box:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.category .box img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.category .box h3 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.category .box p {
+    font-size: 1.2em;
+    color: #ffd700;
+    margin-bottom: 15px;
+}
+
+.category .box .btn {
+    background-color: #ffd700;
+    color: #000;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.category .box .btn:hover {
+    background-color: #f5c300;
+}
+
+/* Product Section */
+.product {
+    padding: 50px 20px;
+    background-color: #333;
+    text-align: center;
+}
+
+.product .heading {
+    font-size: 2.5em;
+    color: #ffd700;
+    margin-bottom: 20px;
+}
+
+.product .box-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.product .box {
+    background-color: #222;
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 23%;
+    transition: all 0.3s ease;
+}
+
+.product .box:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.product .box img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.product .box h3 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.product .box .description {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.product .box .price {
+    font-size: 1.5em;
+    color: #ffd700;
+    margin-bottom: 20px;
+}
+
+.product .box .btn {
+    background-color: #ffd700;
+    color: #000;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.product .box .btn:hover {
+    background-color: #f5c300;
+}
+/* Home Section Image Styling */
+.home img {
+    width: 50%; /* Ensures the image takes up the full width of the container */
+    height: auto; /* Maintains the aspect ratio */
+    object-fit: cover; /* Makes sure the image covers the container without stretching */
+}
+.cart-container {
+    position: relative;
+}
+
+.cart-counter {
+    position: absolute;
+    top: -25px;   /* Adjust this value as needed */
+    right: -10px; /* Adjust this value as needed */
+    background-color: red;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 5px;
+}
+.header-2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar {
+    margin-left: auto; /* Pushes the navigation to the right side */
+}
+
+.navbar a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: white;
+}
+
+
+.search-box-container {
+    position: absolute;
+    top: 10px; /* Adjust this value to position the search box */
+    left: 50%;
+    transform: translateX(-50%);
+}
+ </style>
 </head>
-
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#"><img src="./usb-symbol.svg" alt="Logo" height="30"> Fragcents</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="prices.html">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="prices.html">Contact Us</a></li>
-                    <li class="nav-item"><a class="nav-link" href="prices.html">About Us</a></li>
-                    <li class="nav-item"><a class="nav-link" href="prices.html">Team</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="px-4 pt-5 my-5 text-center border-bottom">
-        <div class="container">
-            <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
-                <div class="carousel-indicators">
-                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active"
-                        aria-current="true" aria-label="Slide 1"></button>
-                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1"
-                        aria-label="Slide 2"></button>
-                    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2"
-                        aria-label="Slide 3"></button>
-                </div>
-                <div class="carousel-inner">
-                    <div class="carousel-item active"><img src="./home1.jpeg" class="d-block" alt="Image 1"></div>
-                    <div class="carousel-item"><img src="./home2.jpg" class="d-block" alt="Image 2"></div>
-                    <div class="carousel-item"><img src="./home3.jpg" class="d-block" alt="Image 3"></div>
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            </div>
-        </div>
+<!-- Header Section Starts -->
+<header>
+    <div class="header-1">
+        <a href="#" class="logo"><i class="fas fa-spray-can"></i> Fregcent Perfums</a>
+        <form action="" class="search-box-container">
+            <input type="search" id="search-box" placeholder="Search perfumes...">
+            <label for="search-box" class="fas fa-search"></label>
+        </form>
     </div>
 
-    <div class="container px-4 py-5" id="featured-3">
-        <h2 class="pb-2">Why Buy With Us?</h2>
-        <div class="row g-4 py-5 row-cols-1 row-cols-lg-3 justify-content-center">
-            <div class="feature col text-center">
-                <div class="feature-icon">
-                    <img src="./briefcase.svg" alt="Professional Icon" height="30">
-                </div>
-                <h3>Professional</h3>
-                <p>We prioritize efficiency and care, ensuring that your fragrance is more than just a scent but a treasured experience.</p>
-                <button class="btn btn-cta">Get a Quote</button>
-            </div>
-            <div class="feature col text-center">
-                <div class="feature-icon">
-                    <img src="./bus-front.svg" alt="Countrywide Icon" height="30">
-                </div>
-                <h3>Countrywide</h3>
-                <p>We deliver nationwide with precision and speed, guaranteeing safe, timely arrival of your order.</p>
-                <button class="btn btn-cta">Get in Touch</button>
-            </div>
-            <div class="feature col text-center">
-                <div class="feature-icon">
-                    <img src="./shield-lock.svg" alt="Safety Icon" height="30">
-                </div>
-                <h3>Safety</h3>
-                <p>Our top priority is the safety of your items, handled with utmost care and responsibility.</p>
-                <button class="btn btn-cta">Get in Touch</button>
-            </div>
+    <div class="header-2">
+        <div id="menu-bar" class="fas fa-bars"></div>
+        <nav class="navbar">
+            <a href="#home">Home</a>
+            <a href="#category">Collections</a>
+            <a href="#product">Perfumes</a>
+            <a href="#deal">Deals</a>
+            <a href="#contact">Contact</a>
+        </nav>
+
+          <div class="cart-container">
+    <a href="#" class="cart-icon">
+          <span id="cart-count" class="cart-counter">0</span>
+         <a href="#" class="fas fa-shopping-cart"></a>
+    </a>
         </div>
     </div>
+</header>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="row text-center">
-                <div class="col-12">
-                    <h5>Fragcents</h5>
-                    <ul class="list-inline">
-                        <li class="list-inline-item"><a href="#" class="icon-link">Home</a></li>
-                        <li class="list-inline-item"><a href="prices.html" class="icon-link">Products</a></li>
-                        <li class="list-inline-item"><a href="prices.html" class="icon-link">Contact Us</a></li>
-                    </ul>
-                    <p>&copy; 2024 Fragcents. All rights reserved.</p>
-                </div>
-            </div>
+<!-- Home Section Starts -->
+<section class="home" id="home">
+    <img src="images/1.jpg" alt="Perfume Bottles">
+
+    <div class="content">
+        <span>Luxurious Scents</span>
+        <h3>Discover Your Signature Fragrance</h3>
+        <a href="#" class="btn">Shop Now</a>
+    </div>
+</section>
+<!-- Home Section Ends -->
+
+<!-- Bulk Purchase Section Starts -->
+<section class="bulk-purchase" id="bulk">
+    <h1 class="heading">Special <span>Bulk Discounts</span></h1>
+    <p class="description">Interested in buying in bulk? Get exclusive discounts on large orders. Contact us now for more details or fill out the form to inquire!</p>
+    <a href="#contact" class="btn">Contact Us for Bulk Orders</a>
+</section>
+<!-- Bulk Purchase Section Ends -->
+
+<!-- Category Section Starts -->
+<section class="category" id="category">
+    <h1 class="heading">Explore by <span>Collection</span></h1>
+    <div class="box-container">
+        <div class="box">
+            <h3>For Him</h3>
+            <p>Up to 25% off</p>
+            <img src="images/4.jpg" alt="For Him">
+            <a href="#" class="btn">Shop Now</a>
         </div>
-    </footer>
+        <div class="box">
+            <h3>For Her</h3>
+            <p>Up to 20% off</p>
+            <img src="images/5.jpg" alt="For Her">
+            <a href="#" class="btn">Shop Now</a>
+        </div>
+        <div class="box">
+            <h3>Unisex</h3>
+            <p>Up to 15% off</p>
+            <img src="images/6.jpg" alt="Unisex">
+            <a href="#" class="btn">Shop Now</a>
+        </div>
+        <div class="box">
+            <h3>Luxury Collection</h3>
+            <p>Special Discounts</p>
+            <img src="images/7.jpg" alt="Luxury Collection">
+            <a href="#" class="btn">Shop Now</a>
+        </div>
+    </div>
+</section>
+<!-- Category Section Ends -->
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.min.js"></script>
+<!-- Product Section Starts -->
+<section class="product" id="product">
+    <h1 class="heading">Latest <span>Perfumes</span></h1>
+    <div class="box-container">
+        <!-- Perfume 1: Dunhill Red -->
+        <div class="box">
+            <img src="images/1.jpg" alt="Dunhill Red">
+            <h3>Dunhill Red</h3>
+            <p class="description">Out of Stock</p>
+            <p class="price">Out of Stock</p>
+            <a href="#" class="btn" disabled>Notify Me</a>
+        </div>
+
+        <!-- Perfume 2: Dark Wild -->
+        <div class="box">
+            <img src="images/2.jpg" alt="Dark Wild">
+            <h3>Dark Wild</h3>
+            <p class="description">For Him</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+
+        <!-- Perfume 3: Bacart Rouge -->
+        <div class="box">
+            <img src="images/3.jpg" alt="Bacart Rouge">
+            <h3>Bacart Rouge</h3>
+            <p class="description">Unisex</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+
+        <!-- Perfume 4: Flower Bomb -->
+        <div class="box">
+            <img src="images/4.jpg" alt="Flower Bomb">
+            <h3>Flower Bomb</h3>
+            <p class="description">For Her</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+
+        <!-- Perfume 5: Scandal -->
+        <div class="box">
+            <img src="images/5.jpg" alt="Scandal">
+            <h3>Scandal</h3>
+            <p class="description">For Her</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+
+        <!-- Perfume 6: Korcula -->
+        <div class="box">
+            <img src="images/6.jpg" alt="Korcula">
+            <h3>Korcula</h3>
+            <p class="description">For Her</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+
+        <!-- Perfume 7: Mount Blanc -->
+        <div class="box">
+            <img src="images/7.jpg" alt="Mount Blanc">
+            <h3>Mount Blanc</h3>
+            <p class="description">For Her</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+
+        <!-- Perfume 8: Creed -->
+        <div class="box">
+            <img src="images/8.jpg" alt="Creed">
+            <h3>Creed</h3>
+            <p class="description">For Him</p>
+            <p class="price">R100.00</p>
+            <a href="#" class="btn add-to-cart">Add to Cart</a>
+        </div>
+    </div>
+</section>
+<!-- Product Section Ends -->
+
+<script>
+// Initialize cart from localStorage or as an empty array
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+// Update cart count display
+function updateCartCount() {
+    const cartCount = document.getElementById('cart-count');
+    cartCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+}
+
+// Add item to cart
+function addToCart(item) {
+    const existingItem = cart.find(cartItem => cartItem.name === item.name);
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({ ...item, quantity: 1 });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    alert(item.name + " has been added to your cart!");
+}
+
+// Attach event listeners to "Add to Cart" buttons
+document.querySelectorAll('.add-to-cart').forEach(button => {
+    button.addEventListener('click', () => {
+        const productBox = button.closest('.box');
+        const item = {
+            name: productBox.querySelector('h3').innerText,
+            price: productBox.querySelector('.price').innerText,
+            description: productBox.querySelector('.description').innerText,
+            image: productBox.querySelector('img').src
+        };
+        addToCart(item);
+    });
+});
+
+// Update cart count on page load
+updateCartCount();
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    updateCartDisplay();
+    alert("Item has been removed from your cart.");
+}
+
+// Attach event listeners to "Add to Cart" buttons
+document.querySelectorAll('.add-to-cart').forEach(button => {
+    button.addEventListener('click', () => {
+        const productBox = button.closest('.box');
+        const item = {
+            name: productBox.querySelector('h3').innerText,
+            price: productBox.querySelector('.price').innerText,
+            description: productBox.querySelector('.description').innerText,
+            image: productBox.querySelector('img').src
+        };
+        addToCart(item);
+    });
+});
+
+// Update cart count and display on page load
+updateCartCount();
+updateCartDisplay();
+</script>
+
 </body>
-
 </html>
-
-
-
