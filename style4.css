@@ -58,6 +58,27 @@
     font-size: 0.8em; /* Smaller font size */
 }
 
+/* discount Label */
+.discount {
+    position: absolute;
+    bottom: 45px;
+    right: 10px;
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 2px;
+    font-weight: bold;
+    font-size: 0.8em; /* Smaller font size */
+}
+/* bag-icon Label */
+.bi-bag {
+    position: absolute;
+    bottom: 18px;
+    right: 10px;
+    /* background-color: red; */
+    /* width: 30px; /* Adjust the size to match your layout */
+}
+
 /* Product Title Styling */
 .product-card h5 {
     font-size: 0.95em; /* Smaller font size */
@@ -161,3 +182,17 @@
     background-color: black;
     margin: 5px auto 0;
 }
+
+/* Original price styling */
+.original-price {
+    color: black;
+    text-decoration: line-through; /* Adds the strike-through effect */
+    margin-right: 10px; /* Adds space between the original and sale price */
+}
+
+/* Sale price styling */
+.sale-price {
+    color: red;
+    font-weight: bold;
+}
+
