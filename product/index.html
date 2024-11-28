@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfume Shop</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+          border: 6px solid #efeded; /* Make the border lighter */
+          padding: 15px;
+          text-align: left; /* Align text to the left */
+          border-radius: 5px;
+          transition: box-shadow 0.3s;
+        }
+        .card:hover {
+          box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .card img {
+            height: 200px;
+            object-fit: cover;
+        }
+        .badge-category {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          padding: 8px 20px;
+          color: #fff;
+          font-weight: bold;
+          border-radius: 2px;
+          font-size: 0.8em; /* Make the badge text smaller */
+        }
+        .discount {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background-color: #dc3545;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .sold-out {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background-color: #6c757d;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .small-text {
+            font-size: 16px;
+            rig: 16px;
+
+        }
+        .price-label {
+            font-weight: bold;
+            color: #6c757d;
+
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="text-center mb-4">Perfume Collection</h1>
+        <div class="row" id="product-container">
+            <!-- Product cards will be inserted dynamically here -->
+        </div>
+    </div>
+
+    <script>
+        // Mapping perfume names to image filenames
+        const imageMapping = {
+            "Luxury Perfume": "perfume1.jpg",
+            "Elegant Fragrance": "perfume2.jpg",
+            "Fresh Aroma": "perfume3.jpg",
+            "Classic Woody Scent": "perfume4.jpg",
+            "Rose Bliss Perfume": "perfume5.jpg",
+            "Citrus Delight": "perfume6.jpg",
+            "Oceanic Fresh": "perfume7.jpg",
+            "Vanilla Essence": "perfume5.jpg", // Example reuse
+            "Spice & Leather": "perfume4.jpg"  // Example reuse
+        };
+
+        // Fetch perfumes data from the server
+        fetch("http://localhost:3000/perfumes")
+            .then(response => response.json())
+            .then(data => {
+                const productContainer = document.getElementById("product-container");
+
+                // Loop through the perfumes data
+                data.forEach(perfume => {
+                    // Determine the image path for the perfume
+                    const imagePath = `/images/${imageMapping[perfume.name] || "default.jpg"}`;
+
+                    // Create a product card
+                    const productCard = `
+                        <div class="col-md-3 mb-4">
+                            <div class="card position-relative">
+                                <!-- Category Badge -->
+                                <div class="badge-category badge-${perfume.category.toLowerCase()}">
+                                    ${perfume.category.toUpperCase()}
+                                </div>
+                                <!-- Discount Badge -->
+                                ${perfume.discount ? `<div class="discount">Sale ${perfume.discount}%</div>` : ''}
+                                <!-- Perfume Image -->
+                                <img src="${imagePath}" alt="${perfume.name}" class="img-fluid mb-3">
+                                <!-- Perfume Name -->
+                                <h6>${perfume.name}</h6>
+                                <!-- Product Price -->
+                                <div class="product-price">
+                                    <span class="price-label">From</span>
+                                    <span class="price-amount">R ${perfume.price}</span>
+                                </div>
+                                <!-- Sold Out -->
+                                ${perfume.is_sold_out ? `<div class="sold-out">Sold Out</div>` : ''}
+                                <!-- Bulk Availability -->
+                                <a href="#" class="text-muted small-text spaced-link">
+                                    ${perfume.is_bulk_available ? 'AVAILABLE IN BULK' : 'NOT AVAILABLE IN BULK'}
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    // Append the card to the container
+                    productContainer.innerHTML += productCard;
+                });
+            })
+            .catch(err => console.error("Error fetching perfumes:", err));
+    </script>
+
+    <!-- Bootstrap JS and Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfume Shop</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+            border: 4px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card img {
+            height: 200px;
+            object-fit: cover;
+        }
+        .badge-category {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .discount {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background-color: #dc3545;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .sold-out {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background-color: #6c757d;
+            color: white;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        .small-text {
+            font-size: 12px;
+        }
+        .price-label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="text-center mb-4">Perfume Collection</h1>
+        <div class="row" id="product-container">
+            <!-- Product cards will be inserted dynamically here -->
+        </div>
+    </div>
+
+    <script>
+        // Mapping perfume names to image filenames
+        const imageMapping = {
+            "Luxury Perfume": "perfume1.jpg",
+            "Elegant Fragrance": "perfume2.jpg",
+            "Fresh Aroma": "perfume3.jpg",
+            "Classic Woody Scent": "perfume4.jpg",
+            "Rose Bliss Perfume": "perfume5.jpg",
+            "Citrus Delight": "perfume6.jpg",
+            "Oceanic Fresh": "perfume7.jpg",
+            "Vanilla Essence": "perfume5.jpg", // Example reuse
+            "Spice & Leather": "perfume4.jpg"  // Example reuse
+        };
+
+        // Fetch perfumes data from the server
+        fetch("http://localhost:3000/perfumes")
+            .then(response => response.json())
+            .then(data => {
+                const productContainer = document.getElementById("product-container");
+
+                // Access the first four perfumes
+                const perfume1 = data[0];
+                const perfume2 = data[1];
+                const perfume3 = data[2];
+                const perfume4 = data[3];
+
+                // Image paths
+                const imagePath1 = `/images/${imageMapping[perfume1.name] || "default.jpg"}`;
+                const imagePath2 = `/images/${imageMapping[perfume2.name] || "default.jpg"}`;
+                const imagePath3 = `/images/${imageMapping[perfume3.name] || "default.jpg"}`;
+                const imagePath4 = `/images/${imageMapping[perfume4.name] || "default.jpg"}`;
+
+                // Generate HTML for the first four perfumes
+                const productCards = `
+                    <div class="col-md-3 mb-4">
+                        <div class="card position-relative">
+                            <!-- Category Badge -->
+                            <div class="badge-category badge-${perfume1.category.toLowerCase()}">
+                                ${perfume1.category.toUpperCase()}
+                            </div>
+                            <!-- Discount Badge -->
+                            ${perfume1.discount ? `<div class="discount">Sale ${perfume1.discount}%</div>` : ''}
+                            <!-- Perfume Image -->
+                            <img src="${imagePath1}" alt="${perfume1.name}" class="img-fluid mb-3">
+                            <!-- Perfume Name -->
+                            <h6>${perfume1.name}</h6>
+                            <!-- Product Price -->
+                            <div class="product-price">
+                                <span class="price-label">From</span>
+                                <span class="price-amount">R ${perfume1.price}</span>
+                            </div>
+                            <!-- Sold Out -->
+                            ${perfume1.is_sold_out ? `<div class="sold-out">Sold Out</div>` : ''}
+                            <!-- Bulk Availability -->
+                            <a href="#" class="text-muted small-text">
+                                ${perfume1.is_bulk_available ? 'AVAILABLE IN BULK' : 'NOT AVAILABLE IN BULK'}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card position-relative">
+                            <!-- Category Badge -->
+                            <div class="badge-category badge-${perfume2.category.toLowerCase()}">
+                                ${perfume2.category.toUpperCase()}
+                            </div>
+                            <!-- Discount Badge -->
+                            ${perfume2.discount ? `<div class="discount">Sale ${perfume2.discount}%</div>` : ''}
+                            <!-- Perfume Image -->
+                            <img src="${imagePath2}" alt="${perfume2.name}" class="img-fluid mb-3">
+                            <!-- Perfume Name -->
+                            <h6>${perfume2.name}</h6>
+                            <!-- Product Price -->
+                            <div class="product-price">
+                                <span class="price-label">From</span>
+                                <span class="price-amount">R ${perfume2.price}</span>
+                            </div>
+                            <!-- Sold Out -->
+                            ${perfume2.is_sold_out ? `<div class="sold-out">Sold Out</div>` : ''}
+                            <!-- Bulk Availability -->
+                            <a href="#" class="text-muted small-text">
+                                ${perfume2.is_bulk_available ? 'AVAILABLE IN BULK' : 'NOT AVAILABLE IN BULK'}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card position-relative">
+                            <!-- Category Badge -->
+                            <div class="badge-category badge-${perfume3.category.toLowerCase()}">
+                                ${perfume3.category.toUpperCase()}
+                            </div>
+                            <!-- Discount Badge -->
+                            ${perfume3.discount ? `<div class="discount">Sale ${perfume3.discount}%</div>` : ''}
+                            <!-- Perfume Image -->
+                            <img src="${imagePath3}" alt="${perfume3.name}" class="img-fluid mb-3">
+                            <!-- Perfume Name -->
+                            <h6>${perfume3.name}</h6>
+                            <!-- Product Price -->
+                            <div class="product-price">
+                                <span class="price-label">From</span>
+                                <span class="price-amount">R ${perfume3.price}</span>
+                            </div>
+                            <!-- Sold Out -->
+                            ${perfume3.is_sold_out ? `<div class="sold-out">Sold Out</div>` : ''}
+                            <!-- Bulk Availability -->
+                            <a href="#" class="text-muted small-text">
+                                ${perfume3.is_bulk_available ? 'AVAILABLE IN BULK' : 'NOT AVAILABLE IN BULK'}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card position-relative">
+                            <!-- Category Badge -->
+                            <div class="badge-category badge-${perfume4.category.toLowerCase()}">
+                                ${perfume4.category.toUpperCase()}
+                            </div>
+                            <!-- Discount Badge -->
+                            ${perfume4.discount ? `<div class="discount">Sale ${perfume4.discount}%</div>` : ''}
+                            <!-- Perfume Image -->
+                            <img src="${imagePath4}" alt="${perfume4.name}" class="img-fluid mb-3">
+                            <!-- Perfume Name -->
+                            <h6>${perfume4.name}</h6>
+                            <!-- Product Price -->
+                            <div class="product-price">
+                                <span class="price-label">From</span>
+                                <span class="price-amount">R ${perfume4.price}</span>
+                            </div>
+                            <!-- Sold Out -->
+                            ${perfume4.is_sold_out ? `<div class="sold-out">Sold Out</div>` : ''}
+                            <!-- Bulk Availability -->
+                            <a href="#" class="text-muted small-text">
+                                ${perfume4.is_bulk_available ? 'AVAILABLE IN BULK' : 'NOT AVAILABLE IN BULK'}
+                            </a>
+                        </div>
+                    </div>
+                `;
+
+                // Insert the product cards into the container
+                productContainer.innerHTML = productCards;
+            })
+            .catch(err => {
+                console.error("Error fetching perfumes:", err);
+                const productContainer = document.getElementById("product-container");
+                productContainer.innerHTML = '<p>Sorry, we could not load the products at this time.</p>';
+            });
+    </script>
+
+    <!-- Bootstrap JS and Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+
