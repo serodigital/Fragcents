@@ -1,14 +1,18 @@
+const { MongoClient } = require("mongodb");
+
 async function run() {
   const uri = "mongodb+srv://mudelysambo:Tech%404747@cluster0.rgxv1.mongodb.net/perfumeDatabase?retryWrites=true&w=majority";
   const client = new MongoClient(uri);
 
   try {
+    // Connect to MongoDB
     await client.connect();
     console.log("Connected to MongoDB successfully!");
 
     const dbName = "perfumeDatabase";
     const database = client.db(dbName);
 
+    // Define collections
     const collections = {
       AllPerfumes: database.collection("AllPerfumes"),
       FemalePerfumes: database.collection("FemalePerfumes"),
@@ -16,6 +20,7 @@ async function run() {
       DiscountedPerfumes: database.collection("DiscountedPerfumes"),
     };
 
+    // Define data
     const data = {
       AllPerfumes: [
         { category: "MALE", name: "Luxury Perfume", price: 200, is_bulk_available: true, is_sold_out: false },
@@ -63,14 +68,12 @@ async function run() {
       ],
     };
 
+    // Insert data into collections
     for (const [collectionName, perfumes] of Object.entries(data)) {
       const collection = collections[collectionName];
       for (const perfume of perfumes) {
-        // Check if perfume already exists
         const existing = await collection.findOne({ name: perfume.name });
-
         if (!existing) {
-          // Insert the new perfume only if it doesn't exist
           await collection.insertOne(perfume);
           console.log(`Inserted: ${perfume.name} into ${collectionName}`);
         } else {
@@ -86,3 +89,6 @@ async function run() {
     await client.close();
   }
 }
+
+// Call the function
+run();
