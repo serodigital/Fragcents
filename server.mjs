@@ -4,10 +4,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import path from 'path';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-
-dotenv.config(); // Load environment variables from .env file
 
 const app = express();
 
@@ -30,9 +27,12 @@ app.get('/favicon.ico', (req, res) => {
 
 // Connect to MongoDB Atlas
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect('mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/?retryWrites=true&w=majority&appName=Fragcents', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
-    console.log('Connected to MongoDB Atlas');
+    console.log('Connected to MongoDB Atlas (Fragcents Database)');
   })
   .catch((error) => {
     console.error('Error connecting to MongoDB Atlas:', error);
@@ -40,19 +40,16 @@ mongoose
 
 // Define the cart item schema
 const cartItemSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
   productId: { type: String, required: true },
   productName: { type: String, required: true },
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
 });
-
-// Create a model for cart items
 const CartItem = mongoose.model('CartItem', cartItemSchema);
 
-// Route to handle saving cart data
+// Define the /cart endpoint
 app.post('/cart', async (req, res) => {
-  console.log('Received cart data:', req.body); // Log the incoming request
+  console.log('Received cart data:', req.body); 
 
   const { userId, cart } = req.body;
 
@@ -61,13 +58,9 @@ app.post('/cart', async (req, res) => {
   }
 
   try {
-    // Loop through each item and process it
     for (const item of cart) {
-      // Clean price field if it's in "R100.00" format (strip 'R' and parse the number)
-      const cleanPrice = typeof item.price === 'string'
-        ? parseFloat(item.price.replace(/[^\d.-]/g, ''))
-        : item.price;
-
+      const cleanPrice =
+        typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.-]/g, '')) : item.price;
       const productName = item.productName || item.name;
 
       const existingItem = await CartItem.findOne({ userId, productId: item.productId || productName });
@@ -99,8 +92,7 @@ app.post('/cart', async (req, res) => {
   }
 });
 
-// Start the server
-const PORT = process.env.PORT || 3000;
+const PORT = 3002;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
