@@ -8,7 +8,7 @@ const categorySchema = new mongoose.Schema({
         maxLength: 32,
         unique: true,
     },
-    class: {
+    gender: {
         type: String,
         trim: true,
         required: true,
@@ -27,4 +27,6 @@ const categorySchema = new mongoose.Schema({
     },
 });
 
-export default mongoose.model('Category', categorySchema);
+export default mongoose.model('Product', categorySchema);
+//creates a 'Collection' iin the db called (Category)
+//import Category from '../models/category.js';
