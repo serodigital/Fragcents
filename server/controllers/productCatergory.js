@@ -50,7 +50,7 @@ export const createProduct = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "An error occurred while creating the product" });
+        res.json({ error: "An error occurred while creating the product" });
     }
 };
 
@@ -61,10 +61,10 @@ export const getAllProducts = async (req, res) => {
         const products = await Product.find().sort({ createdAt: -1 });
 
         // Send response
-        res.status(200).json({ products });
+        res.json({ products });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "An error occurred while retrieving products" });
+        res.json({ error: "An error occurred while retrieving products" });
     }
 };
 

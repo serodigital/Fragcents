@@ -16,9 +16,7 @@ const categorySchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        trim: true,
         required: true,
-        maxLength: 32,
     },
     slug: {
         type: String,
@@ -28,5 +26,4 @@ const categorySchema = new mongoose.Schema({
 });
 
 export default mongoose.model('Product', categorySchema);
-//creates a 'Collection' iin the db called (Category)
-//import Category from '../models/category.js';
+//creates a 'Collection' iin the db called (Product)
