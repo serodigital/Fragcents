@@ -1,5 +1,6 @@
 import Category from '../models/category.js';
 import dotenv from 'dotenv';
+import slugify from "slugify";
 
 dotenv.config();
 
@@ -27,17 +28,11 @@ export const createCategory = async (req, res) => {
         // 4. Save category
         const category = await new Category({
             name,
-            slug,
+            slug: slugify(name),
         }).save();
 
         // 5. Send response
-        res.json({
-            message: "Category created successfully",
-            category: {
-                name: category.name,          
-                slug: category.slug,
-            },
-        });
+        res.json(category);
 
     } catch (err) {
         console.error(err);
@@ -61,54 +56,54 @@ export const getAllCategories = async (req, res) => {
  // Update a category by ID
 export const updateCategory = async (req, res) => {
     try {
-        const { id ,name } = req.body;
-
-        if (!id) {
-            return res.json({ error: "Category ID is required" });
-        }
-
+        const { name } = req.body;
+        const { categoryId } = req.params;
+        
         // Find category by ID and update fields
         const updatedCategory = await Category.findByIdAndUpdate(
-            id,
-            { name },
-            { new: true, runValidators: true }
+            categoryId,
+            { 
+                name,
+                slug: slugify(name),
+            },
+            { new: true}
         );
-
-        if (!updatedCategory) {
-            return res.json({ error: "Category not found" });
-        }
-
-        res.json({
-            message: "Category updated successfully",
-            category: updatedCategory,
-        });
+        res.json(updatedCategory);
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "An error occurred while updating the category" });
+        res.status(400).json({ error: "An error occurred while updating the category" });
     }
 };
 
  // Delete a category by ID
 export const deleteCategory = async (req, res) => {
     try {
-        const { id } = req.body; 
-
-        if (!id) {
-            return res.json({ error: "Category ID is required" });
-        }
-
-        // Find and delete the category
-        const deletedCategory = await Category.findByIdAndDelete(id);
+    
+        const deletedCategory = await Category.findByIdAndDelete(req.params.categoryId);
 
         if (!deletedCategory) {
             return res.json({ error: "Category not found" });
         }
 
-        res.json({ message: "Category deleted successfully" });
+        res.json(deleteCategory);
 
     } catch (err) {
         console.error(err);
         res.json({ error: "An error occurred while deleting the category" });
     }
 };
+
+export const read = async (req, res) => {
+    try{
+        const category = await Category.findOne({
+            slug: req.params.slug
+        });
+        res.json(category);
+    }
+    catch (err)
+    {
+        console.log(err);
+        return res.status(400).json(err.message);
+    }
+}
