@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <style>
+        /* CSS styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .cart-container {
+            width: 400px;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .cart-container h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .cart-item p {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        .remove-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .remove-btn:hover {
+            background-color: #e60000;
+        }
+
+        #empty-message {
+            font-size: 1.1em;
+            color: #888;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cart Container -->
+    <div class="cart-container">
+        <h2>Your Cart</h2>
+        <div id="cart-items">
+            <!-- Example items (to be dynamically generated) -->
+            <div class="cart-item" data-id="1">
+                <p>Perfume Oil Arabic Swiss Arabian - R90.00</p>
+                <button class="remove-btn">Remove</button>
+            </div>
+            <div class="cart-item" data-id="2">
+                <p>Mary's Eau de Parfum - R120.00</p>
+                <button class="remove-btn">Remove</button>
+            </div>
+            <div class="cart-item" data-id="3">
+                <p>Scentsational Eau de Cologne - R150.00</p>
+                <button class="remove-btn">Remove</button>
+            </div>
+        </div>
+        <p id="empty-message" style="display: none;">Your cart is empty.</p>
+    </div>
+
+    <script>
+        // JavaScript for removing items
+        document.addEventListener('DOMContentLoaded', () => {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const emptyMessage = document.getElementById('empty-message');
+
+            // Function to check if the cart is empty
+            function checkCartEmpty() {
+                if (cartItemsContainer.children.length === 0) {
+                    emptyMessage.style.display = 'block';
+                }
+            }
+
+            // Add click event listener to each remove button
+            document.querySelectorAll('.remove-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const cartItem = button.parentElement;
+                    cartItemsContainer.removeChild(cartItem);
+                    checkCartEmpty();
+                });
+            });
+
+            // Initial check if the cart is empty
+            checkCartEmpty();
+        });
+    </script>
+</body>
+</html>
+
