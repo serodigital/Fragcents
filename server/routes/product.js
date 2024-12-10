@@ -17,7 +17,7 @@ router.put('/product/:productId', updateProduct); // Endpoint to Update a produc
 router.delete('/product/:productId', deleteProduct); // Endpoint to Delete a product by ID
 router.get('/product/:slug', requireSignIn, isAdmin, read) //Endpoint to Retrieve a single product by slug
 //testing
-router.post('/product', requireSignIn, isAdmin, formidable(), create); // Endpoint to Create a new product
+router.post('/products', requireSignIn, isAdmin, formidable(), create); // Endpoint to Create a new product
 
 
 export default router;

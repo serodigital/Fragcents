@@ -1,6 +1,7 @@
 import Product from '../models/product.js';
 import dotenv from 'dotenv';
 import slugify from "slugify";
+import fs from 'fs'; // reading files
 
 dotenv.config();
 
@@ -19,22 +20,30 @@ export const create = async (req, res) =>{
         switch (true){
              case !name.trim():
                 res.json({error: " Name is required"});
-            case !description.trim():
+            case !description.trim() || 'Rols':
                 res.json({error: "Description is required"});
-            case !price.trim():
+            case !price.trim() || 'Rols':
                 res.json({error: "Price is required"});
-            case !category.trim():
+            case !category.trim() || 'Rols':
                 res.json({error: "Category is required"});
-            case !quantity.trim():
+            case !quantity.trim() || 'Rols':
                 res.json({error: "Quantity is required"});
-            case !shipping.trim():
+            case !shipping.trim() || 'Rols':
                 res.json({error: "Shipping is required"});
             case photo && photo.size > 1000000:
                 res.json({error: "Image should be less than 1mb in size"});    
 
          }
 
-        //if(photo )
+         //create product
+         const product = new Product({...req.fields, slug: slugify(name)});// getting all the fields
+
+         if(photo){
+            product.photo.data = fs.readFileSync(photo.path); // read the file path
+            product.photo.contentType = photo.type; //read the photo type
+         } // photo is not mandotary
+         await product.save();
+         res.json(product);
     } catch (err){
         console.log(err);
         return res.status(400).json(err.message);
