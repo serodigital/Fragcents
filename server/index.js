@@ -14,7 +14,7 @@ const app = express();
 
 // db 
 mongoose
-.connect(process.env.MONGO_URI)
+.connect(process.env.MONGO_URI || 'mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/?')
 .then(() => console.log("DB connected"))
 .catch(err => console.log('DB error => ', err));
 
