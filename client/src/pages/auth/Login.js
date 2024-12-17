@@ -2,11 +2,14 @@ import { useState } from "react";
 import Jumbotron from "../../components/cards/Jumbotron";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useAuth } from "../../context/auth";
 
 export default function Login() {
 
   const[email, setEmail] = useState("Marolo@gmail.com");
   const[password, setPassword] = useState("Testing");
+
+  const [ auth, setAuth ] = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +26,8 @@ export default function Login() {
           toast.error(data.error);
       }
       else{
+        localStorage.setItem("auth",JSON.stringify(data));
+        setAuth({...auth,token: data.token, user: data.user});
         toast.success("Login successful");
       }
 
