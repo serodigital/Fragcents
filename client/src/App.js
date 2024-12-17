@@ -4,6 +4,7 @@ import Menu from './components/nav/Menu';
 import Register from "./pages/auth/Register";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
+import Dashboard from "./pages/user/dashboard";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path ="/" element={<Home />}/>
         <Route path ="/login" element={<Login />}/>
         <Route path ="/register" element={<Register />}/>
+        <Route path = "/dashboard" element={<Dashboard />}/>
       </Routes>
     </BrowserRouter>
   );
