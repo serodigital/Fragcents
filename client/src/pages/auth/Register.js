@@ -18,7 +18,7 @@ const navigate = useNavigate();
     e.preventDefault();
     try{
        const {data} = await axios.post(
-        `${process.env.REACT_APP_API || "http://localhost:8000/api"}/register`, 
+        `/register`, 
       {
         name,
         email,
