@@ -46,7 +46,7 @@ export default function Menu(){
           <ul className="dropdown-menu">
             <li>
                 <NavLink className="nav-link" to={`/dashboard/${
-                  auth?.user?.role === 1 ? "admmin" : "user"
+                  auth?.user?.role === 1 ? "admin" : "user"
                   }`}
                 >
                   Dashboard

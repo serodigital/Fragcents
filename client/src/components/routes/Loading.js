@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import  loadingGIF from '../../images/loading2.gif'
 
-export default function Loading(){
+export default function Loading({path = "login"}){
     //state
     const [count,setCount] = useState(3);
     //hooks
     const navigate = useNavigate();
     const location = useLocation();
-    console.log(location);
+    // console.log(location);
 
     useEffect(() =>{
         // execute code every second 3 - 1 when done redirect the user
@@ -17,7 +17,7 @@ export default function Loading(){
             setCount((currentCount) => --currentCount);
         }, 1000)// second
         count === 0 && 
-        navigate("/login", {
+        navigate(`/${path}`, {
             state: location.pathname,
         });
         //cleanup
