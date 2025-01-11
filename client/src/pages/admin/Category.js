@@ -5,9 +5,7 @@ import AdminMenu from "../../components/nav/AdminMenu";
 import axios from "axios";
 import toast from "react-hot-toast";
 import CategoryForm from "../../components/forms/CategoryForm";
-// import { Modal } from "antd";
-// import { Modal } from "antd";
-import Modal from 'react-modal';
+import { Modal } from "antd";
 
 export default function AdminCategory () {
     // context
@@ -139,9 +137,6 @@ export default function AdminCategory () {
                     onCancel={() => (setVisible(false))}
                     footer={null}
                     >
-                        Show category update form
-                    </Modal>
-
                     <CategoryForm 
                         value={updatingName} 
                         setValue={setUpdatingName} 
@@ -149,6 +144,7 @@ export default function AdminCategory () {
                         buttonText="Update"
                         handleDelete={handleDelete}
                     />
+                    </Modal>
                     </div>
                 </div>
             </div>
