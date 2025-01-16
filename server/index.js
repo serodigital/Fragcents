@@ -2,31 +2,32 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import morgan from "morgan";
+import cors from "cors"; // Import CORS
 import authRoutes from "./routes/auth.js";
 import categoryRoutes from "./routes/category.js";
-
 
 dotenv.config();
 
 const app = express();
 
-// db 
+// Connect to the database
 mongoose
-.connect(process.env.MONGO_URI)
-.then(() => console.log("DB connected"))
-.catch(err => console.log('DB error => ', err));
+  .connect(process.env.MONGO_URI || 'mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/?retryWrites=true&w=majority',
+     { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("DB connected"))
+  .catch((err) => console.log("DB error =>", err));
 
-//middleware
+// Middleware
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cors()); // Enable CORS for all origins
 
-// router middleware
-app.use("/api/",authRoutes);
-app.use("/api/",categoryRoutes);
-
+// Router middleware
+app.use("/api", authRoutes);
+app.use("/api", categoryRoutes);
 
 const port = process.env.PORT || 8000;
 
-app.listen(port, () =>{
-    console.log(`Node server is running on ${port}`);
+app.listen(port, () => {
+  console.log(`Node server is running on ${port}`);
 });

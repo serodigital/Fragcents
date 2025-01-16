@@ -1,15 +1,15 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 const RegisterPage = () => {
-  // State to hold form values
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
   });
 
-  // State to display a success message
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Handle input change
   const handleChange = (event) => {
@@ -18,26 +18,40 @@ const RegisterPage = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Normally, here you would send the data to a server (e.g., using fetch or axios).
-    // For this example, we'll just display a success message.
-    setSuccessMessage("Registration successful! Welcome, " + formData.username);
-    setFormData({ username: "", email: "", password: "" }); // Reset form
+    try {
+      const response = await axios.post("http://localhost:8000/api/register", formData);
+
+      if (response.data.error) {
+        setErrorMessage(response.data.error);
+        setSuccessMessage("");
+      } else {
+        setSuccessMessage("Registration successful!");
+        setErrorMessage("");
+        setFormData({ name: "", email: "", password: "" }); // Reset form
+      }
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
+      setSuccessMessage("");
+    }
   };
 
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
       <h2>Register</h2>
       {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
+      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "10px" }}>
           <label>
-            Username:
+            Name:
             <input
               type="text"
-              name="username"
-              value={formData.username}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               required
               style={{ display: "block", width: "100%", padding: "8px" }}
