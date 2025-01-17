@@ -5,8 +5,7 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.js";
 import categoryRoutes from "./routes/category.js";
 import productRoutes from "./routes/product.js";
-
-
+import cors from "cors";
 
 dotenv.config();
 
@@ -19,6 +18,7 @@ mongoose
 .catch(err => console.log('DB error => ', err));
 
 //middleware
+app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -26,6 +26,7 @@ app.use(express.json());
 app.use("/api/",authRoutes);
 app.use("/api/",categoryRoutes);
 app.use("/api/",productRoutes);
+
 
 
 

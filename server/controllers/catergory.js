@@ -12,7 +12,7 @@ export const createCategory = async (req, res) => {
         const { name } = req.body;
 
         // 1. Validate fields
-        if (!name || !name.trim()) {
+        if (!name.trim()) {
             return res.json({ error: "Name is required" });
         }
 
@@ -30,13 +30,12 @@ export const createCategory = async (req, res) => {
             name,
             slug: slugify(name),
         }).save();
-
         // 5. Send response
         res.json(category);
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "An error occurred while creating the category" });
+        res.status(400).json({ error: "An error occurred while creating the category" });
     }
 };
 

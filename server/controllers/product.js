@@ -103,12 +103,15 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
     try {
         // Fetch all products
-        const products = await Product.find().sort({ createdAt: -1 });
+        const products = await Product.find({})
+            .populate("category")
+            .select("-photo")
+            .limit(12)
+            .sort({ createdAt: -1});
 
         res.json({ products });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "An error occurred while retrieving products" });
     }
 };
 
@@ -177,13 +180,42 @@ export const read = async (req, res) => {
     try{
         const product = await Product.findOne({
             slug: req.params.slug
-        });
+        })
+        .select('-photo')
+        .populate("category");
         res.json(product);
     }
     catch (err)
     {
         console.log(err);
         return res.status(400).json(err.message);
+    }
+}
+
+export const photo = async (req, res) => {
+    try{
+        const product = await Product.findById(req.params.productId).select(
+            "photo"
+        );
+        
+        if(product.photo.data){
+            res.set("Content-Type", "image/png");
+            return res.send(product.photo.data);
+        }
+        else {
+            return res.status(404).json({ message: "No photo found for this product" });
+        }
+    }catch(err){
+        console.log(err);
+    }
+}
+
+export const list = async (req,res) => {
+    try{
+         const products = await Product.find({}).populate("category").select("-photo").limit(12).sort({ createdAt: -1});
+         res.json(products);   
+    }catch(err){
+        console.log(err)
     }
 }
 

@@ -1,34 +1,28 @@
 import mongoose from 'mongoose';
-const { ObjectId} = mongoose.Schema;
+const { ObjectId } = mongoose.Schema;
 
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
         trim: true,
         required: true,
-        maxLength: 32,
+        maxLength: 160,
         unique: true,
     },
     description: {
         type: String,
+        trim: true,
         required: true,
         maxLength: 2000,
     },
-    // gender: {
-    //     type: String,
-    //     trim: true,
-    //     required: true,
-    //     maxLength: 32,
-    // },
+    
     price: {
         type: Number,
+        trim:true,
         required: true,
         min: 2,  
     },
-    // AvailableInBulk: {
-    //     type: Boolean,
-    //     default: false, // Default value
-    // },
+    
     slug: {
         type: String,
         unique: true,
