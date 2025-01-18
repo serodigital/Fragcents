@@ -2,9 +2,9 @@ export default function Jumbotron({
     title, 
     subtitle = "Welcome to the world of fine fragnents" 
 }) {
-    return <div className="container-fluid bg-primary">
+    return <div className="container-fluid jumbotron">
             <div className="row">
-                <div className="col text-center p-5 bg-light">
+                <div className="col text-center p-5 ">
                     <h1>{title}</h1>
                     <p className="lead">{subtitle}</p>
                 </div>
