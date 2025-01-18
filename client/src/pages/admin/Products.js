@@ -4,6 +4,8 @@ import Jumbotron from "../../components/cards/Jumbotron";
 import AdminMenu from "../../components/nav/AdminMenu";
 import axios from 'axios';
 import {Link} from 'react-router-dom';
+import moment from "moment";
+import "./../../index.css";
 
 export default function AdminProducts () {
     // context
@@ -29,7 +31,7 @@ export default function AdminProducts () {
         <>
             <Jumbotron 
                 title={`Hello ${auth?.user?.name}`} 
-                subTitle="Admin Dashboard"
+                subtitle="Admin Dashboard"
             />
 
             <div className="container-fluid">
@@ -50,13 +52,21 @@ export default function AdminProducts () {
                             <div className="card mb-3">
                                 <div className="row g-0">
                                     <div className="col-md-4">
-                                        <img src={`${process.env.REACT_APP_API}/product/photo/?productId=${p._id}`} 
+                                        <img src={`${process.env.REACT_APP_API}/product/photo?productId=${p._id}`} 
                                         alt={p.name}
                                         className="img img-fluid rounded-start"
                                     />
                                     </div>
                                     <div className="col-md-8">
-                                        ...
+                                        <div className="card-body">
+                                            <h5 className="card-title">{p.name}</h5>
+                                            <p className="card-text">{p.description}</p>
+                                            <p className="card-text">
+                                                <small className="text-muted">
+                                                    {moment(p.createdAt).format("MMMM Do YYYY, h:mm:ss a")}
+                                                </small>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

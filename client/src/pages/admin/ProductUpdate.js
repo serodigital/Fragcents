@@ -5,11 +5,11 @@ import AdminMenu from "../../components/nav/AdminMenu";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { Select } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const {Option} = Select;
 
-export default function AdminProduct () {
+export default function AdminProductUpdate() {
     // context
     const [auth, setAuth] = useAuth();
     //state
@@ -21,9 +21,14 @@ export default function AdminProduct () {
     const [category, setCategory] = useState("");
     const [shipping, setShipping] = useState("");
     const [quantity, setQuantity] = useState("");
+    const [id, setId] = useState("");
 //hook
     const navigate = useNavigate();
+    const params = useParams();
 
+    useEffect(() => {
+        loadProduct();
+    }, [])
     useEffect(() => {
         loadCategories();
     }, []);
@@ -35,6 +40,22 @@ export default function AdminProduct () {
             setCategories(data.categories);
         }
         catch (err){
+            console.log(err);
+        }
+    }
+
+    const loadProduct = async () => {
+        try{
+            const {data} = await axios.get(`/product/${params.slug}`);
+            setName(data.name);
+            setDescription(data.description);
+            setPrice(data.price);
+            setCategory(data.category._id);
+            setShipping(data.shipping);
+            setQuantity(data.quantity);
+            setId(data._id);
+        } catch(err)
+        {
             console.log(err);
         }
     }
@@ -51,12 +72,12 @@ export default function AdminProduct () {
             productData.append('shipping', shipping);
             productData.append('quantity', quantity);
 
-            const {data} = await axios.post('/products', productData);
+            const {data} = await axios.put(`/product/${id}`, productData);
             if(data?.error)
             {
                 toast.error(data.error);
             } else{
-                toast.success(`"${data.name}" is created`);
+                toast.success(`"${data.name}" is updated`);
                 // redirect user 
                 navigate('/dashboard/admin/products');
             }
@@ -65,6 +86,22 @@ export default function AdminProduct () {
         catch(err){
             console.log(err);
             toast.error("Product create failed. Try again");
+        }
+    }
+
+    const handleDelete = async (req,res) => {
+        try{
+            let answer = window.confirm(
+                "Are you sure you want to delete this product"
+            );
+            if(!answer) return;
+            const {data} = await axios.delete(`/product/${id}`);
+            toast.success(`"${data.name}" is deleted`);
+            navigate("/dashboard/admin/products");
+        } catch(err)
+        {
+            console.log(err);
+            toast.error("Delete failed. Try again")
         }
     }
 
@@ -83,16 +120,26 @@ export default function AdminProduct () {
 
                     </div>
                     <div className="col-md-9">
-                    <div className="p-3 mt-2 mb-2 h4 bg-light">Create Products</div>
+                    <div className="p-3 mt-2 mb-2 h4 bg-light">Update Products</div>
 
-                    {photo && <div className="text-center">
+                    {photo ? 
+                    (<div className="text-center">
                         <img 
                             src={URL.createObjectURL(photo)} 
                             alt="product photo" 
                             className="img img-responsive"
                             height="200px"
                             />
-                        </div>}
+                        </div>) : <div className="text-center">
+                        <img 
+                            src={`${
+                                process.env.REACT_APP_API
+                            }/product/photo/${id}?${new Date().getTime()}`} 
+                            alt="product photo" 
+                            className="img img-responsive"
+                            height="200px"
+                            />
+                            </div>}
 
                     <div className="pt-2">
                         <label className="btn btn-outline-secondary col-12 mb-3">
@@ -140,6 +187,7 @@ export default function AdminProduct () {
                             className="form-select mb-3" 
                             placeholder="Choose category"
                             onChange={(value) => setCategory(value)}
+                            value={category}
                             >
                             {categories?.map((c) =>
                                 <Option key={c._id} value={c._id}>
@@ -153,6 +201,7 @@ export default function AdminProduct () {
                             className="form-select mb-3 borderless-select" 
                             placeholder="Choose shipping"
                             onChange={(value) => setShipping(value)}
+                            value={shipping ? "Yes" : "No"}
                             >
                             <Option value="0">No</Option>
                             <Option value="1">Yes</Option>
@@ -168,9 +217,15 @@ export default function AdminProduct () {
                         onChange={(e) => setQuantity(e.target.value)}
                         />
 
+                        <div className="d-flex justify-content-between">
                         <button onClick={handleSubmit} className="btn btn-primary mb-5" >
-                            Submit
+                            Update
                         </button>
+
+                        <button onClick={handleDelete} className="btn btn-danger mb-5" >
+                            Delete
+                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
