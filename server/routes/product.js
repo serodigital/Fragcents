@@ -7,16 +7,16 @@ const router = express.Router();
 import { requireSignIn, isAdmin } from '../middlewares/auth.js';
 
 //controllers
-import { createProduct, getAllProducts, updateProduct, deleteProduct, read, create, photo, list } from '../controllers/product.js';
+import { createProduct, getAllProducts, updateProduct, deleteProduct, read, create, photo, list, update } from '../controllers/product.js';
 
 
 // router.post('/product', requireSignIn, isAdmin, createProduct); // Endpoint to Create a new product
 router.get('/products', getAllProducts); // Endpoint to Retrieve all products
 // router.get('/product/:slug', read); //Endpoint to Retrieve a single product by slug
-router.put('/product/:productId', updateProduct); // Endpoint to Update a product by ID
-router.delete('/product/:productId', deleteProduct); // Endpoint to Delete a product by ID
+router.put('/product/:productId', requireSignIn, isAdmin, formidable(), update); // Endpoint to Update a product by ID
+router.delete('/product/:productId', requireSignIn, isAdmin, deleteProduct); // Endpoint to Delete a product by ID
 router.get('/product/:slug', read) //Endpoint to Retrieve a single product by slug
-router.get('product/photo/:productId', photo);
+router.get('/product/photo/:productId', photo);
 //testing
 router.post('/products', requireSignIn, isAdmin, formidable(), create); // Endpoint to Create a new product
 

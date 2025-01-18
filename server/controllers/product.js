@@ -10,8 +10,8 @@ dotenv.config();
  //additional middleware
 export const create = async (req, res) =>{
     try{
-       console.log(req.fields);
-       console.log(req.files);
+    //    console.log(req.fields);
+    //    console.log(req.files);
         const { name, description, price, category, quantity, shipping } = 
              req.fields;
         const {photo} = req.files;
@@ -19,19 +19,19 @@ export const create = async (req, res) =>{
         //validation error
         switch (true){
              case !name.trim():
-                res.json({error: " Name is required"});
-            case !description.trim() || 'Rols':
-                res.json({error: "Description is required"});
-            case !price.trim() || 'Rols':
-                res.json({error: "Price is required"});
-            case !category.trim() || 'Rols':
-                res.json({error: "Category is required"});
-            case !quantity.trim() || 'Rols':
-                res.json({error: "Quantity is required"});
-            case !shipping.trim() || 'Rols':
-                res.json({error: "Shipping is required"});
+                return res.json({error: " Name is required"});
+            case !description.trim():
+                return res.json({error: "Description is required"});
+            case !price.trim() :
+                return res.json({error: "Price is required"});
+            case !category.trim():
+                return res.json({error: "Category is required"});
+            case !quantity.trim():
+                return res.json({error: "Quantity is required"});
+            case !shipping.trim():
+                return res.json({error: "Shipping is required"});
             case photo && photo.size > 1000000:
-                res.json({error: "Image should be less than 1mb in size"});    
+                return res.json({error: "Image should be less than 1mb in size"});    
 
          }
 
@@ -159,10 +159,52 @@ export const updateProduct = async (req, res) => {
     }
 };
 
+export const update = async (req, res) =>{
+    try{
+       
+        const { name, description, price, category, quantity, shipping } = 
+             req.fields;
+        const {photo} = req.files;
+        
+        //validation error
+        switch (true){
+             case !name.trim():
+                res.json({error: " Name is required"});
+            case !description.trim() :
+                res.json({error: "Description is required"});
+            case !price.trim() :
+                res.json({error: "Price is required"});
+            case !category.trim() :
+                res.json({error: "Category is required"});
+            case !quantity.trim() :
+                res.json({error: "Quantity is required"});
+            case !shipping.trim() :
+                res.json({error: "Shipping is required"});
+            case photo && photo.size > 1000000:
+                res.json({error: "Image should be less than 1mb in size"});    
+
+         }
+
+         //update product
+         const product = await Product.findOneAndUpdate(req.params.productId,{...req.fields,slug: slugify(name),}, {new: true}
+        );
+
+         if(photo){
+            product.photo.data = fs.readFileSync(photo.path); // read the file path
+            product.photo.contentType = photo.type; //read the photo type
+         } // photo is not mandotary
+         await product.save();
+         res.json(product);
+    } catch (err){
+        console.log(err);
+        return res.status(400).json(err.message);
+    }
+} 
+
  // Delete a product by ID
 export const deleteProduct = async (req, res) => {
     try {
-        const deletedProduct = await Product.findByIdAndDelete(req.params.productId);
+        const deletedProduct = await Product.findByIdAndDelete(req.params.productId).select("-photo");
 
         if (!deletedProduct) {
             return res.json({ error: "Product not found" });
@@ -194,12 +236,13 @@ export const read = async (req, res) => {
 
 export const photo = async (req, res) => {
     try{
-        const product = await Product.findById(req.params.productId).select(
-            "photo"
-        );
+        const product = await Product.findById(req.params.productId).select("photo");
         
         if(product.photo.data){
-            res.set("Content-Type", "image/png");
+            res.set("Content-Type", product.photo.contentType);
+            res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.set('Pragma', 'no-cache');
+            res.set('Expires', '0');
             return res.send(product.photo.data);
         }
         else {
