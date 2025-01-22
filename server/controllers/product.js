@@ -109,7 +109,7 @@ export const getAllProducts = async (req, res) => {
             .limit(12)
             .sort({ createdAt: -1});
 
-        res.json({ products });
+        res.json( products );
     } catch (err) {
         console.error(err);
     }
@@ -259,6 +259,26 @@ export const list = async (req,res) => {
          res.json(products);   
     }catch(err){
         console.log(err)
+    }
+};
+
+export const filteredProducts = async (req,res) => {
+    try{
+        const {checked, radio} = req.body;
+
+        let args = {};
+        if(checked.length > 0) args.category = checked;
+        if(radio.length) args.price = { $gte: radio[0], $lte: radio[1] };
+
+        console.log('args =>', args);
+
+        const products = await Product.find(args);
+        console.log("filtered product query =>", products.legnth);
+
+        res.json(products);
+
+    } catch (err){
+        console.log(err);
     }
 }
 

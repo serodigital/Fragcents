@@ -7,7 +7,7 @@ const router = express.Router();
 import { requireSignIn, isAdmin } from '../middlewares/auth.js';
 
 //controllers
-import { createProduct, getAllProducts, updateProduct, deleteProduct, read, create, photo, list, update } from '../controllers/product.js';
+import { createProduct, getAllProducts, updateProduct, deleteProduct, read, create, photo, list, update, filteredProducts } from '../controllers/product.js';
 
 
 // router.post('/product', requireSignIn, isAdmin, createProduct); // Endpoint to Create a new product
@@ -19,6 +19,7 @@ router.get('/product/:slug', read) //Endpoint to Retrieve a single product by sl
 router.get('/product/photo/:productId', photo);
 //testing
 router.post('/products', requireSignIn, isAdmin, formidable(), create); // Endpoint to Create a new product
+router.post('/filtered-products', filteredProducts);
 
 
 export default router;
