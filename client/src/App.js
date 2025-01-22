@@ -13,6 +13,7 @@ import AdminProducts from "./pages/admin/Products";
 import AdminProductUpdate from "./pages/admin/ProductUpdate";
 import UserOrders from "./pages/user/Orders";
 import UserProfile from "./pages/user/Profile";
+import Shop from "./pages/user/Shop";
 import AdminRoute from "./components/routes/AdminRoute";
 // import Secret from "./pages/Secret";
 
@@ -29,6 +30,7 @@ export default function App() {
     <Toaster/>
       <Routes>
         <Route path ="/" element={<Home />}/>
+        <Route path ="/shop" element={<Shop />}/>
         <Route path ="/login" element={<Login />}/>
         <Route path ="/register" element={<Register />}/>
         <Route path = "/dashboard" element={<PrivateRoute />}>

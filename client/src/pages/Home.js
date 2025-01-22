@@ -13,7 +13,7 @@ export default function Home() {
   const loadProducts = async () =>{
     try{
       const {data} = await axios.get("/products");
-      setProducts(data.products);
+      setProducts(data);
     } catch(err){
       console.log(err);
     }

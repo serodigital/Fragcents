@@ -5,7 +5,7 @@ export default function Jumbotron({
     return <div className="container-fluid jumbotron">
             <div className="row">
                 <div className="col text-center p-5 ">
-                    <h1>{title}</h1>
+                    <h1 className="fw-bold">{title}</h1>
                     <p className="lead">{subtitle}</p>
                 </div>
             </div>
