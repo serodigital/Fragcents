@@ -52,7 +52,7 @@ export default function AdminProducts () {
                             <div className="card mb-3">
                                 <div className="row g-0">
                                     <div className="col-md-4">
-                                        <img src={`${process.env.REACT_APP_API}/product/photo?productId=${p._id}`} 
+                                        <img src={`${process.env.REACT_APP_API}/product/photo/${p._id}`} 
                                         alt={p.name}
                                         className="img img-fluid rounded-start"
                                     />
