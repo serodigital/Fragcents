@@ -43,6 +43,7 @@ export const register = async (req, res) => {
 
         //7. send response
         res.json({
+            message: "Registration successful!",
             user: {
                 name: user.name,
                 email: user.email,
@@ -51,10 +52,12 @@ export const register = async (req, res) => {
             },
             token,
         });
-            
+
     }
     catch(err){
-        console.log(err);
+        console.error(err);
+        res.json({ error: "Something went wrong. Please try again later." });
+        console.log("JWT_SECRET:", process.env.JWT_SECRET);
     }
 
 };
@@ -83,13 +86,15 @@ export const login = async (req, res) => {
             return res.json({error: "wrong password"});
         }
         //5. create signed jwt
-        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {
+        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET ||
+            'aJh9dLpEqF8nResBVUCjNwAywLGz4D79dm8ReqTYaVZKRqWtPhVpKmTwd9D8BMCHEGjdJuRHph8tskPfm64xvNezH3cWd2nLXKeqkS98auBMvF', {
             expiresIn: "7d"
         });
 
 
         //7. send response
         res.json({
+            message: "Registration successful!",
             user: {
                 name: user.name,
                 email: user.email,
