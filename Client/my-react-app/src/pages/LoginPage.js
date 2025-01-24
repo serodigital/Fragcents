@@ -6,8 +6,8 @@ const LoginPage = () => {
     return (
         <div>
           <Jumbotron
-            title="Welcome Back!"
-            subtitle="Log in to continue where you left off."
+            title="SIGN IN "
+            subtitle="ENTER YOUR EMAIL AND PASSWORD TO SIGN IN "
           />
         </div>
       );
