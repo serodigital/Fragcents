@@ -1,7 +1,10 @@
 import { Badge } from "antd";
+import {useNavigate} from 'react-router-dom';
 
 
 export default function ProductCard({ p }) {
+    const navigate = useNavigate();
+
     return(
         <div className="card mb-3 hoverable" >
             <Badge.Ribbon text={`${p.sold} sold`} color="red">
@@ -34,6 +37,7 @@ export default function ProductCard({ p }) {
             <div className="d-flex justify-content-between">
                 <button className="btn btn-primary col card-button" 
                 style={{ borderBottomLeftRadius: "5px"}}
+                onClick={() => navigate(`/product/${p.slug}`)}
                 >
                     View Product
                 </button>
