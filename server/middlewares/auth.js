@@ -5,7 +5,7 @@ export const requireSignIn = (req,res,next) => {
     try{
         const decoded = jwt.verify(
             req.headers.authorization, 
-            process.env.JWT_SECRET || 'aJh9dLpEqF8nResBVUCjNwAywLGz4D79dm8ReqTYaVZKRqWtPhVpKmTwd9D8BMCHEGjdJuRHph8tskPfm64xvNezH3cWd2nLXKeqkS98auBMvF'
+            process.env.JWT_SECRET
         );
         // console.log("decoded => ", decoded);
         req.user = decoded;

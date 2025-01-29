@@ -1,7 +1,13 @@
 import React from 'react';
+import { useAuth } from '../Context/Auth';
 
-const Home = () => {
-    return <h1>Welcome to the Homepage!</h1>;
+export default function Home() {
+
+const [auth,setAuth] = useAuth();
+
+    return (
+
+        <div>
+    <pre>{JSON.stringify(auth,null,4)}</pre>
+    </div>);
 };
-
-export default Home;
