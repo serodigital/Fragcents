@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const SECRET_KEY = 'aJh9dLpEqF8nResBVUCjNwAywLGz4D79dm8ReqTYaVZKRqWtPhVpKmTwd9D8BMCHEGjdJuRHph8tskPfm64xvNezH3cWd2nLXKeqkS98auBMvF';
+
 export const register = async (req, res) => {
     try{
         //destructure name, email password from req.body
@@ -36,7 +38,7 @@ export const register = async (req, res) => {
             password: hashedPassword
         }).save();
         //6. create signed jwt
-        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {
+        const token = jwt.sign({_id: user._id}, SECRET_KEY , {
             expiresIn: "7d"
         });
 
@@ -57,7 +59,6 @@ export const register = async (req, res) => {
     catch(err){
         console.error(err);
         res.json({ error: "Something went wrong. Please try again later." });
-        console.log("JWT_SECRET:", process.env.JWT_SECRET);
     }
 
 };
@@ -86,14 +87,14 @@ export const login = async (req, res) => {
             return res.json({error: "wrong password"});
         }
         //5. create signed jwt
-        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {
+        const token = jwt.sign({_id: user._id}, SECRET_KEY , {
             expiresIn: "7d"
         });
 
 
         //7. send response
         res.json({
-            message: "Registration successful!",
+            message: "Login successful!",
             user: {
                 name: user.name,
                 email: user.email,
