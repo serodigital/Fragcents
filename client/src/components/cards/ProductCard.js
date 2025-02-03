@@ -49,8 +49,9 @@ export default function ProductCard({ p }) {
                 <button className="btn btn-outline-primary col card-button" 
                     style={{ borderBottomRightRadius: "5px"}}
                     onClick={() => {
-                        setCart([...cart, p])
-                        toast.success('Added to cart')
+                        setCart([...cart, p]);
+                        localStorage.setItem('cart',JSON.stringify([...cart, p]));
+                        toast.success('Added to cart');
                     }}
                 >
                     Add To Cart
