@@ -26,4 +26,4 @@ router.get('/products/search/:keyword', productsSearch);
 router.get('/related-products/:productId/:categoryId', relatedProducts);
 
 
-export default router;
+export default router; 
