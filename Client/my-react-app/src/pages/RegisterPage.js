@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { useAuth } from "../Context/Auth"; // Import useAuth
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const RegisterPage = () => {
   });
 
   const navigate = useNavigate();
+  const { setAuth } = useAuth(); // Get setAuth from context
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -23,18 +25,23 @@ const RegisterPage = () => {
       const response = await axios.post("http://localhost:8000/api/register", formData);
 
       if (response.data.message) {
-        toast.success(response.data.message); // Show success message
-        navigate("/dashboard"); // Redirect to Dashboard page
+        toast.success(response.data.message);
+
+        // Save user and token in context & localStorage
+        setAuth({
+          user: response.data.user,
+          token: response.data.token,
+        });
+
+        navigate("/dashboard"); // Redirect to Dashboard
       } else if (response.data.error) {
-        toast.error(response.data.error); // Show error message
+        toast.error(response.data.error);
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "An error occurred. Please try again."
-      );
+      toast.error("An error occurred. Please try again.");
     }
   };
-
+  
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">

@@ -1,20 +1,40 @@
-import { useState,createContext, useContext } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
-const AuthContext=createContext();
+// Create Auth Context
+const AuthContext = createContext();
 
-const AuthProvider = ({children}) => {
+// AuthProvider Component
+const AuthProvider = ({ children }) => {
+  const [auth, setAuth] = useState({
+    user: null,
+    token: "",
+  });
 
-    const [auth,setAuth]=useState({
-        user: null,
-        token: "",
-    });
-    return (
-        <AuthContext.Provider value={[auth,setAuth]}>
-           {children}
-            </AuthContext.Provider>
-    )
+  // Load auth data from Local Storage when the app starts
+  useEffect(() => {
+    const storedAuth = localStorage.getItem("auth");
+    if (storedAuth) {
+      setAuth(JSON.parse(storedAuth));
+    }
+  }, []);
+
+  // Save auth data to Local Storage whenever it changes
+  useEffect(() => {
+    if (auth.token) {
+      localStorage.setItem("auth", JSON.stringify(auth));
+    } else {
+      localStorage.removeItem("auth");
+    }
+  }, [auth]);
+
+  return (
+    <AuthContext.Provider value={{ auth, setAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-const useAuth=()=>useContext(AuthContext);
+// Custom Hook to Use Auth Context
+const useAuth = () => useContext(AuthContext);
 
-export {useAuth,AuthProvider}
+export { AuthProvider, useAuth };
