@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -80,14 +79,6 @@ const LoginPage = () => {
       </div>
     </div>
   );
-};
-
-export default LoginPage;
-=======
-import React from 'react';
-
-const LoginPage = () => {
-    return <h1>Login Page</h1>;
 };
 
 export default LoginPage;
