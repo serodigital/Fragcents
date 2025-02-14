@@ -1,37 +1,38 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './Navbar';
-import HomePage from './pages/Home';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import { useAuth } from "./Context/Auth";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from "./routes/AdminRoute";
+import Navbar from "./components/Navbar";
+import { AuthProvider } from "./context/Auth";
 
 const App = () => {
-    // Private Route Component
-const PrivateRoute = ({ children }) => {
-    const { auth } = useAuth();
-    return auth.token ? children : <Navigate to="/register" />;
-  };
-
-    return (
-        <Router>
-            <Navbar />
-            <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />               
-                <Route
-    path="/dashboard"
-    element={
-      <PrivateRoute>
-        <DashboardPage />
-      </PrivateRoute>
-    }
-  />
-            </Routes>
-        </Router>
-    );
+  return (
+    <AuthProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          
+          {/* Protected Admin Route */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 };
 
 export default App;

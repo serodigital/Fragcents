@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../Context/Auth"; // Import useAuth
+import { useAuth } from "../context/Auth"; // Import useAuth
 import { useNavigate } from "react-router-dom";   // For redirection after logout
 
 const DashboardPage = () => {

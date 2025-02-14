@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "./Context/Auth";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
   const { auth, setAuth } = useAuth();
@@ -14,12 +14,12 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
       <div className="container">
-        {/* Brand */}
+        {/* Brand Logo */}
         <Link className="navbar-brand" to="/">
-          Sero Digital
+          MyApp
         </Link>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Toggle */}
         <button
           className="navbar-toggler"
           type="button"
@@ -35,7 +35,7 @@ const Navbar = () => {
         {/* Navbar Links */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-            {/* Home Page Link */}
+            {/* Home Link (Visible to all users) */}
             <li className="nav-item">
               <Link className="nav-link" to="/">
                 Home
@@ -43,8 +43,8 @@ const Navbar = () => {
             </li>
 
             {!auth.user ? (
+              // Show Register/Login if not logged in
               <>
-                {/* Show Register & Login if user is NOT logged in */}
                 <li className="nav-item">
                   <Link className="nav-link" to="/register">
                     Register
@@ -57,15 +57,29 @@ const Navbar = () => {
                 </li>
               </>
             ) : (
+              // Show Dashboard/Logout if logged in
               <>
-                {/* Show Dashboard & Logout if user is logged in */}
                 <li className="nav-item">
                   <Link className="nav-link" to="/dashboard">
                     Dashboard
                   </Link>
                 </li>
+
+                {/* Show Admin link only for users with admin role */}
+                {auth.user.role === "admin" && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/admin">
+                      Admin Dashboard
+                    </Link>
+                  </li>
+                )}
+
+                {/* Logout Button */}
                 <li className="nav-item">
-                  <button className="btn btn-danger nav-link" onClick={handleLogout}>
+                  <button
+                    className="btn btn-danger nav-link"
+                    onClick={handleLogout}
+                  >
                     Logout
                   </button>
                 </li>
