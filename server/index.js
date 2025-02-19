@@ -26,7 +26,7 @@ app.use(cors()); // Enable CORS for all origins
 app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log(`Node server is running on ${port}`);

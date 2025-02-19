@@ -11,7 +11,7 @@ const AdminDashboard = () => {
   // Fetch Categories
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/categories");
+      const { data } = await axios.get("http://localhost:3000/api/categories");
       setCategories(data);
     } catch (error) {
       toast.error("Failed to fetch categories");
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
   // Create Category
   const handleCreate = async () => {
     try {
-      const { data } = await axios.post("http://localhost:8000/api/categories", {
+      const { data } = await axios.post("http://localhost:3000/api/categories", {
         name: newCategory,
       });
       toast.success("Category created successfully");
@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   // Update Category
   const handleUpdate = async (id) => {
     try {
-      const { data } = await axios.put(`http://localhost:8000/api/categories/${id}`, {
+      const { data } = await axios.put(`http://localhost:3000/api/categories/${id}`, {
         name: editName,
       });
       toast.success("Category updated successfully");
@@ -53,7 +53,7 @@ const AdminDashboard = () => {
   // Delete Category
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/categories/${id}`);
+      await axios.delete(`http://localhost:3000/api/categories/${id}`);
       toast.success("Category deleted successfully");
       fetchCategories();
     } catch (error) {

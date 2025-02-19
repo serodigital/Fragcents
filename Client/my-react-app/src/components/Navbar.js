@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/Auth";
 
 const Navbar = () => {
   const { auth, setAuth } = useAuth();
@@ -16,7 +16,7 @@ const Navbar = () => {
       <div className="container">
         {/* Brand Logo */}
         <Link className="navbar-brand" to="/">
-          MyApp
+          Sero Digital
         </Link>
 
         {/* Mobile Menu Toggle */}

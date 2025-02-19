@@ -5,7 +5,7 @@ import { useAuth } from "../context/Auth";
 const AdminRoute = ({ children }) => {
   const { auth } = useAuth();
   
-  if (!auth.user || auth.user.role !== "admin") {
+  if (!auth.user || auth.user.role !== 1) {
     return <Navigate to="/login" replace />;
   }
 
