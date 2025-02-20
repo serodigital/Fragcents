@@ -6,8 +6,6 @@ import cors from "cors"; // Import CORS
 import authRoutes from "./routes/auth.js";
 import categoryRoutes from "./routes/category.js";
 import productRoutes from "./routes/product.js";
-import productCountRoutes  from "./routes/productCount.js";
-import productPageRoutes from './routes/productPage.js'
 
 
 dotenv.config();
@@ -30,8 +28,6 @@ app.use(cors()); // Enable CORS for all origins
 app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api/",productRoutes);
-app.use("/api", productCountRoutes);
-app.use("/api", productPageRoutes);
 
 
 

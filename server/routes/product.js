@@ -7,7 +7,7 @@ const router = express.Router();
 import { requireSignIn, isAdmin } from '../middlewares/auth.js';
 
 //controllers
-import { createProduct, getAllProducts, updateProduct, deleteProduct, read, create } from '../controllers/product.js';
+import { createProduct, getAllProducts, updateProduct, deleteProduct, read, create ,listProducts, productCount} from '../controllers/product.js';
 
 
 // router.post('/product', requireSignIn, isAdmin, createProduct); // Endpoint to Create a new product
@@ -16,6 +16,9 @@ router.get('/product', getAllProducts); // Endpoint to Retrieve all products
 router.put('/product/:productId', updateProduct); // Endpoint to Update a product by ID
 router.delete('/product/:productId', deleteProduct); // Endpoint to Delete a product by ID
 router.get('/product/:slug', requireSignIn, isAdmin, read) //Endpoint to Retrieve a single product by slug
+router.get('/list-products/page/:page', listProducts)
+router.get('/countProduct',productCount) //Count att ietms in the db
+
 //testing
 router.post('/products', requireSignIn, isAdmin, formidable(), create); // Endpoint to Create a new product
 
