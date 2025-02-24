@@ -205,17 +205,32 @@ catch(err)
 }
 
 
+// // Count all products in the database
+// export const productCount = async (req, res) => {
+//   try {
+
+//     const ProductCount = 0;
+
+//     // const count = await ProductCount.countDocuments();
+//     const count = await ProductCount.find({}).estimatedDocumentCount();
+
+//     res.json({ count });
+//   } catch (error) {
+//     res.status(500).json({ error: "An error occurred while counting products." });
+//   }
+// };
+
 // Count all products in the database
 export const productCount = async (req, res) => {
-  try {
+    try {
+        
+      const count = await Product.estimatedDocumentCount();
+      res.json({ count });
 
-    const ProductCount = 0;
 
-    // const count = await ProductCount.countDocuments();
-    const count = await ProductCount.find({}).estimatedDocumentCount();
-
-    res.json({ count });
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred while counting products." });
-  }
-};
+    } catch (error) {
+      console.error("Detailed Error:", error);
+      res.status(500).json({ error: "Failed to fetch product count", details: error.message });
+    }
+  };
+  
