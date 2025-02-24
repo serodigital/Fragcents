@@ -6,9 +6,7 @@ const Home = () => {
     const [productCount, setProductCount] = useState(0); 
     const [page, setPage] = useState(1); 
 
-
-
-
+    // fetch 6 products per page from the API
     const fetchProducts = async () => {
         try {
             const response = await axios.get(`http://localhost:8000/api/list-products/page/${page}`);
@@ -18,6 +16,7 @@ const Home = () => {
         }
     };
 
+    //   fetch the total number of products in the database
     const fetchProductCount = async () => {
         try {
             const response = await axios.get("http://localhost:8000/api/countProduct");
@@ -40,7 +39,6 @@ const Home = () => {
             <h2>Product List</h2>
             {/* <p>Total Products: {productCount}</p> */}
 
-            {/* Render the list of products */}
             <ul>
                 {products.map(product => (
                     <li key={product._id}>
@@ -57,7 +55,6 @@ const Home = () => {
         <div className="col-12">
             <div className="position-fixed bottom-0 end-0 mb-3 me-3 d-flex gap-2 align-items-center">
                 
-                {/* Previous Button */}
                 <button 
                     onClick={() => setPage(prev => Math.max(prev - 1, 1))} 
                     disabled={page === 1}
@@ -68,7 +65,6 @@ const Home = () => {
 
                 <span className="fw-bold"> Page {page} </span>
 
-                {/* Next page Button */}
                 <button 
                     onClick={() => setPage(prev => (prev * 6 < productCount ? prev + 1 : prev))}
                     disabled={page * 6 >= productCount}
