@@ -3,12 +3,11 @@ import axios from "axios";
 import Jumbotron from "../components/Jumbotron.js";
 
 const Home = () => {
-    const [products, setProducts] = useState([]); 
-    const [productCount, setProductCount] = useState(0); 
-    const [page, setPage] = useState(1); 
+    const [products, setProducts] = useState([]);
+    const [productCount, setProductCount] = useState(0);
+    const [page, setPage] = useState(1);
     const [activeTab, setActiveTab] = useState("new-arrivals");
 
-    // Fetch 6 products per page from the API
     const fetchProducts = async () => {
         try {
             const response = await axios.get(`http://localhost:8000/api/list-products/page/${page}`);
@@ -18,12 +17,10 @@ const Home = () => {
         }
     };
 
-    // Fetch total number of products in the database
     const fetchProductCount = async () => {
         try {
             const response = await axios.get("http://localhost:8000/api/countProduct");
             setProductCount(response.data.count);
-            console.log("Available products in DB:", response.data.count);
         } catch (error) {
             console.error("Error fetching product count:", error);
         }
@@ -36,14 +33,9 @@ const Home = () => {
 
     return (
         <div>
-            {/* Jumbotron Section */}
-            <Jumbotron 
-                title="Welcome to Mudely" 
-                subtitle="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES"
-            />
+            <Jumbotron title="Welcome Mudely" subtitle="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES" />
 
-            {/* Navigation Buttons Below Jumbotron */}
-            <div className="d-flex justify-content-center gap-4 my-4">
+            <div className="d-flex justify-content-center gap-4 my-4 ">
                 <button 
                     className={`btn position-relative ${activeTab === "new-arrivals" ? "fw-bold text-dark border-bottom border-3 border-dark" : "text-muted"}`} 
                     onClick={() => setActiveTab("new-arrivals")}
@@ -61,42 +53,30 @@ const Home = () => {
                 </button>
             </div>
 
-            <h2>{activeTab === "new-arrivals" ? "New Arrivals" : "Best Sellers"}</h2>
+            {/* <h2>{activeTab === "new-arrivals" ? "New Arrivals" : "Best Sellers"}</h2> */}
 
-            <ul>
+            <div className="row m-5">
                 {products.map(product => (
-                    <li key={product._id}>
-                        <h3>{product.name} - ${product.price}</h3>
-                    </li>
-                ))}
-            </ul>
-
-            {/* Pagination Controls */}
-            <div className="container">
-                <div className="row">
-                    <div className="col-12">
-                        <div className="position-fixed bottom-0 end-0 mb-3 me-3 d-flex gap-2 align-items-center">
-                            
-                            <button 
-                                onClick={() => setPage(prev => Math.max(prev - 1, 1))} 
-                                disabled={page === 1}
-                                className="btn btn-primary"
-                            >
-                                Previous
-                            </button>
-
-                            <span className="fw-bold"> Page {page} </span>
-
-                            <button 
-                                onClick={() => setPage(prev => (prev * 6 < productCount ? prev + 1 : prev))}
-                                disabled={page * 6 >= productCount}
-                                className="btn btn-outline-primary"
-                            >
-                                View More
-                            </button>
+                    <div key={product._id} className="col-md-4 mb-4 ">
+                        <div className="card p-3 shadow-sm border-4 ml-4">
+                            {/* <div className="badge bg-dark text-uppercase mb-2">{product.category}</div> */}
+                            <img src={product.image} alt={product.name} className="img-fluid mb-2" />
+                            <h5>{product.name}</h5>
+                            <p className="fw-bold text-grey">From R {product.price}</p>
+                            <p className={product.inStock ? "text-grey" : "text-grey"}>{product.inStock ? "AVAILABLE IN BULK" : "NOT AVAILABLE IN BULK"}</p>
+                            {/* {!product.inStock && <span className="badge bg-secondary">Sold Out</span>} */}
                         </div>
                     </div>
-                </div>
+                ))}
+            </div>
+
+            <div className="position-fixed bottom-0 end-0 mb-3 me-3 d-flex gap-2 align-items-center">
+                {page > 1 && (
+                    <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} className="btn text-primary">Previous</button>
+                )}
+                {page * 6 < productCount && (
+                    <button onClick={() => setPage(prev => prev + 1)} className="btn text-primary">Load More</button>
+                )}
             </div>
         </div>
     );
