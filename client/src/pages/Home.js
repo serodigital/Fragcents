@@ -7,7 +7,7 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
 
   useEffect(() => {
     loadProducts();
@@ -27,7 +27,7 @@ export default function Home() {
 
     }
   } 
-
+//##
   const loadProducts = async () =>{
     try{
       const {data} = await axios.get(`/list-products/${page}`);
@@ -48,7 +48,7 @@ export default function Home() {
       setLoading(false);
     }
   };
-
+//##
   const arr = [...products];
   const sortedBySold = arr?.sort((a,b) => (a.sold < b.sold ? 1: -1));
 
