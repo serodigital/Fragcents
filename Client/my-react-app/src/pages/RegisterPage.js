@@ -22,7 +22,7 @@ const RegisterPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3000/api/register", formData);
+      const response = await axios.post("http://localhost:8000/api/register", formData);
 
       if (response.data.message) {
         toast.success(response.data.message);

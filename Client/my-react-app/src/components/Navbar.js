@@ -57,7 +57,7 @@ const Navbar = () => {
                 </li>
               </>
             ) : (
-              // Show Dashboard/Logout if logged in
+              // Show Dashboard & Logout if logged in
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/dashboard">
@@ -66,20 +66,17 @@ const Navbar = () => {
                 </li>
 
                 {/* Show Admin link only for users with admin role */}
-                {auth.user.role === "admin" && (
+                {auth.user.role === 1 && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/admin">
-                      Admin Dashboard
+                      Admin
                     </Link>
                   </li>
                 )}
 
                 {/* Logout Button */}
                 <li className="nav-item">
-                  <button
-                    className="btn btn-danger nav-link"
-                    onClick={handleLogout}
-                  >
+                  <button className="btn btn-danger nav-link" onClick={handleLogout}>
                     Logout
                   </button>
                 </li>

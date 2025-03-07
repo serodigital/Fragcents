@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { useAuth } from "../context/Auth"; //Import Auth Context
 
 const AdminDashboard = () => {
+  const { auth } = useAuth(); //Call useAuth at the top level
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
@@ -11,10 +13,16 @@ const AdminDashboard = () => {
   // Fetch Categories
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3000/api/categories");
-      setCategories(data);
+      const { data } = await axios.get("http://localhost:8000/api/categories"
+      );
+
+      if (data.categories) {
+        setCategories(data.categories); // Ensure correct data mapping
+      } else {
+        toast.error("No categories found.");
+      }
     } catch (error) {
-      toast.error("Failed to fetch categories");
+      toast.error("Error fetching categories.");
     }
   };
 
@@ -25,39 +33,69 @@ const AdminDashboard = () => {
   // Create Category
   const handleCreate = async () => {
     try {
-      const { data } = await axios.post("http://localhost:3000/api/categories", {
-        name: newCategory,
-      });
-      toast.success("Category created successfully");
-      setNewCategory("");
-      fetchCategories();
+      const { data } = await axios.post("http://localhost:8000/api/categories",
+        { name: newCategory },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        }
+      );
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success("Category created successfully");
+        setNewCategory("");
+        fetchCategories();
+      }
     } catch (error) {
-      toast.error("Failed to create category");
+      toast.error("Error creating category.");
+      console.log("JWT Token:", auth.token);
     }
   };
 
   // Update Category
   const handleUpdate = async (id) => {
     try {
-      const { data } = await axios.put(`http://localhost:3000/api/categories/${id}`, {
-        name: editName,
-      });
-      toast.success("Category updated successfully");
-      setEditingCategory(null);
-      fetchCategories();
+      const { data } = await axios.put(`http://localhost:8000/api/categories/${id}`, { name: editName },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        }
+      );
+
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success("Category updated successfully");
+        setEditingCategory(null);
+        fetchCategories();
+      }
     } catch (error) {
-      toast.error("Failed to update category");
+      toast.error("Error updating category.");
     }
   };
 
   // Delete Category
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/api/categories/${id}`);
-      toast.success("Category deleted successfully");
-      fetchCategories();
+      const { data } = await axios.delete(`http://localhost:8000/api/categories/${id}`,
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        }
+      );
+
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success("Category deleted successfully");
+        fetchCategories();
+      }
     } catch (error) {
-      toast.error("Failed to delete category");
+      toast.error("Error deleting category.");
     }
   };
 

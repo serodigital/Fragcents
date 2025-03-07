@@ -20,7 +20,7 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
-        "http://localhost:3000/api/login",
+        "http://localhost:8000/api/login",
         formData
       );
 
