@@ -5,6 +5,8 @@ import morgan from "morgan";
 import cors from "cors"; // Import CORS
 import authRoutes from "./routes/auth.js";
 import categoryRoutes from "./routes/category.js";
+import productRoutes from "./routes/product.js";
+
 
 dotenv.config();
 
@@ -12,7 +14,7 @@ const app = express();
 
 // Connect to the database
 mongoose
-  .connect(process.env.MONGO_URI || 'mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/?retryWrites=true&w=majority',
+  .connect(process.env.MONGO_URI || 'mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/?' || 'mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/?retryWrites=true&w=majority',
      { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("DB connected"))
   .catch((err) => console.log("DB error =>", err));
@@ -25,6 +27,8 @@ app.use(cors()); // Enable CORS for all origins
 // Router middleware
 app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
+app.use("/api/",productRoutes);
+
 
 const port = process.env.PORT || 8000;
 
