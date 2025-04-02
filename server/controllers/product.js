@@ -52,7 +52,7 @@ export const create = async (req, res) =>{
 export const createProduct = async (req, res) => {
     try {
         // Destructure fields from req.body
-        const { name, description, gender, price, AvailableInBulk } = req.body;
+        const { name, description, price, AvailableInBulk } = req.body;
 
         // 1. Validate fields
         if (!name || !name.trim()) {
@@ -60,9 +60,6 @@ export const createProduct = async (req, res) => {
         }
         if (!description || !description.trim()) {
             return res.json({ error: "Description is required" });
-        }
-        if (!gender || !gender.trim()) {
-            return res.json({ error: "Gender is required" });
         }
         if (typeof price !== 'number' || price <= 0) {
             return res.json({ error: "Price must be a positive number" });
@@ -84,7 +81,6 @@ export const createProduct = async (req, res) => {
         const product = await new Product({
             name,
             description,
-            gender,
             price,
             slug: slugify(name),
             AvailableInBulk: AvailableInBulk || false, // Default to false if not provided
@@ -115,7 +111,7 @@ export const getAllProducts = async (req, res) => {
  // Update a product by ID
 export const updateProduct = async (req, res) => {
     try {
-        const { name, description, gender, price, AvailableInBulk } = req.body;
+        const { name, description, price, AvailableInBulk } = req.body;
         const { productId } = req.params;
 
         // Validate fields
@@ -124,9 +120,6 @@ export const updateProduct = async (req, res) => {
         }
         if (description && !description.trim()) {
             return res.json({ error: "Description is required" });
-        }
-        if (gender && !gender.trim()) {
-            return res.json({ error: "Gender is required" });
         }
         if (price !== undefined && (typeof price !== 'number' || price <= 0)) {
             return res.json({ error: "Price must be a positive number" });
@@ -141,7 +134,6 @@ export const updateProduct = async (req, res) => {
             { 
                 name,
                 description,
-                gender,
                 price,
                 slug: name ? slugify(name) : undefined,
                 AvailableInBulk,

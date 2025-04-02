@@ -8,6 +8,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./routes/AdminRoute";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/Auth";
+import AdminCategories from "./pages/AdminCategories";
+import AdminProducts from "./pages/AdminProducts";
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 
 const App = () => {
   return (
@@ -20,12 +24,28 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           
-          {/* Protected Admin Route */}
+          {/* Protected Admin Routes */}
           <Route
             path="/admin"
             element={
               <AdminRoute>
                 <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <AdminRoute>
+                <AdminCategories />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <AdminRoute>
+                <AdminProducts />
               </AdminRoute>
             }
           />

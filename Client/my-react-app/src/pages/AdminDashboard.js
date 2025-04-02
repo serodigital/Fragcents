@@ -1,196 +1,47 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
-import { useAuth } from "../context/Auth"; //Import Auth Context
+import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/Auth";
 
 const AdminDashboard = () => {
-  const { auth } = useAuth(); //Call useAuth at the top level
-  const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState("");
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [editName, setEditName] = useState("");
-
-  // Fetch Categories
-  const fetchCategories = async () => {
-    try {
-      const { data } = await axios.get("http://localhost:8000/api/categories"
-      );
-
-      if (data.categories) {
-        setCategories(data.categories); // Ensure correct data mapping
-      } else {
-        toast.error("No categories found.");
-      }
-    } catch (error) {
-      toast.error("Error fetching categories.");
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  // Create Category
-  const handleCreate = async () => {
-    try {
-      const { data } = await axios.post("http://localhost:8000/api/categories",
-        { name: newCategory },
-        {
-          headers: {
-            Authorization: auth.token,
-          },
-        }
-      );
-      if (data.error) {
-        toast.error(data.error);
-      } else {
-        toast.success("Category created successfully");
-        setNewCategory("");
-        fetchCategories();
-      }
-    } catch (error) {
-      toast.error("Error creating category.");
-      console.log("JWT Token:", auth.token);
-    }
-  };
-
-  // Update Category
-  const handleUpdate = async (id) => {
-    try {
-      const { data } = await axios.put(`http://localhost:8000/api/categories/${id}`, { name: editName },
-        {
-          headers: {
-            Authorization: auth.token,
-          },
-        }
-      );
-
-      if (data.error) {
-        toast.error(data.error);
-      } else {
-        toast.success("Category updated successfully");
-        setEditingCategory(null);
-        fetchCategories();
-      }
-    } catch (error) {
-      toast.error("Error updating category.");
-    }
-  };
-
-  // Delete Category
-  const handleDelete = async (id) => {
-    try {
-      const { data } = await axios.delete(`http://localhost:8000/api/categories/${id}`,
-        {
-          headers: {
-            Authorization: auth.token,
-          },
-        }
-      );
-
-      if (data.error) {
-        toast.error(data.error);
-      } else {
-        toast.success("Category deleted successfully");
-        fetchCategories();
-      }
-    } catch (error) {
-      toast.error("Error deleting category.");
-    }
-  };
+  const { auth } = useAuth();
 
   return (
     <div className="container mt-5">
-      <Toaster position="top-right" />
-      <h2 className="text-center mb-4">Admin Dashboard - Category Management</h2>
+      <div className="row">
+        <div className="col-md-3">
+          <div className="card mb-4">
+            <div className="card-header">
+              <h4>Admin Navigation</h4>
+            </div>
+            <ul className="list-group list-group-flush">
+              <li className="list-group-item">
+                <Link to="/admin/categories" className="nav-link">
+                  Manage Categories
+                </Link>
+              </li>
+              <li className="list-group-item">
+                <Link to="/admin/products" className="nav-link">
+                  Manage Products
+                </Link>
+              </li>
+              {/* Add more admin links as needed */}
+            </ul>
+          </div>
+        </div>
 
-      {/* Add Category Form */}
-      <div className="mb-4">
-        <input
-          type="text"
-          className="form-control mb-2"
-          placeholder="New Category Name"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-        />
-        <button className="btn btn-primary" onClick={handleCreate}>
-          Add Category
-        </button>
+        <div className="col-md-9">
+          <div className="card">
+            <div className="card-header">
+              <h4>Admin Information</h4>
+            </div>
+            <div className="card-body">
+              <h5>Welcome {auth?.user?.name}!</h5>
+              <p>Email: {auth?.user?.email}</p>
+              <p>Role: Administrator</p>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Categories List */}
-      <table className="table table-bordered">
-        <thead className="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.length > 0 ? (
-            categories.map((category) => (
-              <tr key={category._id}>
-                <td>{category._id}</td>
-                <td>
-                  {editingCategory === category._id ? (
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                    />
-                  ) : (
-                    category.name
-                  )}
-                </td>
-                <td>
-                  {editingCategory === category._id ? (
-                    <>
-                      <button
-                        className="btn btn-success btn-sm me-2"
-                        onClick={() => handleUpdate(category._id)}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setEditingCategory(null)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        onClick={() => {
-                          setEditingCategory(category._id);
-                          setEditName(category.name);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDelete(category._id)}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="3" className="text-center">
-                No categories found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
     </div>
   );
 };
