@@ -1,9 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./Context/Auth";
+import { useCart } from "./Context/CartContext";
+
 
 const Navbar = () => {
   const { auth, setAuth } = useAuth();
+  const { cart } = useCart();
+
 
   // Logout Function
   const handleLogout = () => {
@@ -71,6 +75,24 @@ const Navbar = () => {
                 </li>
               </>
             )}
+
+            {/* Home Page Link */}
+            <li className="nav-item">
+  <Link className="nav-link position-relative" to="/cart">
+    <span className="d-flex align-items-center">
+      <span >Cart  🛒</span>
+      {cart.length > 0 && (
+        <span
+          className="badge position-absolute top-2  start-100 translate-middle badge-pill"
+          style={{ fontSize: '0.90rem' }}
+        >
+          {cart.length}
+        </span>
+      )}
+    </span>
+  </Link>
+</li>
+
           </ul>
         </div>
       </div>
