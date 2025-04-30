@@ -179,3 +179,49 @@ export const read = async (req, res) => {
     }
 }
 
+// Display 6 product per page 
+export const listProducts = async (req,res) =>{
+    try{
+       const perPage = 6;
+       const page = req.params.page ? req.params.page : 1;
+   
+       const products = await Product.find({}).select("-photo").skip((page-1) *perPage).limit(perPage).sort({createdAt:-1});
+       res.json(products);
+   
+    }
+   catch(err)
+   {
+     console.log(err)
+     return res.status(400).json(err.message);
+   }
+   }
+   
+   
+   // // Count all products in the database
+   // export const productCount = async (req, res) => {
+   //   try {
+   
+   //     const ProductCount = 0;
+   
+   //     // const count = await ProductCount.countDocuments();
+   //     const count = await ProductCount.find({}).estimatedDocumentCount();
+   
+   //     res.json({ count });
+   //   } catch (error) {
+   //     res.status(500).json({ error: "An error occurred while counting products." });
+   //   }
+   // };
+   
+   // Count all products in the database
+   export const productCount = async (req, res) => {
+       try {
+           
+         const count = await Product.estimatedDocumentCount();
+         res.json({ count });
+   
+   
+       } catch (error) {
+         console.error("Detailed Error:", error);
+         res.status(500).json({ error: "Failed to fetch product count", details: error.message });
+       }
+     };
