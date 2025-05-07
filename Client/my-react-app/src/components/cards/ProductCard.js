@@ -3,7 +3,7 @@ import { useCart } from "../../Context/CartContext";
 import moment from "moment";
 
 
-// Currency from Dollar to Rand
+// Currency from Dollar to Rand Rand
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-ZA', {
         style: 'currency',
