@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { useAuth } from "../context/Auth"; //Import Auth Context
+import { useAuth } from "../Context/Auth"; //Import Auth Context
 
 const AdminCategories = () => {
   const { auth } = useAuth(); //Call useAuth at the top level

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-import { useAuth } from "../context/Auth"; // Import useAuth
+import { useAuth } from "../Context/Auth"; // Import useAuth
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({

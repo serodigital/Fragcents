@@ -7,7 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./routes/AdminRoute";
 import Navbar from "./components/Navbar";
-import { AuthProvider } from "./context/Auth";
+import { AuthProvider } from "./Context/Auth";
 import AdminCategories from "./pages/AdminCategories";
 import AdminProducts from "./pages/AdminProducts";
 import { Buffer } from 'buffer';

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/Auth";
+import { useAuth } from "../Context/Auth";
 import toast, { Toaster } from "react-hot-toast";
 
 const LoginPage = () => {

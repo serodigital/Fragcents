@@ -7,8 +7,6 @@ import authRoutes from "./routes/auth.js";
 import categoryRoutes from "./routes/category.js";
 import productRoutes from "./routes/product.js";
 
-import productRoutes from "./routes/product.js";
-
 
 dotenv.config();
 
