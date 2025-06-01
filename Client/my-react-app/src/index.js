@@ -5,13 +5,18 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import "bootstrap/dist/css/bootstrap.min.css";
 import { AuthProvider } from './Context/Auth';
+import { CartProvider } from './Context/CartContext'; // ✅ must be from src
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    <CartProvider>
     <AuthProvider>
     <App />
     </AuthProvider>
+    </CartProvider>
+
   </React.StrictMode>
 );
 
