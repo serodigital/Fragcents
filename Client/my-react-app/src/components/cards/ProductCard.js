@@ -17,16 +17,23 @@ export default function ProductCard({ p }) {
 
     return (
         <div className="card mb-3">
-            <img 
-                src={`${process.env.REACT_APP_API}/product/photo/${p._id}`} 
-                alt={p.name}
-                style={{ height: "200px", objectFit: "cover" }}
-            />
+            {p.photo && p.photo.data ? (
+                          <img
+                            src={`data:${p.photo.contentType};base64,${Buffer.from(
+                              p.photo.data
+                            ).toString("base64")}`}
+                            alt={p.name}
+                            style={{ height: "120px" }}
+                            className="img-thumbnail"
+                          />
+                        ) : (
+                          <span className="text-muted">No image</span>
+                        )}
 
             <div className="card-body">
                 <h5 className="card-title">{p.name}</h5>
                 <p className="text-muted">{moment(p.createdAt).fromNow()}</p>
-                <p className="fw-bold">{p.sold} sold</p>
+                {/* <p className="fw-bold">{p.sold} sold</p> */}
 
                 <p className="text-success fw-bold">{formatCurrency(p.price)}</p>
 
@@ -41,7 +48,7 @@ export default function ProductCard({ p }) {
                             _id: p._id,
                             name: p.name,
                             price: p.price,
-                            image: `${process.env.REACT_APP_API}/product/photo/${p._id}`
+                            image: `http://localhost:8000/api/product/images/${p._id}`
                         });
 
                         //  alert-----------

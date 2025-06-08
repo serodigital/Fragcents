@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "./Context/Auth";
-import { useCart } from "./Context/CartContext";
+import { useAuth } from "../Context/Auth";
+import { useCart } from "../Context/CartContext";
 
 
 const Navbar = () => {

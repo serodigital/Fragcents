@@ -8,22 +8,6 @@ const Home = () => {
     const [products, setProducts] = useState([]);
     const [productCount, setProductCount] = useState(0);
     const [page, setPage] = useState(1);
-    const [activeTab, setActiveTab] = useState("new-arrivals");
- 
-    // New code
-    useEffect(() => {
-        loadProducts();
-    }, []);
-
-    const loadProducts = async () => {
-        try{
-            const {data} = await axios.get(`${process.env.REACT_APP_API}/list-products/${page}`);
-            setProducts(data);
-        }
-        catch(error){
-            console.log(error);
-        }
-    }
 
     const arr = [...products];
     const sortedBySold = arr?.sort((a,b) => (a.sold < b.sold ? 1 : -1))
@@ -51,11 +35,11 @@ const Home = () => {
     useEffect(() => {
         fetchProducts();
         fetchProductCount();
-    }, [page]);
+    });
 
     return (
         <div>
-            <Jumbotron title="Welcome Mudely" subtitle="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES" />
+            <Jumbotron title="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES" />
 
 
             {/* New Code */}

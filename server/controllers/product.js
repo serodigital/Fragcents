@@ -186,7 +186,7 @@ export const listProducts = async (req,res) =>{
        const page = req.params.page ? req.params.page : 1;
    
        const products = await Product.find({}).select("-photo").skip((page-1) *perPage).limit(perPage).sort({createdAt:-1});
-       res.json(products);
+       res.json({ products });
    
     }
    catch(err)
