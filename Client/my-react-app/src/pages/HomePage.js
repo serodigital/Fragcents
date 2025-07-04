@@ -10,12 +10,12 @@ const Home = () => {
     const [page, setPage] = useState(1);
 
     const arr = [...products];
-    const sortedBySold = arr?.sort((a,b) => (a.sold < b.sold ? 1 : -1))
+    const sortedBySold = arr?.sort((a, b) => (a.sold < b.sold ? 1 : -1))
 
     const fetchProducts = async () => {
         try {
             const response = await axios.get(`http://localhost:8000/api/list-products/${page}`);
-            setProducts(response.data);
+            setProducts(response.data.products || []); 
         } catch (error) {
             console.error("Error fetching products:", error);
         }
@@ -31,16 +31,14 @@ const Home = () => {
             console.error("Error fetching product count:", error);
         }
     };
-
     useEffect(() => {
         fetchProducts();
         fetchProductCount();
-    });
+    }, []);
 
     return (
         <div>
             <Jumbotron title="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES" />
-
 
             {/* New Code */}
             <div className="row">
@@ -51,26 +49,20 @@ const Home = () => {
                     <div className="row">
                         {products?.map((p) => (
                             <div className="col-md-6" key={p._id}>
-                                <ProductCard p={p}/>
-
+                                <ProductCard p={p} />
                             </div>
-                            ))}
-                            </div>
-                        </div>
-                        <div className="col-md-6">
-                            <h2 className="p-3 mt-2 mb-2 h4 bg-light text-center">
-                                Best Sellers
-                            </h2>
-                            {sortedBySold?.map((p) => (
-                            <ProductCard p={p}/>
-                                
-                            ))}
-                        </div>
+                        ))}
                     </div>
-
-
-
-          
+                </div>
+                <div className="col-md-6">
+                    <h2 className="p-3 mt-2 mb-2 h4 bg-light text-center">
+                        Best Sellers
+                    </h2>
+                    {sortedBySold?.map((p) => (
+                        <ProductCard p={p} />
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };
