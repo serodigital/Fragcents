@@ -1,0 +1,15 @@
+.purchase-history {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.order-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+}
