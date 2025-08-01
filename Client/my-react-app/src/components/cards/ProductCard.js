@@ -16,14 +16,14 @@ export default function ProductCard({ p }) {
     const { addToCart } = useCart();
 
     return (
-        <div className="card mb-3">
+        <div className="card mb-3" key={p._id}>
             {p.photo && p.photo.data ? (
                           <img
                             src={`data:${p.photo.contentType};base64,${Buffer.from(
                               p.photo.data
                             ).toString("base64")}`}
                             alt={p.name}
-                            style={{ height: "120px" }}
+                            style={{ height: "400px" }}
                             className="img-thumbnail"
                           />
                         ) : (
@@ -33,7 +33,7 @@ export default function ProductCard({ p }) {
             <div className="card-body">
                 <h5 className="card-title">{p.name}</h5>
                 <p className="text-muted">{moment(p.createdAt).fromNow()}</p>
-                {/* <p className="fw-bold">{p.sold} sold</p> */}
+                { <p className="fw-bold">{p.sold} sold</p> }
 
                 <p className="text-success fw-bold">{formatCurrency(p.price)}</p>
 
@@ -47,7 +47,7 @@ export default function ProductCard({ p }) {
                         addToCart({
                             _id: p._id,
                             name: p.name,
-                            price: p.price,
+                            price: formatCurrency(p.price),
                             image: `http://localhost:8000/api/product/images/${p._id}`
                         });
 
