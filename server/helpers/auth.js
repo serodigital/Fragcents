@@ -1,13 +1,13 @@
 import bcrypt from 'bcrypt';
 
-export const hashPassowrd = (password) => {
+export const hashPassword = (password) => {
     return new Promise((resolve, reject) => {
-        bcrypt.genSalt(12,(err, salt) => {
-            if(err){
+        bcrypt.genSalt(12, (err, salt) => {
+            if (err) {
                 reject(err);
             }
-            bcrypt.hash(password, salt, (err, hash) =>{
-                if(err){
+            bcrypt.hash(password, salt, (err, hash) => {
+                if (err) {
                     reject(err);
                 }
                 resolve(hash);
@@ -16,6 +16,6 @@ export const hashPassowrd = (password) => {
     });
 };
 
-export const comparePassowrd = (password, hashed) => {
+export const comparePassword = (password, hashed) => {
     return bcrypt.compare(password, hashed);
 };

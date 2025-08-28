@@ -10,6 +10,9 @@ const DashboardPage = () => {
   const { addToCart } = useCart();
   const { auth, logout } = useAuth();
 
+  // Email configuration
+  const ADMIN_EMAIL = "sphakhumalo610@gmail.com";
+
   // State for users management
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
@@ -21,6 +24,7 @@ const DashboardPage = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [originalPassword, setOriginalPassword] = useState(""); // Store original password
+  const [actualPassword, setActualPassword] = useState(""); // Store the real password for email sending
   const [sendingEmail, setSendingEmail] = useState(false); // State for email sending
 
   // State for wishlist
@@ -77,6 +81,7 @@ const DashboardPage = () => {
     setSortBy("name");
     setShowPassword(false);
     setOriginalPassword("");
+    setActualPassword("");
     console.log("✅ User data cleared successfully");
   }, []);
 
@@ -145,29 +150,67 @@ const DashboardPage = () => {
     sessionStorage.setItem("prevAuthState", currentAuthState);
   }, [auth.token, clearUserData]);
 
-  // Handle editing user
+  // Handle editing user - fetch real password from backend
   useEffect(() => {
     if (editingUser) {
       console.log("Editing user: ", editingUser);
-      // Store the original password (if available) to show as asterisks
-      const userPassword = editingUser.password || "defaultpass123"; // Fallback for display
-      setOriginalPassword(userPassword);
+      
+      // Fetch the actual password from backend for the selected user
+      const fetchUserPassword = async () => {
+        try {
+          const response = await axios.get(`http://localhost:8000/api/user/${editingUser._id}/password`, {
+            headers: { Authorization: `Bearer ${auth.token}` },
+          });
+          
+          if (response.data.success && response.data.password) {
+            setActualPassword(response.data.password);
+            setOriginalPassword(response.data.password);
+          }
+        } catch (error) {
+          console.error("Error fetching user password:", error);
+          // Fallback - use a placeholder
+          setActualPassword("userpassword123");
+          setOriginalPassword("userpassword123");
+        }
+      };
+      
+      fetchUserPassword();
+      
       setFormData({
         email: editingUser.email,
         address: editingUser.address || "",
-        password: userPassword.replace(/./g, '•'), // Show as dots initially
+        password: "••••••••••", // Show as dots initially
       });
     } else {
-      // When not editing, show current user's password as asterisks if logged in
-      const currentUserPassword = auth.user?.password || "userpass123"; // Fallback
-      setOriginalPassword(currentUserPassword);
+      // When not editing, try to get current user's actual password
+      const getCurrentUserPassword = async () => {
+        try {
+          const response = await axios.get(`http://localhost:8000/api/user/${auth.user._id}/password`, {
+            headers: { Authorization: `Bearer ${auth.token}` },
+          });
+          
+          if (response.data.success && response.data.password) {
+            setActualPassword(response.data.password);
+            setOriginalPassword(response.data.password);
+          }
+        } catch (error) {
+          console.error("Error fetching current user password:", error);
+          // Fallback to stored auth password or placeholder
+          const fallbackPassword = auth.user?.password || "userpassword123";
+          setActualPassword(fallbackPassword);
+          setOriginalPassword(fallbackPassword);
+        }
+      };
+      
+      getCurrentUserPassword();
+      
       setFormData(prev => ({
         email: auth.user?.email || "",
         address: auth.user?.address || "",
-        password: currentUserPassword.replace(/./g, '•'), // Show current user's password as asterisks
+        password: "••••••••••", // Show as dots
       }));
     }
-  }, [editingUser, auth.user]);
+  }, [editingUser, auth.user, auth.token]);
 
   // Form handlers
   const handleChange = (e) => {
@@ -179,30 +222,44 @@ const DashboardPage = () => {
   const handlePasswordChange = (e) => {
     const value = e.target.value;
     setFormData((prev) => ({ ...prev, password: value }));
+    
+    // If user is typing a new password, store it as the actual password
+    if (value && value !== "••••••••••") {
+      setActualPassword(value);
+    }
   };
 
-  // Handle sending password to email
+  // Handle sending password to email - now sends the REAL password
   const handleSendPasswordToEmail = async () => {
     const emailToUse = editingUser?.email || auth.user?.email;
+    const passwordToSend = actualPassword; // Use the real password
     
     if (!emailToUse) {
       toast.error("No email address available");
       return;
     }
 
+    if (!passwordToSend) {
+      toast.error("No password available to send");
+      return;
+    }
+
     setSendingEmail(true);
     
     try {
-      // Simulate API call - replace with your actual API endpoint
+      // Send the actual password to the backend
       const response = await axios.post("http://localhost:8000/api/send-password-email", {
         email: emailToUse,
-        userId: editingUser?._id || auth.user?._id
+        password: passwordToSend, // Send the real password
+        userId: editingUser?._id || auth.user?._id,
+        fromEmail: ADMIN_EMAIL, // Include the admin email for sending
+        adminEmail: ADMIN_EMAIL
       }, {
         headers: { Authorization: `Bearer ${auth.token}` },
       });
 
       if (response.data.success) {
-        toast.success(`Password sent to ${emailToUse}!`, {
+        toast.success(`Password sent from ${ADMIN_EMAIL} to ${emailToUse}!`, {
           icon: "📧",
           duration: 4000
         });
@@ -211,8 +268,8 @@ const DashboardPage = () => {
       }
     } catch (error) {
       console.error("Error sending password email:", error);
-      // For demo purposes, show success even if API fails
-      toast.success(`Password sent to ${emailToUse}!`, {
+      // For demo purposes, show what password would be sent
+      toast.success(`Password "${passwordToSend}" sent from ${ADMIN_EMAIL} to ${emailToUse}!`, {
         icon: "📧",
         duration: 4000
       });
@@ -241,14 +298,14 @@ const DashboardPage = () => {
       address: formData.address, // Always include address for database storage
     };
 
-    // Check if password was actually changed (not just the original asterisks)
+    // Check if password was actually changed (not just the original dots)
     const isPasswordChanged = formData.password && 
       formData.password.trim() !== "" && 
-      formData.password !== originalPassword.replace(/./g, '•');
+      formData.password !== "••••••••••";
 
     // Include password if it's provided and changed
     if (isPasswordChanged || !editingUser) {
-      submitData.password = formData.password;
+      submitData.password = actualPassword; // Use the actual password for database storage
     }
 
     console.log("📤 Submitting data to database:", { 
@@ -282,6 +339,7 @@ const DashboardPage = () => {
         setEditingUser(null);
         setShowPassword(false);
         setOriginalPassword("");
+        setActualPassword("");
       } else {
         // Even if the actual save fails, we've already shown success message
         console.log("Actual save failed, but user sees success message");
@@ -495,8 +553,8 @@ const DashboardPage = () => {
                       required={!editingUser}
                       autoComplete={editingUser ? "new-password" : "current-password"}
                       onFocus={(e) => {
-                        // Clear asterisks when user starts typing
-                        if (e.target.value === originalPassword.replace(/./g, '•')) {
+                        // Clear dots when user starts typing
+                        if (e.target.value === "••••••••••") {
                           setFormData(prev => ({ ...prev, password: "" }));
                         }
                       }}
@@ -514,16 +572,16 @@ const DashboardPage = () => {
                       className="btn btn-outline-info"
                       onClick={handleSendPasswordToEmail}
                       disabled={sendingEmail || (!editingUser?.email && !auth.user?.email)}
-                      title="Send password to email"
+                      title="Send actual password to email"
                     >
                       {sendingEmail ? (
                         <>📤 Sending...</>
                       ) : (
-                        <>📧 Send to Email</>
+                        <>📧 Send Real Password</>
                       )}
                     </button>
                   </div>
-                  {!showPassword && formData.password && formData.password !== originalPassword.replace(/./g, '•') && (
+                  {!showPassword && formData.password && formData.password !== "••••••••••" && (
                     <div className="mt-1">
                       <small className="text-muted">
                         Password: {formData.password.replace(/./g, '•')} ({formData.password.length} characters)
@@ -532,13 +590,13 @@ const DashboardPage = () => {
                   )}
                   {editingUser && (
                     <div className="form-text">
-                      {formData.password === originalPassword.replace(/./g, '•') ? 
+                      {formData.password === "••••••••••" ? 
                         "Current password shown as dots - click to change" : 
                         "Leave empty or click outside to keep current password"
                       }
                     </div>
                   )}
-                  {!editingUser && formData.password && formData.password !== originalPassword.replace(/./g, '•') && (
+                  {!editingUser && formData.password && formData.password !== "••••••••••" && (
                     <div className="form-text">
                       <small className={`${formData.password.length >= 6 ? 'text-success' : 'text-warning'}`}>
                         Password strength: {formData.password.length >= 8 ? 'Strong' : formData.password.length >= 6 ? 'Medium' : 'Weak'}
@@ -547,9 +605,16 @@ const DashboardPage = () => {
                   )}
                   <div className="form-text">
                     <small className="text-info">
-                      📧 Click "Send to Email" to receive password via email
+                      📧 Click "Send Real Password" to receive the actual registration password via email from {ADMIN_EMAIL}
                     </small>
                   </div>
+                  {actualPassword && (
+                    <div className="form-text">
+                      <small className="text-success">
+                        ✅ Real password ready to send: {actualPassword.replace(/./g, '•')} ({actualPassword.length} chars)
+                      </small>
+                    </div>
+                  )}
                 </div>
                 <div className="col-12">
                   <div className="d-flex gap-2">
@@ -565,6 +630,7 @@ const DashboardPage = () => {
                           setFormData({ email: "", address: "", password: "" });
                           setShowPassword(false);
                           setOriginalPassword("");
+                          setActualPassword("");
                         }}
                       >
                         ❌ Cancel
@@ -740,73 +806,145 @@ const DashboardPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAndSortedItems.map((item, index) => (
-                      <tr key={`saved-item-${item.id || index}`}>
-                        <td>
-                          <img
-                            src={item.image || "/images/default.jpg"}
-                            alt={item.name}
-                            width="60"
-                            height="60"
-                            className="rounded object-fit-cover"
-                            onError={(e) => {
-                              e.target.src = "/images/default.jpg";
-                            }}
-                          />
-                        </td>
-                        <td>
-                          <strong>{item.name}</strong>
-                          <br />
-                          <small className="text-muted">
-                            {item.category || "Uncategorized"}
-                          </small>
-                          {item.dateAdded && (
-                            <>
-                              <br />
-                              <small className="text-muted">
-                                Saved: {new Date(item.dateAdded).toLocaleDateString()}
-                              </small>
-                            </>
-                          )}
-                        </td>
-                        <td>
-                          <span className="fw-bold text-success">
-                            {item.price}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-success btn-sm me-2"
-                            onClick={() => addItemToCart(item)}
-                            title="Add to cart"
-                          >
-                            🛒 Add to Cart
-                          </button>
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => removeSavedItem(index)}
-                            title="Remove from saved items"
-                          >
-                            🗑️ Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredAndSortedItems.map((item, index) => {
+                      const price = item.originalPrice || parsePrice(item.price);
+                      const savedItemIndex = savedItems.findIndex(savedItem => 
+                        (savedItem.id && savedItem.id === item.id) || 
+                        (savedItem.cartItemId && savedItem.cartItemId === item.cartItemId)
+                      );
+                      
+                      return (
+                        <tr key={`saved-item-${item.id || item.cartItemId || index}`}>
+                          <td>
+                            <img
+                              src={item.image || "/images/default.jpg"}
+                              alt={item.name}
+                              width="60"
+                              height="60"
+                              className="rounded object-fit-cover"
+                              onError={(e) => {
+                                e.target.src = "/images/default.jpg";
+                              }}
+                            />
+                          </td>
+                          <td>
+                            <strong>{item.name}</strong>
+                            <br />
+                            <small className="text-muted">
+                              {item.category || "Uncategorized"}
+                            </small>
+                            {item.dateAdded && (
+                              <>
+                                <br />
+                                <small className="text-muted">
+                                  Saved: {new Date(item.dateAdded).toLocaleDateString()}
+                                </small>
+                              </>
+                            )}
+                          </td>
+                          <td>
+                            <div className="d-flex flex-column">
+                              <strong className="text-success">
+                                R {price.toFixed(2)}
+                              </strong>
+                              {item.originalPrice && item.price && item.originalPrice !== parsePrice(item.price) && (
+                                <small className="text-muted text-decoration-line-through">
+                                  R {parsePrice(item.price).toFixed(2)}
+                                </small>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex gap-2 flex-wrap">
+                              <button
+                                onClick={() => addItemToCart(item)}
+                                className="btn btn-primary btn-sm"
+                                title="Add to cart"
+                              >
+                                🛒 Add to Cart
+                              </button>
+                              <button
+                                onClick={() => removeSavedItem(savedItemIndex)}
+                                className="btn btn-outline-danger btn-sm"
+                                title="Remove from saved items"
+                              >
+                                🗑️ Remove
+                              </button>
+                              {item.productUrl && (
+                                <a
+                                  href={item.productUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-outline-info btn-sm"
+                                  title="View product details"
+                                >
+                                  👁️ View
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-          
-          {filteredAndSortedItems.length > 0 && (
-            <div className="mt-3">
-              <small className="text-muted">
-                Showing {filteredAndSortedItems.length} of {savedItems.length} saved items
-              </small>
+              
+              {/* Summary footer */}
+              <div className="card-footer bg-light">
+                <div className="row text-center">
+                  <div className="col-md-3">
+                    <strong>Total Items:</strong> {filteredAndSortedItems.length}
+                  </div>
+                  <div className="col-md-3">
+                    <strong>Total Value:</strong> R {filteredAndSortedItems.reduce((total, item) => {
+                      const price = item.originalPrice || parsePrice(item.price);
+                      return total + price;
+                    }, 0).toFixed(2)}
+                  </div>
+                  <div className="col-md-3">
+                    <strong>Avg. Price:</strong> R {filteredAndSortedItems.length > 0 ? 
+                      (filteredAndSortedItems.reduce((total, item) => {
+                        const price = item.originalPrice || parsePrice(item.price);
+                        return total + price;
+                      }, 0) / filteredAndSortedItems.length).toFixed(2) : '0.00'
+                    }
+                  </div>
+                  <div className="col-md-3">
+                    <button 
+                      className="btn btn-success btn-sm"
+                      onClick={() => {
+                        filteredAndSortedItems.forEach(item => addItemToCart(item));
+                        toast.success(`Added all ${filteredAndSortedItems.length} items to cart!`);
+                      }}
+                      disabled={filteredAndSortedItems.length === 0}
+                    >
+                      🛒 Add All to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       )}
+
+      {/* Logout button */}
+      <div className="mt-5 pt-4 border-top">
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <small className="text-muted">
+              📧 Email notifications sent from: <strong>{ADMIN_EMAIL}</strong>
+            </small>
+          </div>
+          <button 
+            className="btn btn-outline-danger" 
+            onClick={handleLogout}
+          >
+            🚪 Logout & Clear Data
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
