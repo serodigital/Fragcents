@@ -1,60 +1,126 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
-const CartContext = createContext();// Cart Cotext
+const CartContext = createContext();
 
-// Define the CartProvider component to wrap around any part of the app that needs cart access
-export const CartProvider = ({ children }) => {
-    const [cart, setCart] = useState([]);
+// Cart reducer to handle all cart operations
+const cartReducer = (state, action) => {
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      // Always add as a new item, never increment existing
+      // Create a unique identifier using timestamp + random number
+      const uniqueId = `${action.payload._id}_${Date.now()}_${Math.random()}`;
+      
+      return [
+        ...state,
+        {
+          ...action.payload,
+          cartItemId: uniqueId, // Unique identifier for this cart entry
+          quantity: 1, // Always start with quantity 1
+          // Ensure we have the image URL if _id exists
+          image: action.payload._id 
+            ? `http://localhost:8000/api/product/image/${action.payload._id}`
+            : action.payload.image || "/images/default.jpg"
+        }
+      ];
 
-    
-    useEffect(() => {// load cart from localStorage if available[1+]
-        const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
-        setCart(storedCart);
-    }, []);
+    case 'REMOVE_FROM_CART':
+      return state.filter(item => item.cartItemId !== action.payload);
 
-    useEffect(() => { // update localStorage
+    case 'UPDATE_CART':
+      return state.map(item =>
+        item.cartItemId === action.payload.cartItemId
+          ? { ...item, quantity: action.payload.quantity }
+          : item
+      );
 
-        localStorage.setItem("cart", JSON.stringify(cart));
-    }, [cart]);
+    case 'CLEAR_CART':
+      return [];
 
-    // Add a product to the cart
-    const addToCart = (product) => {
-        setCart((prevCart) => {
-            // Check if product already exists in cart
-            const existingItem = prevCart.find((item) => item._id === product._id);
-            if (existingItem) {
-               
-                return prevCart.map((item) => //if True=increment 
-                    item._id === product._id
-                        ? { ...item, quantity: item.quantity + 1 } //i++ quantity
-                        : item
-                );
-            } else {
-                return [...prevCart, { ...product, quantity: 1 }]; // If not, add 
+    case 'LOAD_CART':
+      return action.payload || [];
 
-            }
-        });
-    };
-    const removeFromCart = (productId) => {// Remove an item from the cart by its ID
-        setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
-    };
-
-    const updateCart = (productId, quantity) => {   // Update the quantity 
-        setCart((prevCart) =>
-            prevCart.map((item) =>
-                item._id === productId ? { ...item, quantity } : item 
-            )
-        );
-    };
-
-    const clearCart = () => setCart([]);// Clear entire cart
-
-
-    return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateCart, clearCart }}>
-            {children}
-        </CartContext.Provider>
-    );
+    default:
+      return state;
+  }
 };
 
-export const useCart = () => useContext(CartContext);
+export const CartProvider = ({ children }) => {
+  const [cart, dispatch] = useReducer(cartReducer, []);
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        dispatch({ type: 'LOAD_CART', payload: parsedCart });
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (product) => {
+    console.log('Adding to cart:', product); // Debug log
+    dispatch({ type: 'ADD_TO_CART', payload: product });
+  };
+
+  const removeFromCart = (cartItemId) => {
+    console.log('Removing from cart:', cartItemId); // Debug log
+    dispatch({ type: 'REMOVE_FROM_CART', payload: cartItemId });
+  };
+
+  const updateCart = (cartItemId, quantity) => {
+    console.log('Updating cart:', cartItemId, quantity); // Debug log
+    if (quantity <= 0) {
+      removeFromCart(cartItemId);
+    } else {
+      dispatch({ 
+        type: 'UPDATE_CART', 
+        payload: { cartItemId, quantity } 
+      });
+    }
+  };
+
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+  };
+
+  const getCartItemCount = () => {
+    return cart.reduce((total, item) => total + (item.quantity || 1), 0);
+  };
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => {
+      const price = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+      return total + (price * (item.quantity || 1));
+    }, 0);
+  };
+
+  return (
+    <CartContext.Provider value={{
+      cart,
+      addToCart,
+      removeFromCart,
+      updateCart,
+      clearCart,
+      getCartItemCount,
+      getCartTotal
+    }}>
+      {children}
+    </CartContext.Provider>
+  );
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};

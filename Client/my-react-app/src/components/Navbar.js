@@ -3,11 +3,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../Context/Auth";
 import { useCart } from "../Context/CartContext";
 
-
 const Navbar = () => {
   const { auth, setAuth } = useAuth();
   const { cart } = useCart();
-
 
   // Logout Function
   const handleLogout = () => {
@@ -39,10 +37,17 @@ const Navbar = () => {
         {/* Navbar Links */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-            {/* Home Link (Visible to all users) */}
+            {/* Home Link */}
             <li className="nav-item">
               <Link className="nav-link" to="/">
                 Home
+              </Link>
+            </li>
+
+            {/* Shop Link */}
+            <li className="nav-item">
+              <Link className="nav-link" to="/shop">
+                Shop
               </Link>
             </li>
 
@@ -87,23 +92,22 @@ const Navbar = () => {
               </>
             )}
 
-            {/* Home Page Link */}
+            {/* Cart Link */}
             <li className="nav-item">
-  <Link className="nav-link position-relative" to="/cart">
-    <span className="d-flex align-items-center">
-      <span >Cart  🛒</span>
-      {cart.length > 0 && (
-        <span
-          className="badge position-absolute top-2  start-100 translate-middle badge-pill"
-          style={{ fontSize: '0.90rem' }}
-        >
-          {cart.length}
-        </span>
-      )}
-    </span>
-  </Link>
-</li>
-
+              <Link className="nav-link position-relative" to="/cart">
+                <span className="d-flex align-items-center">
+                  <span>Cart 🛒</span>
+                  {cart.length > 0 && (
+                    <span
+                      className="badge position-absolute top-2 start-100 translate-middle badge-pill"
+                      style={{ fontSize: "0.90rem" }}
+                    >
+                      {cart.length}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
@@ -112,3 +116,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
