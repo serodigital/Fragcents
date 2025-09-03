@@ -1,132 +1,227 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import "./ShoppingPage.css";
+import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import Jumbotron from "../components/Jumbotron";
+import ProductCard from "../components/cards/ProductCard";
 
-const ShoppingPage = ({ user, auth, onBack, cart, setCart }) => {
-  const navigate = useNavigate();
-
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedPriceRange, setSelectedPriceRange] = useState(null);
-
-  const products = [
-    { id: 1, name: "Dunhil- Men", category: "SHOES", gender: "MALE", price: 100.0, image: "/images/3.JPG", description: "Classic men's shoes." },
-    { id: 2, name: "Dunhil - Women", category: "DRESS", gender: "FEMALE", price: 100.0, image: "/images/4.JPG", description: "Elegant women's dress." },
-    { id: 3, name: "Classic", category: "SHOES", gender: "MALE", price: 99.99, image: "/images/5.JPG", description: "Classic style shoes." },
-    { id: 4, name: "Elegant Dress Pants", category: "PANTS", gender: "FEMALE", price: 129.99, image: "https://via.placeholder.com/300", description: "Comfortable dress pants." },
-    { id: 5, name: "Running Shoes", category: "SHOES", gender: "FEMALE", price: 159.99, image: "https://via.placeholder.com/300", description: "Lightweight running shoes." },
-    { id: 6, name: "Casual Jeans", category: "PANTS", gender: "MALE", price: 89.99, image: "https://via.placeholder.com/300", description: "Stylish casual jeans." }
-  ];
-
-  const handleAddToCart = (product) => {
-    setCart((prevCart) => [...prevCart, product]);
-    alert(`${product.name} has been added to your cart!`);
-  };
-
-  const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      !selectedCategory || product.category === selectedCategory || product.gender === selectedCategory;
-    const matchesPrice =
-      !selectedPriceRange ||
-      (selectedPriceRange === "R0-R79" && product.price <= 79) ||
-      (selectedPriceRange === "R80-R119" && product.price >= 80 && product.price <= 119) ||
-      (selectedPriceRange === "R120-R179" && product.price >= 120 && product.price <= 179) ||
-      (selectedPriceRange === "R180-R220" && product.price >= 180 && product.price <= 220);
-    return matchesCategory && matchesPrice;
+const ShoppingPage = () => {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [productCount, setProductCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [categories, setCategories] = useState([]);
+  const [filters, setFilters] = useState({
+    category: '',
+    priceRange: '',
+    availability: '',
+    search: ''
   });
+  
+  const arr = [...filteredProducts];
+  const sortedBySold = arr?.sort((a, b) => (a.sold < b.sold ? 1 : -1));
 
-  const resetFilters = () => {
-    setSelectedCategory(null);
-    setSelectedPriceRange(null);
+  const fetchProducts = useCallback(async () => {
+    try {
+      const { data } = await axios.get("http://localhost:8000/api/products");
+      if (data.products) {
+        setProducts(data.products);
+        setFilteredProducts(data.products);
+        
+        // Extract unique categories
+        const uniqueCategories = [...new Set(data.products.map(p => p.category).filter(Boolean))];
+        setCategories(uniqueCategories);
+      } else {
+        console.error("No products found in the response");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  const fetchProductCount = useCallback(async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/api/countProduct");
+      setProductCount(response.data.count);
+      console.log("Product Count:", response.data.count);
+    } catch (error) {
+      console.error("Error fetching product count:", error);
+    }
+  }, []);
+
+  // Filter products based on current filters
+  const applyFilters = useCallback(() => {
+    let filtered = [...products];
+
+    // Search filter
+    if (filters.search) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        p.description.toLowerCase().includes(filters.search.toLowerCase())
+      );
+    }
+
+    // Category filter
+    if (filters.category) {
+      filtered = filtered.filter(p => p.category === filters.category);
+    }
+
+    // Price range filter
+    if (filters.priceRange) {
+      const [min, max] = filters.priceRange.split('-').map(Number);
+      filtered = filtered.filter(p => {
+        if (max) {
+          return p.price >= min && p.price <= max;
+        } else {
+          return p.price >= min;
+        }
+      });
+    }
+
+    // Availability filter
+    if (filters.availability === 'in-stock') {
+      filtered = filtered.filter(p => p.quantity > 0);
+    } else if (filters.availability === 'out-of-stock') {
+      filtered = filtered.filter(p => p.quantity === 0);
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, filters]);
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
   };
+
+  const clearFilters = () => {
+    setFilters({
+      category: '',
+      priceRange: '',
+      availability: '',
+      search: ''
+    });
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchProductCount();
+  }, [fetchProducts, fetchProductCount]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   return (
-    <div className="shopping-page">
-      <nav className="navbar navbar-expand-lg navbar-light bg-light mb-4">
-        <div className="container-fluid d-flex justify-content-between align-items-center">
-          <button className="btn btn-outline-secondary" onClick={onBack}>
-            ⬅ Back to Dashboard
-          </button>
-          <button
-            className="btn btn-outline-success"
-            onClick={() => navigate("/purchase-history")}
-          >
-            🧾 Purchase History
-          </button>
-        </div>
-      </nav>
-
-      <div className="row">
-        {/* Sidebar Filters */}
-        <div className="col-md-3">
-          <div className="card mb-4">
-            <div className="card-header">Filter by Category</div>
-            <div className="card-body d-flex flex-column">
-              {["FEMALE", "MALE", "PANTS", "SHOES", "DRESS"].map((category) => (
-                <button
-                  key={category}
-                  className={`btn btn-outline-primary mb-2 ${selectedCategory === category ? "active" : ""}`}
-                  onClick={() => setSelectedCategory(category)}
+    <div>
+      <Jumbotron title="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES" />
+      
+      <div className="container-fluid">
+        <div className="row">
+          {/* Filter Sidebar */}
+          <div className="col-md-3 col-lg-2">
+            <div className="card mb-4">
+              <div className="card-header">
+                <h5 className="mb-0">Filters</h5>
+                <button 
+                  className="btn btn-link btn-sm p-0"
+                  onClick={clearFilters}
                 >
-                  {category}
+                  Clear All
                 </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">Filter by Price</div>
-            <div className="card-body d-flex flex-column">
-              {["ANY", "R0-R79", "R80-R119", "R120-R179", "R180-R220"].map((priceRange) => (
-                <button
-                  key={priceRange}
-                  className={`btn btn-outline-secondary mb-2 ${selectedPriceRange === priceRange ? "active" : ""}`}
-                  onClick={() => setSelectedPriceRange(priceRange === "ANY" ? null : priceRange)}
-                >
-                  {priceRange}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button className="btn btn-danger mt-3 w-100" onClick={resetFilters}>
-            RESET FILTERS
-          </button>
-        </div>
-
-        {/* Product Grid */}
-        <div className="col-md-9">
-          <div className="text-center mb-4">
-            <h2>{user?.name || auth?.user?.name || "Welcome to Fine Fragrances"}</h2>
-            <p className="text-muted">Explore our products</p>
-          </div>
-
-          <div className="product-list d-flex flex-wrap justify-content-start">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <div key={product.id} className="product-item card m-2 p-2" style={{ width: "18rem" }}>
-                  <img src={product.image} className="card-img-top" alt={product.name} />
-                  <div className="card-body">
-                    <h5 className="card-title">{product.name}</h5>
-                    <p className="card-text">R{product.price.toFixed(2)}</p>
-                    <div className="d-flex justify-content-between">
-                      <button className="btn btn-primary" onClick={() => handleAddToCart(product)}>
-                        Add to Cart
-                      </button>
-                      <button
-                        className="btn btn-outline-info"
-                        onClick={() => navigate(`/product/${product.id}`)}
-                      >
-                        View
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-12 text-center">
-                <h4>No products match your filters.</h4>
               </div>
-            )}
+              <div className="card-body">
+                {/* Search Filter */}
+                <div className="mb-3">
+                  <label className="form-label">Search</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    placeholder="Search products..."
+                    value={filters.search}
+                    onChange={(e) => handleFilterChange('search', e.target.value)}
+                  />
+                </div>
+
+                {/* Category Filter */}
+                <div className="mb-3">
+                  <label className="form-label">Category</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={filters.category}
+                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price Range Filter */}
+                <div className="mb-3">
+                  <label className="form-label">Price Range</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={filters.priceRange}
+                    onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                  >
+                    <option value="">All Prices</option>
+                    <option value="0-50">R0 - R50</option>
+                    <option value="50-100">R50 - R100</option>
+                    <option value="100-200">R100 - R200</option>
+                    <option value="200-500">R200 - R500</option>
+                    <option value="500">R500+</option>
+                  </select>
+                </div>
+
+                {/* Availability Filter */}
+                <div className="mb-3">
+                  <label className="form-label">Availability</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={filters.availability}
+                    onChange={(e) => handleFilterChange('availability', e.target.value)}
+                  >
+                    <option value="">All Products</option>
+                    <option value="in-stock">In Stock</option>
+                    <option value="out-of-stock">Out of Stock</option>
+                  </select>
+                </div>
+
+                {/* Results Count */}
+                <div className="text-muted small">
+                  Showing {filteredProducts.length} of {products.length} products
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="col-md-9 col-lg-10">
+            <div className="row">
+              <div className="col-md-6">
+                <h2 className="p-3 mt-2 mb-2 h4 bg-light text-center">New Arrivals</h2>
+                <div className="row">
+                  {filteredProducts?.map((p) => (
+                    <div className="col-lg-4 col-md-6 col-sm-12" key={p._id}>
+                      <ProductCard p={p} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="col-md-6">
+                <h2 className="p-3 mt-2 mb-2 h4 bg-light text-center">Best Sellers</h2>
+                <div className="row">
+                  {sortedBySold?.map((p) => (
+                    <div className="col-lg-4 col-md-6 col-sm-12" key={p._id}>
+                      <ProductCard p={p} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -135,9 +230,3 @@ const ShoppingPage = ({ user, auth, onBack, cart, setCart }) => {
 };
 
 export default ShoppingPage;
-
-
-
-
-
-
