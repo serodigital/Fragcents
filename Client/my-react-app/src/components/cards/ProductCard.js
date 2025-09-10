@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from "../../Context/CartContext";
 import moment from "moment";
+import axios from "axios";
 
 // Currency formatter (Dollar to Rand)
 const formatCurrency = (amount) => {
@@ -15,7 +16,7 @@ export default function ProductCard({ p }) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const { addToCart } = useCart();
-  
+
   const handleImageError = () => {
     setImageError(true);
     setImageLoading(false);
@@ -24,7 +25,72 @@ export default function ProductCard({ p }) {
   const handleImageLoad = () => {
     setImageLoading(false);
   };
-  
+
+  // ✅ Updated Save Item function to work with localStorage
+  const handleSaveItem = async () => {
+    try {
+      // First save to backend (optional - for persistence)
+      await axios.post("http://localhost:8000/api/saved-items", {
+        productId: p._id
+      });
+
+      // Then save to localStorage for immediate dashboard display
+      const existingSavedItems = JSON.parse(localStorage.getItem("savedItems") || "[]");
+      
+      // Check if item is already saved
+      const isAlreadySaved = existingSavedItems.some(item => item.id === p._id);
+      
+      if (isAlreadySaved) {
+        alert(`"${p.name}" is already in your saved items!`);
+        return;
+      }
+
+      // Create the saved item object matching the dashboard format
+      const savedItem = {
+        id: p._id,
+        cartItemId: `saved_${p._id}_${Date.now()}`, // Unique ID for cart operations
+        name: p.name,
+        price: formatCurrency(p.price),
+        image: `http://localhost:8000/api/product/image/${p._id}`,
+        category: p.category || "Uncategorized",
+        dateAdded: new Date().toISOString(),
+        // Store original price as number for sorting
+        originalPrice: p.price
+      };
+
+      // Add to saved items
+      const updatedSavedItems = [...existingSavedItems, savedItem];
+      localStorage.setItem("savedItems", JSON.stringify(updatedSavedItems));
+      
+      alert(`"${p.name}" saved successfully!`);
+    } catch (err) {
+      console.error("Error saving item:", err);
+      
+      // Fallback: save to localStorage only if backend fails
+      const existingSavedItems = JSON.parse(localStorage.getItem("savedItems") || "[]");
+      const isAlreadySaved = existingSavedItems.some(item => item.id === p._id);
+      
+      if (!isAlreadySaved) {
+        const savedItem = {
+          id: p._id,
+          cartItemId: `saved_${p._id}_${Date.now()}`,
+          name: p.name,
+          price: formatCurrency(p.price),
+          image: `http://localhost:8000/api/product/image/${p._id}`,
+          category: p.category || "Uncategorized",
+          dateAdded: new Date().toISOString(),
+          originalPrice: p.price
+        };
+        
+        const updatedSavedItems = [...existingSavedItems, savedItem];
+        localStorage.setItem("savedItems", JSON.stringify(updatedSavedItems));
+        alert(`"${p.name}" saved locally!`);
+      } else {
+        alert("Item already saved!");
+      }
+    }
+  };
+
   return (
     <div className="card mb-3" style={{ maxWidth: '280px', margin: '0 auto' }}>
       {/* Image Section */}
@@ -83,14 +149,13 @@ export default function ProductCard({ p }) {
        
         {/* Button Group */}
         <div className="d-grid gap-2">
-          {/* ✅ Link now navigates using ID */}
           <Link 
-  to={`/product-view/${p._id}`}  
-  className="btn btn-outline-primary btn-sm"
-  style={{ fontSize: '0.85rem' }}
->
-  👁️ View Details
-</Link>
+            to={`/product-view/${p._id}`}  
+            className="btn btn-outline-primary btn-sm"
+            style={{ fontSize: '0.85rem' }}
+          >
+            👁️ View Details
+          </Link>
           
           <button
             className="btn btn-primary btn-sm"
@@ -106,6 +171,15 @@ export default function ProductCard({ p }) {
             style={{ fontSize: '0.85rem' }}
           >
             🛒 Add to Cart
+          </button>
+
+          {/* ✅ Updated Save Item Button */}
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={handleSaveItem}
+            style={{ fontSize: '0.85rem' }}
+          >
+            💾 Save Item
           </button>
         </div>
       </div>
