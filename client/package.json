@@ -5,6 +5,7 @@
   "dependencies": {
     "antd": "^5.23.0",
     "axios": "^1.7.9",
+    "braintree-web-drop-in-react": "^1.2.1",
     "cra-template": "1.2.0",
     "express-formidable": "^1.2.0",
     "moment": "^2.30.1",

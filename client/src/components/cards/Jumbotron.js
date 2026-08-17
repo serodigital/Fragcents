@@ -1,6 +1,6 @@
 export default function Jumbotron({ 
     title, 
-    subtitle = "Welcome to the world of fine fragnents" 
+    subtitle = "Premium Fragrances. Long-Lasting. Affordable." 
 }) {
     return <div className="container-fluid jumbotron" style={{marginTop: '-8px', height: '200px'}
     }>

@@ -55,7 +55,7 @@ export default function Home() {
     return (
       <div>
         <Jumbotron title="Fragcents" 
-        subtitle="Welcome to the world of fine fragnents"/>
+        subtitle="Premium Fragrances. Long-Lasting. Affordable"/>
 
         <div className="row">
           <div className="col-md-6">

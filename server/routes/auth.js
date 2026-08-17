@@ -6,7 +6,7 @@ const router = express.Router();
 import { requireSignIn, isAdmin } from '../middlewares/auth.js';
 
 //controllers
-import {register, login, secret} from "../controllers/auth.js";
+import {register, login, secret, updateProfile} from "../controllers/auth.js";
 
 
 router.post("/register", register);
@@ -19,6 +19,7 @@ router.get("/admin-check", requireSignIn , (req, res) => {
     res.json({ ok: true });
 }); // router to check if admin
 
+router.put("/profile", requireSignIn, updateProfile)
 //testing
 
 router.get('/secret', requireSignIn, isAdmin, secret);

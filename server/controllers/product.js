@@ -2,6 +2,15 @@ import Product from '../models/product.js';
 import dotenv from 'dotenv';
 import slugify from "slugify";
 import fs from 'fs'; // reading files
+import braintree from "braintree";
+
+
+const gateway = new braintree.BraintreeGateway({
+    environment: braintree.Environment.Sandbox,
+    merchantId: process.env.BRAINTREE_MERCHANT_ID,
+    publicKey: process.env.BRAINTREE_PUBLIC_KEY,
+    privateKey: process.env.BRAINTREE_PRIVATE_KEY,
+});
 
 dotenv.config();
 
@@ -342,3 +351,48 @@ export const relatedProducts = async (req,res) => {
     }
 }
 
+export const getToken = async (req,res) => {
+    try{
+        gateway.clientToken.generate({}, function(err, response){
+            if(err){
+                res.status(500).send(err);
+            }
+            else{
+                res.send(response);
+            }
+        });
+    }catch(err){
+        console.log(err);
+    }
+};
+
+export const processPayment = async (req,res) => {
+    try{
+        // const { nonce, amount } = req.body;
+        console.log(req.body);
+
+         let nonceFromTheClient = req.body.paymentMethodNonce;
+
+        let newTransaction = gateway.transaction.sale({
+            amount: "10.00",
+            paymentMethodNonce: nonceFromTheClient,
+            options: {
+                submitForSettlement: true
+            },
+        },
+        function (err, result){
+            if(result){
+                res.send(result);
+            }
+            else{
+                res.status(500).send(err);
+            }
+        }
+        );
+
+        // console.log(req.body);
+        // let amountFromTheClient = req.body.amount;
+    }catch(err){
+        console.log(err);
+    }
+}   

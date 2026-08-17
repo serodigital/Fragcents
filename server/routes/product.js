@@ -7,7 +7,22 @@ const router = express.Router();
 import { requireSignIn, isAdmin } from '../middlewares/auth.js';
 
 //controllers
-import { productsSearch, relatedProducts, createProduct, getAllProducts, updateProduct, deleteProduct, read, create, photo, list, update, filteredProducts,productsCount, listProducts} from '../controllers/product.js';
+import { 
+    productsSearch, 
+    relatedProducts,
+    getAllProducts,
+    deleteProduct,
+    read,
+    create,
+    photo,
+    list,
+    update,
+    filteredProducts,
+    productsCount,
+    listProducts,
+    processPayment,
+    getToken
+} from '../controllers/product.js';
 
 
 // router.post('/product', requireSignIn, isAdmin, createProduct); // Endpoint to Create a new product
@@ -24,6 +39,9 @@ router.get('/products-count', productsCount);
 router.get('/list-products/:page', listProducts);
 router.get('/products/search/:keyword', productsSearch);
 router.get('/related-products/:productId/:categoryId', relatedProducts);
+
+router.get('/braintree/token', getToken);
+router.post('/braintree/payment', processPayment);
 
 
 export default router; 
