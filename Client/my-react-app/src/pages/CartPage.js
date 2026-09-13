@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../Context/CartContext";
+import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 const CartPage = () => {
   const { cart, removeFromCart, updateCart, clearCart } = useCart();
@@ -18,19 +20,78 @@ const CartPage = () => {
     });
   };
 
-  const incrementQuantity = (cartItemId) => {
-    const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
-    if (item) {
-      updateCart(cartItemId, item.quantity + 1);
-    }
-  };
+  ///const incrementQuantity = (cartItemId) => {
+   /// const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
+   /// if (item) {
+    ///  updateCart(cartItemId, item.quantity + 1);
+    ///}
+  //};
 
-  const decrementQuantity = (cartItemId) => {
-    const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
-    if (item && item.quantity > 1) {
-      updateCart(cartItemId, item.quantity - 1);
-    }
-  };
+const incrementQuantity = (cartItemId) => {
+  const item = cart.find(
+    (cartItem) => cartItem.cartItemId === cartItemId
+  );
+
+  if (!item) {
+    console.error("Cart item not found:", cartItemId);
+    return;
+  }
+
+  const currentQuantity = Number(item.quantity) || 1;
+  const availableStock = Number(item.stock);
+
+  console.log("=================================");
+  console.log("INCREMENT QUANTITY");
+  console.log("Product:", item.name);
+  console.log("Product ID:", item._id);
+  console.log("Current quantity:", currentQuantity);
+  console.log("Available stock:", availableStock);
+  console.log("=================================");
+
+  // Stock information missing
+  if (!Number.isFinite(availableStock)) {
+    toast.error("Stock information is unavailable.");
+    return;
+  }
+
+  // Completely out of stock
+  if (availableStock <= 0) {
+    toast.error("This item is currently out of stock.");
+    return;
+  }
+
+  // Already reached maximum stock
+  if (currentQuantity >= availableStock) {
+    toast.error(
+      `Only ${availableStock} item(s) available in stock.`
+    );
+    return;
+  }
+
+  // Increase quantity
+  updateCart(
+    cartItemId,
+    currentQuantity + 1
+  );
+};
+
+
+const decrementQuantity = (cartItemId) => {
+  const item = cart.find(
+    (cartItem) => cartItem.cartItemId === cartItemId
+  );
+
+  if (!item) return;
+
+  const currentQuantity = Number(item.quantity) || 1;
+
+  if (currentQuantity > 1) {
+    updateCart(
+      cartItemId,
+      currentQuantity - 1
+    );
+  }
+};
 
   // Helper to safely parse price to number
   const parsePrice = (price) => {
@@ -81,6 +142,12 @@ const CartPage = () => {
     // Fallback to item.image or default
     return item.image || "/images/default.jpg";
   };
+
+ const navigate = useNavigate();
+
+const handleCheckout = () => {
+  navigate("/checkout");
+};
 
   return (
     <div className="container mt-4">
@@ -332,9 +399,12 @@ const CartPage = () => {
                     <strong>R{totalPrice.toFixed(2)}</strong>
                   </li>
                 </ul>
-                <button className="btn btn-success w-100 mt-2">
-                  Proceed to Checkout
-                </button>
+                <button
+  className="btn btn-success w-100 mt-2"
+  onClick={handleCheckout}
+>
+  Proceed to Checkout
+</button>
                 
                 <Link to="/shop" className="btn btn-outline-secondary w-100 mt-2">
                   Continue Shopping
