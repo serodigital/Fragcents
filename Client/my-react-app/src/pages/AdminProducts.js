@@ -35,7 +35,7 @@ const AdminProducts = () => {
   // Use useCallback to memoize the fetch functions
   const fetchProducts = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/product");
+      const { data } = await axios.get("http://localhost:8000/api/products");
       if (data.products) {
         setProducts(data.products);
       } else {
@@ -96,15 +96,22 @@ const AdminProducts = () => {
   // Create Product
   const handleCreate = async (e) => {
     e.preventDefault();
+
+    if (!formData.category) {
+      toast.error("Please select a category before creating a product.");
+      return;
+    }
+
     try {
-      // Using FormData to handle file uploads
+      const token = auth?.token ? (auth.token.startsWith("Bearer ") ? auth.token : `Bearer ${auth.token}`) : "";
       const productFormData = new FormData();
-      
-      // Append all form fields to FormData
+
       Object.keys(formData).forEach((key) => {
         if (key === 'photo' && formData.photo) {
           productFormData.append('photo', formData.photo);
-        } else {
+        } else if (key === 'shipping') {
+          productFormData.append('shipping', String(formData.shipping));
+        } else if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
           productFormData.append(key, formData[key]);
         }
       });
@@ -114,7 +121,7 @@ const AdminProducts = () => {
         productFormData,
         {
           headers: {
-            Authorization: auth.token,
+            Authorization: token,
             "Content-Type": "multipart/form-data",
           },
         }

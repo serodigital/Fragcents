@@ -1,20 +1,23 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import CartPage from './pages/CartPage';
+import CartPage from "./pages/CartPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import DashboardPage from './pages/DashboardPage';
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import DashboardPage from "./pages/DashboardPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./routes/AdminRoute";
 import Navbar from "./components/Navbar";
-import { AuthProvider, useAuth } from './Context/Auth';
-import { CartProvider, useCart } from './Context/CartContext';  
+import { AuthProvider, useAuth } from "./Context/Auth";
+import { CartProvider, useCart } from "./Context/CartContext";
 import AdminCategories from "./pages/AdminCategories";
 import AdminProducts from "./pages/AdminProducts";
-import ShoppingPage from './pages/ShoppingPage';
-import ProductViewPage from './pages/ProductViewPage';
-import { Buffer } from 'buffer';
+import ShoppingPage from "./pages/ShoppingPage";
+import ProductViewPage from "./pages/ProductViewPage";
+
+import { Buffer } from "buffer";
 
 window.Buffer = Buffer;
 
@@ -26,6 +29,8 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/cart" element={<CartPage />} />
 

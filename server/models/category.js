@@ -1,19 +1,24 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const categorySchema = new mongoose.Schema({
-    name: {
-        type: String,
-        trim: true,
-        required: true,
-        maxLength: 32,
-        unique: true,
-    },
-    slug: {
-        type: String,
-        unique: true,
-        lowercase: true,
-    },
+  name: {
+    type: String,
+    trim: true,
+    required: true,
+    maxLength: 32,
+    unique: true,
+  },
+  description: {
+    type: String,
+    trim: true,
+    maxLength: 500,
+    default: "",
+  },
+  slug: {
+    type: String,
+    unique: true,
+    lowercase: true,
+  },
 });
 
-export default mongoose.model('Category', categorySchema);
-//creates a 'Collection' iin the db called (Category)
+export default mongoose.model("Category", categorySchema);
