@@ -1,113 +1,76 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useCart } from "../Context/CartContext";
-import { useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
 
 const CartPage = () => {
   const { cart, removeFromCart, updateCart, clearCart } = useCart();
-  const [savedForLater, setSavedForLater] = useState(new Set()); // Track saved items
+  const navigate = useNavigate();
+  const [savedForLater, setSavedForLater] = useState(new Set());
 
   const toggleSaveForLater = (cartItemId) => {
-    setSavedForLater(prev => {
+    setSavedForLater((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(cartItemId)) {
-        newSet.delete(cartItemId); // Remove from saved
+        newSet.delete(cartItemId);
       } else {
-        newSet.add(cartItemId); // Add to saved
+        newSet.add(cartItemId);
       }
       return newSet;
     });
   };
 
-  ///const incrementQuantity = (cartItemId) => {
-   /// const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
-   /// if (item) {
-    ///  updateCart(cartItemId, item.quantity + 1);
-    ///}
-  //};
+  const incrementQuantity = (cartItemId) => {
+    const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
 
-const incrementQuantity = (cartItemId) => {
-  const item = cart.find(
-    (cartItem) => cartItem.cartItemId === cartItemId
-  );
+    if (!item) {
+      console.error("Cart item not found:", cartItemId);
+      return;
+    }
 
-  if (!item) {
-    console.error("Cart item not found:", cartItemId);
-    return;
-  }
+    const currentQuantity = Number(item.quantity) || 1;
+    const availableStock = Number(item.stock);
 
-  const currentQuantity = Number(item.quantity) || 1;
-  const availableStock = Number(item.stock);
+    if (!Number.isFinite(availableStock)) {
+      toast.error("Stock information is unavailable.");
+      return;
+    }
 
-  console.log("=================================");
-  console.log("INCREMENT QUANTITY");
-  console.log("Product:", item.name);
-  console.log("Product ID:", item._id);
-  console.log("Current quantity:", currentQuantity);
-  console.log("Available stock:", availableStock);
-  console.log("=================================");
+    if (availableStock <= 0) {
+      toast.error("This item is currently out of stock.");
+      return;
+    }
 
-  // Stock information missing
-  if (!Number.isFinite(availableStock)) {
-    toast.error("Stock information is unavailable.");
-    return;
-  }
+    if (currentQuantity >= availableStock) {
+      toast.error(`Only ${availableStock} item(s) available in stock.`);
+      return;
+    }
 
-  // Completely out of stock
-  if (availableStock <= 0) {
-    toast.error("This item is currently out of stock.");
-    return;
-  }
+    updateCart(cartItemId, currentQuantity + 1);
+  };
 
-  // Already reached maximum stock
-  if (currentQuantity >= availableStock) {
-    toast.error(
-      `Only ${availableStock} item(s) available in stock.`
-    );
-    return;
-  }
+  const decrementQuantity = (cartItemId) => {
+    const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
 
-  // Increase quantity
-  updateCart(
-    cartItemId,
-    currentQuantity + 1
-  );
-};
+    if (!item) return;
 
+    const currentQuantity = Number(item.quantity) || 1;
 
-const decrementQuantity = (cartItemId) => {
-  const item = cart.find(
-    (cartItem) => cartItem.cartItemId === cartItemId
-  );
+    if (currentQuantity > 1) {
+      updateCart(cartItemId, currentQuantity - 1);
+    }
+  };
 
-  if (!item) return;
-
-  const currentQuantity = Number(item.quantity) || 1;
-
-  if (currentQuantity > 1) {
-    updateCart(
-      cartItemId,
-      currentQuantity - 1
-    );
-  }
-};
-
-  // Helper to safely parse price to number
   const parsePrice = (price) => {
     if (typeof price === "number") {
-      // If the number seems too large (like 15000 instead of 150), divide by 100
       if (price > 10000) {
         return price / 100;
       }
       return price;
     }
     if (typeof price === "string") {
-      // Remove currency symbols and non-numeric characters except decimal point
       const cleanPrice = price.replace(/[^\d.-]/g, "");
       const num = parseFloat(cleanPrice) || 0;
-      
-      // If the parsed number seems too large, divide by 100
       if (num > 10000) {
         return num / 100;
       }
@@ -116,38 +79,28 @@ const decrementQuantity = (cartItemId) => {
     return 0;
   };
 
-  // Calculate item total (price × quantity)
   const getItemTotal = (item) => {
     return parsePrice(item.price) * (item.quantity || 1);
   };
 
-  // Calculate subtotal (sum of all item totals)
   const subtotal = cart.reduce((total, item) => total + getItemTotal(item), 0);
-
-  // Calculate delivery fee (free for orders over R200, otherwise R50)
   const deliveryFee = subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
-
-  // Calculate final total
   const totalPrice = subtotal + deliveryFee;
+  const totalItems = cart.reduce(
+    (total, item) => total + (item.quantity || 1),
+    0,
+  );
 
-  // Get total quantity of items
-  const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
-
-  // Function to get the correct image URL
   const getImageUrl = (item) => {
-    // If item has _id, use the API endpoint
     if (item._id) {
       return `http://localhost:8000/api/product/image/${item._id}`;
     }
-    // Fallback to item.image or default
     return item.image || "/images/default.jpg";
   };
 
- const navigate = useNavigate();
-
-const handleCheckout = () => {
-  navigate("/checkout");
-};
+  const handleCheckout = () => {
+    navigate("/checkout");
+  };
 
   return (
     <div className="container mt-4">
@@ -155,7 +108,7 @@ const handleCheckout = () => {
         <h3 className="mb-0 me-2">🛒 Shopping Cart:</h3>
         <p className="mt-4 ms-2">
           ({totalItems}
-          <span className="ms-1">{totalItems === 1 ? 'item' : 'items'}</span>)
+          <span className="ms-1">{totalItems === 1 ? "item" : "items"}</span>)
         </p>
       </div>
 
@@ -179,13 +132,12 @@ const handleCheckout = () => {
             <div>
               {cart.map((item, index) => (
                 <div
-                  key={item.cartItemId} // Use unique cart item ID
+                  key={item.cartItemId}
                   className={`mb-3 p-3 border rounded ${
                     index === 0 ? "border-top" : ""
                   }`}
                 >
                   <div className="d-flex justify-content-between align-items-center">
-                    {/* Left: Image and Name */}
                     <div className="d-flex align-items-center">
                       <div className="me-3">
                         <img
@@ -196,19 +148,9 @@ const handleCheckout = () => {
                           style={{ objectFit: "cover" }}
                           className="rounded shadow-sm"
                           onError={(e) => {
-                            console.log(`Image failed for item ${item._id}:`, e.target.src);
                             e.target.src = "/images/default.jpg";
                           }}
-                          onLoad={() => {
-                            console.log(`Image loaded for ${item.name}:`, getImageUrl(item));
-                          }}
                         />
-                        {/* Show item ID for debugging */}
-                        {process.env.NODE_ENV === 'development' && (
-                          <small className="text-muted d-block text-center">
-                            {item._id?.slice(-4)}
-                          </small>
-                        )}
                       </div>
                       <div>
                         <h5 className="mb-1">{item.name}</h5>
@@ -225,7 +167,6 @@ const handleCheckout = () => {
                       </div>
                     </div>
 
-                    {/* Right: Quantity + Total Price */}
                     <div className="d-flex align-items-center">
                       <div
                         className="input-group input-group-sm me-3 border rounded"
@@ -262,18 +203,19 @@ const handleCheckout = () => {
                     </div>
                   </div>
 
-                  {/* Save and Remove buttons */}
                   <div className="d-flex align-items-center justify-content-between mt-3">
                     <div className="d-flex">
-                      <button 
+                      <button
                         className={`btn btn-sm me-2 ${
-                          savedForLater.has(item.cartItemId) 
-                            ? 'btn-danger text-white' 
-                            : 'btn-outline-primary'
+                          savedForLater.has(item.cartItemId)
+                            ? "btn-danger text-white"
+                            : "btn-outline-primary"
                         }`}
                         onClick={() => toggleSaveForLater(item.cartItemId)}
                       >
-                        {savedForLater.has(item.cartItemId) ? '❤️ Saved!' : '🤍 Save for Later'}
+                        {savedForLater.has(item.cartItemId)
+                          ? "❤️ Saved!"
+                          : "🤍 Save for Later"}
                       </button>
                       <button
                         className="btn btn-sm btn-outline-danger"
@@ -282,24 +224,24 @@ const handleCheckout = () => {
                         🗑️ Remove
                       </button>
                     </div>
-                    {/* Show save status */}
                     <div className="d-flex align-items-center">
                       {savedForLater.has(item.cartItemId) && (
                         <small className="text-danger me-2">
                           ⭐ Saved for later
                         </small>
                       )}
-                      <small className="text-muted">
-                        Item #{index + 1}
-                      </small>
+                      <small className="text-muted">Item #{index + 1}</small>
                     </div>
                   </div>
                 </div>
               ))}
-              
+
               {cart.length >= 3 && (
                 <div className="d-flex justify-content-between align-items-center mt-4">
-                  <button className="btn btn-outline-danger" onClick={clearCart}>
+                  <button
+                    className="btn btn-outline-danger"
+                    onClick={clearCart}
+                  >
                     🗑️ Clear All Items
                   </button>
                   <small className="text-muted">
@@ -308,15 +250,19 @@ const handleCheckout = () => {
                 </div>
               )}
 
-              {/* Saved for Later Section */}
               {savedForLater.size > 0 && (
                 <div className="mt-5">
-                  <h5 className="mb-3 text-danger">❤️ Saved for Later ({savedForLater.size} items)</h5>
+                  <h5 className="mb-3 text-danger">
+                    ❤️ Saved for Later ({savedForLater.size} items)
+                  </h5>
                   <div className="border-top pt-3">
                     {cart
-                      .filter(item => savedForLater.has(item.cartItemId))
+                      .filter((item) => savedForLater.has(item.cartItemId))
                       .map((item, index) => (
-                        <div key={item.cartItemId} className="mb-3 p-3 border rounded bg-light">
+                        <div
+                          key={item.cartItemId}
+                          className="mb-3 p-3 border rounded bg-light"
+                        >
                           <div className="d-flex justify-content-between align-items-center">
                             <div className="d-flex align-items-center">
                               <img
@@ -336,15 +282,21 @@ const handleCheckout = () => {
                                   R{parsePrice(item.price).toFixed(2)} each
                                 </small>
                                 <div>
-                                  <span className="badge bg-danger small">Saved</span>
+                                  <span className="badge bg-danger small">
+                                    Saved
+                                  </span>
                                 </div>
                               </div>
                             </div>
                             <div className="d-flex align-items-center">
-                              <small className="text-muted me-3">Qty: {item.quantity}</small>
+                              <small className="text-muted me-3">
+                                Qty: {item.quantity}
+                              </small>
                               <button
                                 className="btn btn-sm btn-success me-2"
-                                onClick={() => toggleSaveForLater(item.cartItemId)}
+                                onClick={() =>
+                                  toggleSaveForLater(item.cartItemId)
+                                }
                               >
                                 ⬅️ Move to Cart
                               </button>
@@ -365,7 +317,6 @@ const handleCheckout = () => {
           )}
         </div>
 
-        {/* Payment Summary */}
         {cart.length > 0 && (
           <div className="col-md-4 mb-3">
             <div
@@ -376,7 +327,10 @@ const handleCheckout = () => {
                 <h4 className="card-title mt-2">💳 Payment Summary</h4>
                 <ul className="list-unstyled">
                   <li className="d-flex justify-content-between pt-3">
-                    <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
+                    <span>
+                      Subtotal ({totalItems}{" "}
+                      {totalItems === 1 ? "item" : "items"})
+                    </span>
                     <span>R{subtotal.toFixed(2)}</span>
                   </li>
                   <li className="d-flex justify-content-between pt-3">
@@ -387,7 +341,9 @@ const handleCheckout = () => {
                     <span>
                       Delivery
                       {subtotal >= 200 && (
-                        <small className="text-success d-block">Free delivery on orders over R200!</small>
+                        <small className="text-success d-block">
+                          Free delivery on orders over R200!
+                        </small>
                       )}
                     </span>
                     <strong>R{deliveryFee.toFixed(2)}</strong>
@@ -400,13 +356,16 @@ const handleCheckout = () => {
                   </li>
                 </ul>
                 <button
-  className="btn btn-success w-100 mt-2"
-  onClick={handleCheckout}
->
-  Proceed to Checkout
-</button>
-                
-                <Link to="/shop" className="btn btn-outline-secondary w-100 mt-2">
+                  className="btn btn-success w-100 mt-2"
+                  onClick={handleCheckout}
+                >
+                  Proceed to Checkout
+                </button>
+
+                <Link
+                  to="/shop"
+                  className="btn btn-outline-secondary w-100 mt-2"
+                >
                   Continue Shopping
                 </Link>
               </div>
