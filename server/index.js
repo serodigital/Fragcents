@@ -6,6 +6,8 @@ import nodemailer from "nodemailer"; // Email functionality
 import authRoutes from "./routes/auth.js";
 import categoryRoutes from "./routes/category.js";
 import productRoutes from "./routes/product.js";
+import orderRoutes from "./routes/order.js";
+
 
 const app = express();
 
@@ -14,7 +16,8 @@ const app = express();
 // ===============================
 mongoose
   .connect(
-    "mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/fragcents?retryWrites=true&w=majority"
+   "mongodb+srv://db:7Yhnd81U5jIlI1Tg@fragcents.isrmk.mongodb.net/fragcents?retryWrites=true&w=majority"
+   //"mongodb://localhost:27017/fragcen"
   )
   .then(() => console.log("✅ DB connected"))
   .catch((err) => console.log("❌ DB error =>", err));
@@ -68,6 +71,7 @@ app.post("/api/test-email", async (req, res) => {
 app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
+app.use("/api/order", orderRoutes);
 
 // ===============================
 // 📌 Server Start
