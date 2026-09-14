@@ -20,9 +20,17 @@ const userSchema = new Schema({
         max: 64,
     },
     address: {
-        type: String,
-        trim: true,
-    },
+  street: { type: String, trim: true, default: "" },
+  city: { type: String, trim: true, default: "" },
+  province: { type: String, trim: true, default: "" },
+  postalCode: { type: String, trim: true, default: "" },
+  country: { type: String, trim: true, default: "" }
+},
+  phone: {
+    type: String,
+    trim: true,
+   
+  },
     role:{
         type: Number,
         default: 0,
