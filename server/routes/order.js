@@ -3,6 +3,13 @@ import mongoose from "mongoose";
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 import { sendEmail } from "../utils/email.js";
+import { requireSignIn, isAdmin, isManager } from "../middlewares/auth.js";
+import {
+  getMyOrders,
+  getAllOrders,
+  getFinanceSummary,
+  updateOrderStatus,
+} from "../controllers/order.js";
 
 const router = express.Router();
 
@@ -389,5 +396,10 @@ Fragcents
     });
   }
 });
+
+router.get("/order/mine", requireSignIn, getMyOrders);
+router.get("/orders", requireSignIn, isAdmin, getAllOrders);
+router.get("/finance-summary", requireSignIn, isManager, getFinanceSummary);
+router.put("/order/:id/status", requireSignIn, isAdmin, updateOrderStatus);
 
 export default router;

@@ -3,13 +3,19 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "../Context/Auth";
 
-const STATUS_OPTIONS = ["pending", "paid", "shipped", "delivered", "cancelled"];
+const STATUS_OPTIONS = [
+  "pending",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+];
 
 const statusBadgeClass = (status) => {
   switch (status) {
     case "pending":
       return "bg-secondary";
-    case "paid":
+    case "processing":
       return "bg-info";
     case "shipped":
       return "bg-primary";
@@ -20,6 +26,20 @@ const statusBadgeClass = (status) => {
     default:
       return "bg-secondary";
   }
+};
+
+const formatAddress = (address) => {
+  if (!address) return null;
+  if (typeof address === "string") return address;
+  return [
+    address.address,
+    address.city,
+    address.province,
+    address.postalCode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 };
 
 const AdminOrders = () => {
@@ -50,7 +70,7 @@ const AdminOrders = () => {
     try {
       const { data } = await axios.put(
         `http://localhost:8000/api/order/${orderId}/status`,
-        { status: newStatus },
+        { orderStatus: newStatus },
         { headers: { Authorization: auth.token } },
       );
       if (data.success) {
@@ -77,7 +97,7 @@ const AdminOrders = () => {
     });
 
   const displayedOrders = statusFilter
-    ? orders.filter((o) => o.status === statusFilter)
+    ? orders.filter((o) => o.orderStatus === statusFilter)
     : orders;
 
   return (
@@ -106,23 +126,27 @@ const AdminOrders = () => {
             <div key={order._id} className="border rounded p-3 mb-3">
               <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
-                  <strong>{order.buyer?.name || "Unknown buyer"}</strong>
+                  <strong>
+                    {order.customer?.name || order.user?.name || "Guest"}
+                  </strong>
                   <div className="text-muted" style={{ fontSize: "13px" }}>
-                    {order.buyer?.email}
+                    {order.customer?.email || order.user?.email}
                   </div>
                   <div className="text-muted" style={{ fontSize: "12px" }}>
                     Placed: {formatDate(order.createdAt)}
                   </div>
                 </div>
-                <span className={`badge ${statusBadgeClass(order.status)}`}>
-                  {order.status}
+                <span
+                  className={`badge ${statusBadgeClass(order.orderStatus)}`}
+                >
+                  {order.orderStatus}
                 </span>
               </div>
 
               <hr className="my-2" />
 
               <ul className="list-unstyled mb-2" style={{ fontSize: "14px" }}>
-                {order.items.map((item, idx) => (
+                {(order.products || []).map((item, idx) => (
                   <li key={idx}>
                     {item.name} &times; {item.quantity} —{" "}
                     {formatPrice(item.price * item.quantity)}
@@ -132,7 +156,7 @@ const AdminOrders = () => {
 
               {order.deliveryAddress && (
                 <p className="mb-1 text-muted" style={{ fontSize: "13px" }}>
-                  📍 {order.deliveryAddress}
+                  📍 {formatAddress(order.deliveryAddress)}
                 </p>
               )}
 
@@ -153,7 +177,7 @@ const AdminOrders = () => {
                 <select
                   className="form-select form-select-sm"
                   style={{ width: "160px" }}
-                  value={order.status}
+                  value={order.orderStatus}
                   onChange={(e) =>
                     handleStatusChange(order._id, e.target.value)
                   }

@@ -16,6 +16,8 @@ import AdminCategories from "./pages/AdminCategories";
 import AdminProducts from "./pages/AdminProducts";
 import ShoppingPage from "./pages/ShoppingPage";
 import ProductViewPage from "./pages/ProductViewPage";
+import Checkout from "./pages/Checkout";
+import SecureCheckout from "./pages/SecureCheckout";
 
 import { Buffer } from "buffer";
 
@@ -37,6 +39,8 @@ const App = () => {
         {/* Shopping and Product Routes */}
         <Route path="/shop" element={<ShoppingPageWrapper />} />
         <Route path="/product-view/:id" element={<ProductViewPageWrapper />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/SecureCheckout" element={<SecureCheckout />} />
 
         {/* Admin Routes */}
         <Route

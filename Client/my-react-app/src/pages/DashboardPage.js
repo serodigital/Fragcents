@@ -5,27 +5,32 @@ import { useAuth } from "../Context/Auth";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 
+const formatAddress = (address) => {
+  if (!address) return null;
+  if (typeof address === "string") return address;
+  return [
+    address.street || address.address,
+    address.city,
+    address.province,
+    address.postalCode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+};
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { auth, logout, authLoading } = useAuth();
 
-  // Email configuration
-  const ADMIN_EMAIL = "sphakhumalo610@gmail.com";
-
-  // State for users management
-  const [users, setUsers] = useState([]);
+  // State for the logged-in user's own profile form
   const [formData, setFormData] = useState({
     email: "",
     address: "",
     password: "",
   });
-  const [editingUser, setEditingUser] = useState(null);
-  const [loadingUsers, setLoadingUsers] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [originalPassword, setOriginalPassword] = useState(""); // Store original password
-  const [actualPassword, setActualPassword] = useState(""); // Store the real password for email sending
-  const [sendingEmail, setSendingEmail] = useState(false); // State for email sending
 
   // State for wishlist
   const [savedItems, setSavedItems] = useState([]);
@@ -33,7 +38,7 @@ const DashboardPage = () => {
   const [sortBy, setSortBy] = useState("name");
 
   // State for tabs
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // State for my orders
   const [myOrders, setMyOrders] = useState([]);
@@ -43,7 +48,6 @@ const DashboardPage = () => {
   const fetchSavedItems = useCallback(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("savedItems") || "[]");
-      console.log("📦 Fetched saved items:", saved);
       setSavedItems(saved);
     } catch (error) {
       console.error("Error parsing saved items:", error);
@@ -55,15 +59,11 @@ const DashboardPage = () => {
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === "savedItems") {
-        console.log("🔄 Storage change detected for savedItems");
         fetchSavedItems();
       }
     };
 
-    // Listen for storage events
     window.addEventListener("storage", handleStorageChange);
-
-    // Also check for changes periodically (for same-tab updates)
     const intervalId = setInterval(fetchSavedItems, 2000);
 
     return () => {
@@ -74,19 +74,13 @@ const DashboardPage = () => {
 
   // Clear user personal data on logout
   const clearUserData = useCallback(() => {
-    console.log("🗑️ Clearing user data on logout...");
     setSavedItems([]);
     localStorage.removeItem("savedItems");
     localStorage.removeItem("cart");
-    setUsers([]);
     setFormData({ email: "", address: "", password: "" });
-    setEditingUser(null);
     setSearchTerm("");
     setSortBy("name");
     setShowPassword(false);
-    setOriginalPassword("");
-    setActualPassword("");
-    console.log("✅ User data cleared successfully");
   }, []);
 
   // Handle explicit logout
@@ -118,55 +112,17 @@ const DashboardPage = () => {
     }
   }, [auth.token]);
 
-  // Fetch users from backend
-  const fetchUsers = useCallback(async () => {
-    setLoadingUsers(true);
-    try {
-      const response = await axios.get("http://localhost:8000/api/user", {
-        headers: { Authorization: `Bearer ${auth.token}` },
-      });
-
-      console.log("Fetched users: ", response.data);
-
-      if (response.data && response.data.users) {
-        setUsers(response.data.users);
-      } else {
-        toast.error("Failed to fetch users.");
-      }
-    } catch (error) {
-      if (error.response?.status === 401) {
-        toast.error("Session expired. Please log in again.");
-        clearUserData();
-        logout();
-        navigate("/login");
-      } else {
-        toast.error("Error fetching users.");
-      }
-    } finally {
-      setLoadingUsers(false);
-    }
-  }, [auth.token, logout, navigate, clearUserData]);
-
   // Initial setup and logout handling
   useEffect(() => {
     if (authLoading) return;
 
     if (!auth.token) {
-      console.log("🚪 No auth token detected - clearing data and redirecting");
       clearUserData();
       navigate("/login");
     } else {
-      fetchUsers();
       fetchSavedItems();
     }
-  }, [
-    auth.token,
-    authLoading,
-    navigate,
-    fetchUsers,
-    fetchSavedItems,
-    clearUserData,
-  ]);
+  }, [auth.token, authLoading, navigate, fetchSavedItems, clearUserData]);
 
   // Monitor auth state changes for logout detection
   useEffect(() => {
@@ -174,7 +130,6 @@ const DashboardPage = () => {
     const currentAuthState = auth.token ? "logged-in" : "logged-out";
 
     if (prevAuthState === "logged-in" && currentAuthState === "logged-out") {
-      console.log("🔄 Auth state changed: User logged out - clearing wishlist");
       clearUserData();
       toast.success("Wishlist cleared on logout");
     }
@@ -182,245 +137,52 @@ const DashboardPage = () => {
     sessionStorage.setItem("prevAuthState", currentAuthState);
   }, [auth.token, clearUserData]);
 
-  // Handle editing user - fetch real password from backend
+  // Populate the form with the current user's own info
   useEffect(() => {
-    if (editingUser) {
-      console.log("Editing user: ", editingUser);
+    setFormData({
+      email: auth.user?.email || "",
+      address: formatAddress(auth.user?.address) || "",
+      password: "",
+    });
+  }, [auth.user]);
 
-      // Fetch the actual password from backend for the selected user
-      const fetchUserPassword = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:8000/api/user/${editingUser._id}/password`,
-            {
-              headers: { Authorization: `Bearer ${auth.token}` },
-            },
-          );
-
-          if (response.data.success && response.data.password) {
-            setActualPassword(response.data.password);
-            setOriginalPassword(response.data.password);
-          }
-        } catch (error) {
-          console.error("Error fetching user password:", error);
-          // Fallback - use a placeholder
-          setActualPassword("userpassword123");
-          setOriginalPassword("userpassword123");
-        }
-      };
-
-      fetchUserPassword();
-
-      setFormData({
-        email: editingUser.email,
-        address: editingUser.address || "",
-        password: "••••••••••", // Show as dots initially
-      });
-    } else {
-      // When not editing, try to get current user's actual password
-      const getCurrentUserPassword = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:8000/api/user/${auth.user._id}/password`,
-            {
-              headers: { Authorization: `Bearer ${auth.token}` },
-            },
-          );
-
-          if (response.data.success && response.data.password) {
-            setActualPassword(response.data.password);
-            setOriginalPassword(response.data.password);
-          }
-        } catch (error) {
-          console.error("Error fetching current user password:", error);
-          // Fallback to stored auth password or placeholder
-          const fallbackPassword = auth.user?.password || "userpassword123";
-          setActualPassword(fallbackPassword);
-          setOriginalPassword(fallbackPassword);
-        }
-      };
-
-      getCurrentUserPassword();
-
-      setFormData((prev) => ({
-        email: auth.user?.email || "",
-        address: auth.user?.address || "",
-        password: "••••••••••", // Show as dots
-      }));
-    }
-  }, [editingUser, auth.user, auth.token]);
-
-  // Form handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Special handler for password changes
-  const handlePasswordChange = (e) => {
-    const value = e.target.value;
-    setFormData((prev) => ({ ...prev, password: value }));
-
-    // If user is typing a new password, store it as the actual password
-    if (value && value !== "••••••••••") {
-      setActualPassword(value);
-    }
-  };
-
-  // Handle sending password to email - now sends the REAL password
-  const handleSendPasswordToEmail = async () => {
-    const emailToUse = editingUser?.email || auth.user?.email;
-    const passwordToSend = actualPassword; // Use the real password
-
-    if (!emailToUse) {
-      toast.error("No email address available");
-      return;
-    }
-
-    if (!passwordToSend) {
-      toast.error("No password available to send");
-      return;
-    }
-
-    setSendingEmail(true);
-
-    try {
-      // Send the actual password to the backend
-      const response = await axios.post(
-        "http://localhost:8000/api/send-password-email",
-        {
-          email: emailToUse,
-          password: passwordToSend, // Send the real password
-          userId: editingUser?._id || auth.user?._id,
-          fromEmail: ADMIN_EMAIL, // Include the admin email for sending
-          adminEmail: ADMIN_EMAIL,
-        },
-        {
-          headers: { Authorization: `Bearer ${auth.token}` },
-        },
-      );
-
-      if (response.data.success) {
-        toast.success(`Password sent from ${ADMIN_EMAIL} to ${emailToUse}!`, {
-          icon: "📧",
-          duration: 4000,
-        });
-      } else {
-        toast.error("Failed to send password email");
-      }
-    } catch (error) {
-      console.error("Error sending password email:", error);
-      // For demo purposes, show what password would be sent
-      toast.success(
-        `Password "${passwordToSend}" sent from ${ADMIN_EMAIL} to ${emailToUse}!`,
-        {
-          icon: "📧",
-          duration: 4000,
-        },
-      );
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Always show "saved profile" message regardless of actual save operation
-    toast.success("Profile saved successfully!", {
-      duration: 3000,
-      icon: "💾",
-    });
-
-    const url = editingUser
-      ? `http://localhost:8000/api/user/${editingUser._id}`
-      : "http://localhost:8000/api/user";
-    const method = editingUser ? "PUT" : "POST";
-
-    // Prepare data for database submission
     const submitData = {
       email: formData.email,
-      address: formData.address, // Always include address for database storage
+      address: formData.address,
     };
 
-    // Check if password was actually changed (not just the original dots)
-    const isPasswordChanged =
-      formData.password &&
-      formData.password.trim() !== "" &&
-      formData.password !== "••••••••••";
-
-    // Include password if it's provided and changed
-    if (isPasswordChanged || !editingUser) {
-      submitData.password = actualPassword; // Use the actual password for database storage
+    if (formData.password && formData.password.trim() !== "") {
+      submitData.password = formData.password;
     }
 
-    console.log("📤 Submitting data to database:", {
-      ...submitData,
-      password: submitData.password ? "[PROTECTED]" : "Not included",
-    });
-
     try {
-      const response = await axios({
-        method,
-        url,
-        data: submitData,
-        headers: { Authorization: `Bearer ${auth.token}` },
-      });
+      const response = await axios.put(
+        `http://localhost:8000/api/user/${auth.user._id}`,
+        submitData,
+        { headers: { Authorization: `Bearer ${auth.token}` } },
+      );
 
       if (response.data.success) {
-        const isCurrentUser = editingUser?._id === auth.user?._id;
-
-        // Show additional confirmation for address saving
-        if (!editingUser && formData.address) {
-          setTimeout(() => {
-            toast.success(
-              `📍 Address "${formData.address}" saved to database!`,
-              {
-                duration: 3000,
-                icon: "🏠",
-              },
-            );
-          }, 1000);
-        }
-
-        fetchUsers();
-        setFormData({ email: "", address: "", password: "" });
-        setEditingUser(null);
+        toast.success("Profile saved successfully!", {
+          duration: 3000,
+          icon: "💾",
+        });
+        setFormData((prev) => ({ ...prev, password: "" }));
         setShowPassword(false);
-        setOriginalPassword("");
-        setActualPassword("");
       } else {
-        // Even if the actual save fails, we've already shown success message
-        console.log("Actual save failed, but user sees success message");
+        toast.error(response.data.message || "Failed to save profile.");
       }
     } catch (error) {
-      console.error("Error:", error);
-      // Don't show error to user since we want to always show success
-      console.log("Save operation failed, but user sees success message");
-    }
-  };
-
-  const handleEdit = (user) => {
-    console.log("Selected user for editing: ", user);
-    setEditingUser(user);
-  };
-
-  const handleDelete = async (userId) => {
-    try {
-      const response = await axios.delete(
-        `http://localhost:8000/api/user/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${auth.token}` },
-        },
-      );
-      if (response.data.success) {
-        toast.success(response.data.message);
-        fetchUsers();
-      } else {
-        toast.error(response.data.error);
-      }
-    } catch {
-      toast.error("Failed to delete user.");
+      console.error("Error saving profile:", error);
+      toast.error("Something went wrong while saving your profile.");
     }
   };
 
@@ -435,7 +197,6 @@ const DashboardPage = () => {
   const parsePrice = (price) => {
     if (typeof price === "number") return price > 10000 ? price / 100 : price;
     if (typeof price === "string") {
-      // Handle formatted currency strings like "R 123.45"
       const num = parseFloat(price.replace(/[^\d.-]/g, "")) || 0;
       return num > 10000 ? num / 100 : num;
     }
@@ -465,7 +226,6 @@ const DashboardPage = () => {
         },
       );
     } else {
-      // Use originalPrice if available, otherwise parse the formatted price
       const unitPrice = item.originalPrice || parsePrice(item.price);
       const { cartItemId, ...itemWithoutId } = item;
       const newItem = {
@@ -486,7 +246,6 @@ const DashboardPage = () => {
     }
   };
 
-  // Filter and sort saved items
   const filteredAndSortedItems = savedItems
     .filter(
       (item) =>
@@ -498,11 +257,11 @@ const DashboardPage = () => {
       switch (sortBy) {
         case "name":
           return a.name.localeCompare(b.name);
-        case "price":
-          // Use originalPrice for accurate sorting
+        case "price": {
           const priceA = a.originalPrice || parsePrice(a.price);
           const priceB = b.originalPrice || parsePrice(b.price);
           return priceA - priceB;
+        }
         case "category":
           return (a.category || "").localeCompare(b.category || "");
         case "dateAdded":
@@ -528,10 +287,10 @@ const DashboardPage = () => {
       <ul className="nav nav-tabs mb-4">
         <li className="nav-item">
           <button
-            className={`nav-link ${activeTab === "users" ? "active" : ""}`}
-            onClick={() => setActiveTab("users")}
+            className={`nav-link ${activeTab === "profile" ? "active" : ""}`}
+            onClick={() => setActiveTab("profile")}
           >
-            👤 User Management
+            👤 My Profile
           </button>
         </li>
         <li className="nav-item">
@@ -539,7 +298,6 @@ const DashboardPage = () => {
             className={`nav-link ${activeTab === "saved" ? "active" : ""}`}
             onClick={() => {
               setActiveTab("saved");
-              // Refresh saved items when tab is clicked
               fetchSavedItems();
             }}
           >
@@ -562,295 +320,84 @@ const DashboardPage = () => {
         </li>
       </ul>
 
-      {/* User Management Tab */}
-      {activeTab === "users" && (
-        <div>
-          {/* User Form Section */}
-          <div className="card mb-4">
-            <div className="card-body">
-              <h5 className="mb-3">
-                {editingUser ? "Edit User Information" : "Save User Profile"}
-              </h5>
-              <form onSubmit={handleSubmit} className="row g-3">
-                <div className="col-md-4">
-                  <label htmlFor="email" className="form-label">
-                    Email Address {editingUser ? "(Editable)" : ""}
-                  </label>
+      {/* My Profile Tab */}
+      {activeTab === "profile" && (
+        <div className="card mb-4">
+          <div className="card-body">
+            <h5 className="mb-3">My Profile</h5>
+            <form onSubmit={handleSubmit} className="row g-3">
+              <div className="col-md-4">
+                <label htmlFor="email" className="form-label">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="col-md-4">
+                <label htmlFor="address" className="form-label">
+                  Address{" "}
+                  <span className="text-success">
+                    (Will be saved to database)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="form-control"
+                  placeholder="Enter your complete address"
+                />
+              </div>
+              <div className="col-md-4">
+                <label htmlFor="password" className="form-label">
+                  New Password (optional)
+                </label>
+                <div className="input-group">
                   <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={
-                      editingUser ? formData.email : auth.user?.email || ""
-                    }
-                    onChange={editingUser ? handleChange : undefined}
-                    readOnly={!editingUser}
-                    className={`form-control ${!editingUser ? "bg-light" : ""}`}
-                    required={editingUser}
-                  />
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="address" className="form-label">
-                    Address{" "}
-                    <span className="text-success">
-                      (Will be saved to database)
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={formData.address}
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
                     onChange={handleChange}
                     className="form-control"
-                    placeholder="Enter your complete address"
-                    required
+                    placeholder="Leave blank to keep current password"
+                    autoComplete="new-password"
                   />
-                  <div className="form-text">
-                    <i className="fas fa-database"></i> Your address will be
-                    securely stored in our database
-                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? "👁️‍🗨️" : "👁️"}
+                  </button>
                 </div>
-                <div className="col-md-4">
-                  <label htmlFor="password" className="form-label">
-                    {editingUser ? "Password (click to change)" : "Password"}
-                  </label>
-                  <div className="input-group">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handlePasswordChange}
-                      className="form-control"
-                      placeholder={
-                        editingUser
-                          ? "Click to change password"
-                          : "Enter password"
-                      }
-                      required={!editingUser}
-                      autoComplete={
-                        editingUser ? "new-password" : "current-password"
-                      }
-                      onFocus={(e) => {
-                        // Clear dots when user starts typing
-                        if (e.target.value === "••••••••••") {
-                          setFormData((prev) => ({ ...prev, password: "" }));
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={() => setShowPassword(!showPassword)}
-                      title={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? "👁️‍🗨️" : "👁️"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-info"
-                      onClick={handleSendPasswordToEmail}
-                      disabled={
-                        sendingEmail ||
-                        (!editingUser?.email && !auth.user?.email)
-                      }
-                      title="Send actual password to email"
-                    >
-                      {sendingEmail ? (
-                        <>📤 Sending...</>
-                      ) : (
-                        <>📧 Send Real Password</>
-                      )}
-                    </button>
-                  </div>
-                  {!showPassword &&
-                    formData.password &&
-                    formData.password !== "••••••••••" && (
-                      <div className="mt-1">
-                        <small className="text-muted">
-                          Password: {formData.password.replace(/./g, "•")} (
-                          {formData.password.length} characters)
-                        </small>
-                      </div>
-                    )}
-                  {editingUser && (
-                    <div className="form-text">
-                      {formData.password === "••••••••••"
-                        ? "Current password shown as dots - click to change"
-                        : "Leave empty or click outside to keep current password"}
-                    </div>
-                  )}
-                  {!editingUser &&
-                    formData.password &&
-                    formData.password !== "••••••••••" && (
-                      <div className="form-text">
-                        <small
-                          className={`${formData.password.length >= 6 ? "text-success" : "text-warning"}`}
-                        >
-                          Password strength:{" "}
-                          {formData.password.length >= 8
-                            ? "Strong"
-                            : formData.password.length >= 6
-                              ? "Medium"
-                              : "Weak"}
-                        </small>
-                      </div>
-                    )}
-                  <div className="form-text">
-                    <small className="text-info">
-                      📧 Click "Send Real Password" to receive the actual
-                      registration password via email from {ADMIN_EMAIL}
-                    </small>
-                  </div>
-                  {actualPassword && (
-                    <div className="form-text">
-                      <small className="text-success">
-                        ✅ Real password ready to send:{" "}
-                        {actualPassword.replace(/./g, "•")} (
-                        {actualPassword.length} chars)
-                      </small>
-                    </div>
-                  )}
+                <div className="form-text">
+                  Leave empty to keep your current password unchanged.
                 </div>
-                <div className="col-12">
-                  <div className="d-flex gap-2">
-                    <button type="submit" className="btn btn-success">
-                      {editingUser ? "💾 Update User" : "💾 Save Profile"}
-                    </button>
-                    {editingUser && (
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={() => {
-                          setEditingUser(null);
-                          setFormData({ email: "", address: "", password: "" });
-                          setShowPassword(false);
-                          setOriginalPassword("");
-                          setActualPassword("");
-                        }}
-                      >
-                        ❌ Cancel
-                      </button>
-                    )}
-                  </div>
-                  {!editingUser && (
-                    <div className="mt-2">
-                      <small className="text-muted">
-                        <i className="fas fa-info-circle"></i> Clicking "Save
-                        Profile" will store your address and password in the
-                        database
-                      </small>
-                    </div>
-                  )}
-                </div>
-              </form>
-            </div>
-          </div>
-
-          {/* Users Table Section */}
-          {users.length === 0 ? (
-            <div className="text-center py-5">
-              <h4>No registered users yet</h4>
-              <p className="text-muted">
-                Saved user profiles will appear here.
-              </p>
-              <button
-                className="btn btn-primary"
-                onClick={fetchUsers}
-                disabled={loadingUsers}
-              >
-                {loadingUsers ? "Loading..." : "Refresh Users"}
-              </button>
-            </div>
-          ) : (
-            <div className="card">
-              <div className="card-body p-0">
-                <table className="table mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Profile</th>
-                      <th>Details</th>
-                      <th>Address</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user, index) => (
-                      <tr key={user._id}>
-                        <td>
-                          <div className="d-flex align-items-center">
-                            <div
-                              className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                              style={{
-                                width: "60px",
-                                height: "60px",
-                                fontSize: "24px",
-                              }}
-                            >
-                              {user.name
-                                ? user.name.charAt(0).toUpperCase()
-                                : user.email.charAt(0).toUpperCase()}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <strong>{user.name || "N/A"}</strong>
-                          {auth?.user?._id === user._id && (
-                            <span className="badge bg-primary ms-2">You</span>
-                          )}
-                          <br />
-                          <small className="text-muted">{user.email}</small>
-                          <br />
-                          <small className="text-info">
-                            👤 ID: {user._id.slice(-6)}
-                          </small>
-                        </td>
-                        <td>
-                          <div className="d-flex flex-column">
-                            <span className="mb-1">
-                              📍 {user.address || "No address saved"}
-                            </span>
-                            {user.address ? (
-                              <small className="text-success">
-                                ✅ Saved in database
-                              </small>
-                            ) : (
-                              <small className="text-warning">
-                                ⚠️ Address not provided
-                              </small>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => handleEdit(user)}
-                            className="btn btn-success btn-sm me-2"
-                            disabled={editingUser?._id === user._id}
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user._id)}
-                            className="btn btn-outline-danger btn-sm"
-                          >
-                            🗑️ Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
-            </div>
-          )}
+              <div className="col-12">
+                <button type="submit" className="btn btn-success">
+                  💾 Save Profile
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
       {/* Saved Items Tab */}
       {activeTab === "saved" && (
         <div>
-          {/* Refresh button */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4>Your Saved Items</h4>
             <button
@@ -957,7 +504,9 @@ const DashboardPage = () => {
                             <strong>{item.name}</strong>
                             <br />
                             <small className="text-muted">
-                              {item.category || "Uncategorized"}
+                              {typeof item.category === "string"
+                                ? item.category
+                                : item.category?.name || "Uncategorized"}
                             </small>
                             {item.dateAdded && (
                               <>
@@ -1022,7 +571,6 @@ const DashboardPage = () => {
                 </table>
               </div>
 
-              {/* Summary footer */}
               <div className="card-footer bg-light">
                 <div className="row text-center">
                   <div className="col-md-3">
@@ -1073,6 +621,7 @@ const DashboardPage = () => {
           )}
         </div>
       )}
+
       {/* My Orders Tab */}
       {activeTab === "orders" && (
         <div>
@@ -1120,7 +669,7 @@ const DashboardPage = () => {
                           </small>
                         </td>
                         <td>
-                          {order.items.map((item, i) => (
+                          {(order.products || []).map((item, i) => (
                             <div key={i}>
                               <small>
                                 {item.quantity}x {item.name}
@@ -1134,18 +683,18 @@ const DashboardPage = () => {
                         <td>
                           <span
                             className={`badge text-capitalize ${
-                              order.status === "delivered"
+                              order.orderStatus === "delivered"
                                 ? "bg-success"
-                                : order.status === "shipped"
+                                : order.orderStatus === "shipped"
                                   ? "bg-info"
-                                  : order.status === "paid"
+                                  : order.orderStatus === "processing"
                                     ? "bg-primary"
-                                    : order.status === "cancelled"
+                                    : order.orderStatus === "cancelled"
                                       ? "bg-danger"
                                       : "bg-secondary"
                             }`}
                           >
-                            {order.status}
+                            {order.orderStatus}
                           </span>
                         </td>
                         <td>
@@ -1165,12 +714,7 @@ const DashboardPage = () => {
 
       {/* Logout button */}
       <div className="mt-5 pt-4 border-top">
-        <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <small className="text-muted">
-              📧 Email notifications sent from: <strong>{ADMIN_EMAIL}</strong>
-            </small>
-          </div>
+        <div className="d-flex justify-content-end">
           <button className="btn btn-outline-danger" onClick={handleLogout}>
             🚪 Logout & Clear Data
           </button>

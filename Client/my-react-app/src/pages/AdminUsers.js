@@ -9,6 +9,22 @@ const ROLE_LABELS = {
   2: "Manager",
 };
 
+const formatAddress = (address) => {
+  if (!address) return "—";
+  if (typeof address === "string") return address;
+  return (
+    [
+      address.street || address.address,
+      address.city,
+      address.province,
+      address.postalCode,
+      address.country,
+    ]
+      .filter(Boolean)
+      .join(", ") || "—"
+  );
+};
+
 const AdminUsers = () => {
   const { auth } = useAuth();
   const [users, setUsers] = useState([]);
@@ -48,7 +64,7 @@ const AdminUsers = () => {
   }, [fetchUsers, fetchOrders]);
 
   const getOrderCount = (userId) => {
-    return orders.filter((o) => o.buyer?._id === userId).length;
+    return orders.filter((o) => o.user?._id === userId).length;
   };
 
   const handleRoleChange = async (userId, newRole) => {
@@ -109,7 +125,7 @@ const AdminUsers = () => {
                   <tr key={user._id}>
                     <td>{user.name}</td>
                     <td>{user.email}</td>
-                    <td>{user.address || "—"}</td>
+                    <td>{formatAddress(user.address)}</td>
                     <td>{getOrderCount(user._id)}</td>
                     <td>
                       <select

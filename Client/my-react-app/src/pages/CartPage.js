@@ -160,7 +160,9 @@ const CartPage = () => {
                         {item.category && (
                           <div>
                             <span className="badge bg-secondary small">
-                              {item.category}
+                              {typeof item.category === "string"
+                                ? item.category
+                                : item.category.name}
                             </span>
                           </div>
                         )}

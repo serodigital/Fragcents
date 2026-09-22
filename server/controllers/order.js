@@ -1,45 +1,10 @@
 import orderModel from "../models/order.js";
 
-// Create a new order (checkout)
-export const createOrder = async (req, res) => {
-  try {
-    const { items, totalAmount, deliveryFee, deliveryAddress } = req.body;
-
-    if (!items || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Order must contain at least one item",
-      });
-    }
-
-    const order = await new orderModel({
-      buyer: req.user._id,
-      items,
-      totalAmount,
-      deliveryFee: deliveryFee || 0,
-      deliveryAddress,
-    }).save();
-
-    res.status(201).json({
-      success: true,
-      message: "Order placed successfully",
-      order,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Error placing order",
-      error,
-    });
-  }
-};
-
 // Get orders for the logged-in user
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await orderModel
-      .find({ buyer: req.user._id })
+      .find({ user: req.user._id })
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -56,12 +21,12 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-// Get ALL orders (manager/finances use)
+// Get ALL orders (admin use)
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await orderModel
       .find({})
-      .populate("buyer", "name email")
+      .populate("user", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -78,7 +43,7 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// Get finance summary (manager/finances use)
+// Get finance summary (manager use)
 export const getFinanceSummary = async (req, res) => {
   try {
     const orders = await orderModel.find({});
@@ -86,7 +51,6 @@ export const getFinanceSummary = async (req, res) => {
     const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
     const totalOrders = orders.length;
 
-    // Revenue for the current month
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisMonthOrders = orders.filter(
@@ -97,7 +61,6 @@ export const getFinanceSummary = async (req, res) => {
       0,
     );
 
-    // Monthly revenue trend (last 6 months)
     const monthlyRevenue = [];
     for (let i = 5; i >= 0; i--) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -118,10 +81,9 @@ export const getFinanceSummary = async (req, res) => {
       monthlyRevenue.push({ month: monthLabel, revenue: monthTotal });
     }
 
-    // Top selling products (by quantity across all orders)
     const productTotals = {};
     orders.forEach((order) => {
-      order.items.forEach((item) => {
+      (order.products || []).forEach((item) => {
         if (!productTotals[item.name]) {
           productTotals[item.name] = {
             name: item.name,
@@ -159,20 +121,21 @@ export const getFinanceSummary = async (req, res) => {
   }
 };
 
-// Update order status (manager only)
+// Update order status (admin use)
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { orderStatus } = req.body;
 
     const validStatuses = [
       "pending",
-      "paid",
+      "processing",
       "shipped",
       "delivered",
       "cancelled",
     ];
-    if (!validStatuses.includes(status)) {
+
+    if (!validStatuses.includes(orderStatus)) {
       return res.status(400).json({
         success: false,
         message: "Invalid status value",
@@ -181,7 +144,7 @@ export const updateOrderStatus = async (req, res) => {
 
     const order = await orderModel.findByIdAndUpdate(
       id,
-      { status },
+      { orderStatus },
       { new: true },
     );
 
