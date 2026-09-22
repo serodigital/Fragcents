@@ -21,7 +21,7 @@ const LoginPage = () => {
     try {
       const { data } = await axios.post(
         "http://localhost:8000/api/login",
-        formData
+        formData,
       );
 
       if (data.token) {
@@ -49,62 +49,67 @@ const LoginPage = () => {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.error || "An error occurred. Please try again."
+        error.response?.data?.error || "An error occurred. Please try again.",
       );
     }
   };
 
   return (
     <div className="container mt-5">
-        <div className="row justify-content-center">
-      <Toaster position="top-right" reverseOrder={false} />
-      <div className="col-md-4 col-lg-3"> {/* Adjusted form width */}
-      <h2 className="text-center mb-4">Login</h2>
-      <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-        {/* Email Input */}
-        <div className="mb-3">
-          <label htmlFor="email" className="form-label">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="form-control"
-            placeholder="Enter your email"
-            required
-          />
-        </div>
+      <div className="row justify-content-center">
+        <Toaster position="top-right" reverseOrder={false} />
+        <div className="col-md-4 col-lg-3">
+          {" "}
+          {/* Adjusted form width */}
+          <h2 className="text-center mb-4">Login</h2>
+          <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
+            {/* Email Input */}
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
 
-        {/* Password Input */}
-        <div className="mb-3">
-          <label htmlFor="password" className="form-label">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="form-control"
-            placeholder="Enter your password"
-            required
-          />
-        </div>
+            {/* Password Input */}
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
 
-        {/* Submit Button */}
-        <button type="submit" className="btn btn-primary w-100">
-          Login
-        </button>
-      </form>
-    </div>
-    </div>
+            <div className="text-center mt-3">
+              <a href="/forgot-password">Forgot password?</a>
+            </div>
+
+            {/* Submit Button */}
+            <button type="submit" className="btn btn-primary w-100">
+              Login
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default LoginPage;
-

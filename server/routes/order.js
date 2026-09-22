@@ -6,19 +6,6 @@ import { sendEmail } from "../utils/email.js";
 
 const router = express.Router();
 
-// =====================================
-// CREATE ORDER
-// Supports:
-// - Logged-in users
-// - Guest users
-//
-// IMPORTANT:
-// - Only paid orders reduce stock
-// - Product quantity is reduced
-// - Product sold is increased
-// - Cannot purchase more than available stock
-// =====================================
-
 router.post("/create", async (req, res) => {
   try {
     console.log("\n=================================");
@@ -39,10 +26,6 @@ router.post("/create", async (req, res) => {
       paymentMethod,
     } = req.body;
 
-    // =====================================
-    // USER
-    // =====================================
-
     let cleanUser = null;
 
     if (user) {
@@ -52,29 +35,15 @@ router.post("/create", async (req, res) => {
           message: `Invalid user ID: ${user}`,
         });
       }
-
       cleanUser = user;
     }
 
-    // =====================================
-    // CUSTOMER
-    // =====================================
-
-    if (
-      !customer ||
-      !customer.name ||
-      !customer.email ||
-      !customer.phone
-    ) {
+    if (!customer || !customer.name || !customer.email || !customer.phone) {
       return res.status(400).json({
         success: false,
         message: "Customer information is missing.",
       });
     }
-
-    // =====================================
-    // DELIVERY ADDRESS
-    // =====================================
 
     if (
       !deliveryAddress ||
@@ -88,10 +57,6 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // =====================================
-    // PRODUCTS
-    // =====================================
-
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({
         success: false,
@@ -99,40 +64,24 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // =====================================
-    // VALIDATE PRODUCTS
-    // =====================================
-
     const cleanedProducts = [];
 
     for (const item of products) {
       console.log("Checking product:", item);
 
-      // -------------------------------------
-      // Product ID
-      // -------------------------------------
-
       if (!item.product) {
         return res.status(400).json({
           success: false,
-          message: `Product ID is missing for ${
-            item.name || "an item"
-          }.`,
+          message: `Product ID is missing for ${item.name || "an item"}.`,
         });
       }
 
       if (!mongoose.Types.ObjectId.isValid(item.product)) {
         return res.status(400).json({
           success: false,
-          message: `Invalid product ID for ${
-            item.name || "an item"
-          }: ${item.product}`,
+          message: `Invalid product ID for ${item.name || "an item"}: ${item.product}`,
         });
       }
-
-      // -------------------------------------
-      // Product name
-      // -------------------------------------
 
       if (!item.name) {
         return res.status(400).json({
@@ -140,10 +89,6 @@ router.post("/create", async (req, res) => {
           message: "Product name is missing.",
         });
       }
-
-      // -------------------------------------
-      // Quantity
-      // -------------------------------------
 
       const quantity = Number(item.quantity);
 
@@ -158,10 +103,6 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // -------------------------------------
-      // Price
-      // -------------------------------------
-
       const price = Number(item.price);
 
       if (!Number.isFinite(price) || price < 0) {
@@ -170,10 +111,6 @@ router.post("/create", async (req, res) => {
           message: `Invalid price for ${item.name}.`,
         });
       }
-
-      // -------------------------------------
-      // Check product exists
-      // -------------------------------------
 
       const productExists = await Product.findById(item.product);
 
@@ -184,13 +121,7 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // -------------------------------------
-      // Check stock
-      // -------------------------------------
-
-      const availableQuantity = Number(
-        productExists.quantity || 0
-      );
+      const availableQuantity = Number(productExists.quantity || 0);
 
       if (availableQuantity <= 0) {
         return res.status(400).json({
@@ -206,10 +137,6 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // -------------------------------------
-      // Add cleaned product
-      // -------------------------------------
-
       cleanedProducts.push({
         product: item.product,
         name: productExists.name.trim(),
@@ -218,29 +145,18 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // =====================================
-    // PAYMENT METHOD
-    // =====================================
-
     const allowedPaymentMethods = [
       "PayFast - Credit/Debit Card",
       "PayFast - Instant EFT",
       "PayFast - Capitec Pay",
     ];
 
-    if (
-      !paymentMethod ||
-      !allowedPaymentMethods.includes(paymentMethod)
-    ) {
+    if (!paymentMethod || !allowedPaymentMethods.includes(paymentMethod)) {
       return res.status(400).json({
         success: false,
         message: "Invalid or missing PayFast payment method.",
       });
     }
-
-    // =====================================
-    // MONEY
-    // =====================================
 
     const cleanSubtotal = Number(subtotal);
     const cleanDeliveryFee = Number(deliveryFee);
@@ -257,80 +173,39 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // Prevent negative amounts
-
-    if (
-      cleanSubtotal < 0 ||
-      cleanDeliveryFee < 0 ||
-      cleanTotalAmount < 0
-    ) {
+    if (cleanSubtotal < 0 || cleanDeliveryFee < 0 || cleanTotalAmount < 0) {
       return res.status(400).json({
         success: false,
         message: "Order amounts cannot be negative.",
       });
     }
 
-    // =====================================
-    // ORDER NUMBER
-    // =====================================
-
     const finalOrderNumber =
-      orderNumber ||
-      `FRAG-${Math.floor(
-        100000 + Math.random() * 900000
-      )}`;
-
-    // =====================================
-    // IMPORTANT:
-    // REDUCE PRODUCT STOCK
-    // =====================================
-    //
-    // We only reach this section after:
-    // - Customer information is valid
-    // - Address is valid
-    // - Products are valid
-    // - Products exist
-    // - Enough stock exists
-    // - PayFast payment method is valid
-    //
-    // We reduce quantity and increase sold.
+      orderNumber || `FRAG-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const updatedProducts = [];
 
     try {
       for (const item of cleanedProducts) {
-        console.log(
-          `Updating stock for ${item.name}...`
+        console.log(`Updating stock for ${item.name}...`);
+
+        const updatedProduct = await Product.findOneAndUpdate(
+          {
+            _id: item.product,
+            quantity: { $gte: item.quantity },
+          },
+          {
+            $inc: {
+              quantity: -item.quantity,
+              sold: item.quantity,
+            },
+          },
+          { new: true },
         );
-
-        // Atomically decrease stock only if
-        // enough stock still exists.
-
-        const updatedProduct =
-          await Product.findOneAndUpdate(
-            {
-              _id: item.product,
-              quantity: { $gte: item.quantity },
-            },
-            {
-              $inc: {
-                quantity: -item.quantity,
-                sold: item.quantity,
-              },
-            },
-            {
-              new: true,
-            }
-          );
-
-        // -------------------------------------
-        // Stock changed between validation
-        // and update
-        // -------------------------------------
 
         if (!updatedProduct) {
           throw new Error(
-            `Not enough stock available for ${item.name}. The product may have just been purchased by another customer.`
+            `Not enough stock available for ${item.name}. The product may have just been purchased by another customer.`,
           );
         }
 
@@ -339,116 +214,47 @@ router.post("/create", async (req, res) => {
           quantity: item.quantity,
         });
 
-        console.log(
-          `Stock updated: ${updatedProduct.name}`
-        );
-
-        console.log(
-          `Remaining quantity: ${updatedProduct.quantity}`
-        );
-
-        console.log(
-          `Total sold: ${updatedProduct.sold}`
-        );
+        console.log(`Stock updated: ${updatedProduct.name}`);
+        console.log(`Remaining quantity: ${updatedProduct.quantity}`);
+        console.log(`Total sold: ${updatedProduct.sold}`);
       }
-
-      // =====================================
-      // CREATE ORDER
-      // =====================================
 
       const order = new Order({
         orderNumber: finalOrderNumber,
-
-        // Logged-in user:
-        // MongoDB ObjectId
-        //
-        // Guest:
-        // null
         user: cleanUser,
-
-        // -------------------------------------
-        // Customer
-        // -------------------------------------
-
         customer: {
           name: customer.name.trim(),
           email: customer.email.trim(),
           phone: customer.phone.trim(),
         },
-
-        // -------------------------------------
-        // Delivery address
-        // -------------------------------------
-
         deliveryAddress: {
           address: deliveryAddress.address.trim(),
           city: deliveryAddress.city.trim(),
           postalCode: deliveryAddress.postalCode.trim(),
-
           ...(deliveryAddress.province && {
             province: deliveryAddress.province.trim(),
           }),
-
           ...(deliveryAddress.country && {
             country: deliveryAddress.country.trim(),
           }),
         },
-
-        // -------------------------------------
-        // Products
-        // -------------------------------------
-
         products: cleanedProducts,
-
-        // -------------------------------------
-        // Amounts
-        // -------------------------------------
-
-        subtotal: Number(
-          cleanSubtotal.toFixed(2)
-        ),
-
-        deliveryFee: Number(
-          cleanDeliveryFee.toFixed(2)
-        ),
-
-        totalAmount: Number(
-          cleanTotalAmount.toFixed(2)
-        ),
-
-        // -------------------------------------
-        // Payment
-        // -------------------------------------
-
+        subtotal: Number(cleanSubtotal.toFixed(2)),
+        deliveryFee: Number(cleanDeliveryFee.toFixed(2)),
+        totalAmount: Number(cleanTotalAmount.toFixed(2)),
         paymentMethod,
-
         paymentStatus: "paid",
-
-        // -------------------------------------
-        // Order status
-        // -------------------------------------
-
         orderStatus: "processing",
-
         paidAt: new Date(),
       });
 
-      // =====================================
-      // SAVE ORDER
-      // =====================================
-
       const savedOrder = await order.save();
-      // =====================================
-      // SEND ORDER CONFIRMATION EMAIL
-      // =====================================
 
       try {
         const itemsText = savedOrder.products
           .map(
             (item) =>
-              `${item.name} x ${item.quantity} - R${(
-                item.price * item.quantity
-              ).toFixed(2)}`
+              `${item.name} x ${item.quantity} - R${(item.price * item.quantity).toFixed(2)}`,
           )
           .join("\n");
 
@@ -504,103 +310,61 @@ Fragcents
         await sendEmail(
           savedOrder.customer.email,
           `Fragcents Order Confirmation - ${savedOrder.orderNumber}`,
-          emailText
+          emailText,
         );
 
         console.log(
-          `Order confirmation email sent to ${savedOrder.customer.email}`
+          `Order confirmation email sent to ${savedOrder.customer.email}`,
         );
       } catch (emailError) {
-        // Do NOT fail the order if the email fails
         console.error(
           "Order was saved, but confirmation email failed:",
-          emailError.message
+          emailError.message,
         );
       }
-      // =====================================
-      // SUCCESS LOG
-      // =====================================
 
       console.log("\n=================================");
       console.log("ORDER SAVED TO MONGODB");
       console.log("=================================");
       console.log("Order ID:", savedOrder._id);
-      console.log(
-        "Order Number:",
-        savedOrder.orderNumber
-      );
-      console.log(
-        "User:",
-        savedOrder.user || "GUEST CHECKOUT"
-      );
-      console.log(
-        "Payment:",
-        savedOrder.paymentMethod
-      );
-      console.log(
-        "Total:",
-        savedOrder.totalAmount
-      );
+      console.log("Order Number:", savedOrder.orderNumber);
+      console.log("User:", savedOrder.user || "GUEST CHECKOUT");
+      console.log("Payment:", savedOrder.paymentMethod);
+      console.log("Total:", savedOrder.totalAmount);
 
       console.log("\nSTOCK UPDATED:");
-
       for (const updated of updatedProducts) {
-        console.log(
-          `Product ${updated.product}: -${updated.quantity}`
-        );
+        console.log(`Product ${updated.product}: -${updated.quantity}`);
       }
-
       console.log("=================================\n");
-
-      // =====================================
-      // RESPONSE
-      // =====================================
 
       return res.status(201).json({
         success: true,
-        message:
-          "Order created successfully and stock updated.",
+        message: "Order created successfully and stock updated.",
         order: savedOrder,
       });
-
     } catch (stockOrOrderError) {
-      // =====================================
-      // ROLLBACK STOCK IF ORDER CREATION FAILS
-      // =====================================
-      //
-      // If we successfully reduced stock for one
-      // or more products but something fails later,
-      // restore that stock.
-
       console.error(
         "Order creation/stock update failed:",
-        stockOrOrderError.message
+        stockOrOrderError.message,
       );
 
       if (updatedProducts.length > 0) {
-        console.log(
-          "Rolling back stock changes..."
-        );
+        console.log("Rolling back stock changes...");
 
         for (const updated of updatedProducts) {
           try {
-            await Product.findByIdAndUpdate(
-              updated.product,
-              {
-                $inc: {
-                  quantity: updated.quantity,
-                  sold: -updated.quantity,
-                },
-              }
-            );
-
-            console.log(
-              `Stock restored for product ${updated.product}`
-            );
+            await Product.findByIdAndUpdate(updated.product, {
+              $inc: {
+                quantity: updated.quantity,
+                sold: -updated.quantity,
+              },
+            });
+            console.log(`Stock restored for product ${updated.product}`);
           } catch (rollbackError) {
             console.error(
               `CRITICAL: Failed to rollback stock for ${updated.product}`,
-              rollbackError
+              rollbackError,
             );
           }
         }
@@ -608,12 +372,9 @@ Fragcents
 
       return res.status(400).json({
         success: false,
-        message:
-          stockOrOrderError.message ||
-          "Failed to create order.",
+        message: stockOrOrderError.message || "Failed to create order.",
       });
     }
-
   } catch (error) {
     console.error("\n=================================");
     console.error("CREATE ORDER ERROR");
@@ -624,9 +385,7 @@ Fragcents
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message ||
-        "Failed to create order.",
+      message: error.message || "Failed to create order.",
     });
   }
 });

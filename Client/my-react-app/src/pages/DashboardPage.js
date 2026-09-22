@@ -8,7 +8,7 @@ import axios from "axios";
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { auth, logout } = useAuth();
+  const { auth, logout, authLoading } = useAuth();
 
   // Email configuration
   const ADMIN_EMAIL = "sphakhumalo610@gmail.com";
@@ -31,9 +31,13 @@ const DashboardPage = () => {
   const [savedItems, setSavedItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
-  
+
   // State for tabs
   const [activeTab, setActiveTab] = useState("users");
+
+  // State for my orders
+  const [myOrders, setMyOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   // Fetch saved items from localStorage with real-time updates
   const fetchSavedItems = useCallback(() => {
@@ -58,7 +62,7 @@ const DashboardPage = () => {
 
     // Listen for storage events
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Also check for changes periodically (for same-tab updates)
     const intervalId = setInterval(fetchSavedItems, 2000);
 
@@ -93,10 +97,29 @@ const DashboardPage = () => {
     navigate("/login");
   }, [clearUserData, logout, navigate]);
 
+  // Fetch the logged-in user's own orders
+  const fetchMyOrders = useCallback(async () => {
+    if (!auth.token) return;
+
+    setLoadingOrders(true);
+    try {
+      const response = await axios.get("http://localhost:8000/api/order/mine", {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+
+      if (response.data && response.data.orders) {
+        setMyOrders(response.data.orders);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error("Error fetching your orders.");
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [auth.token]);
+
   // Fetch users from backend
   const fetchUsers = useCallback(async () => {
-    if (!auth.token) return;
-    
     setLoadingUsers(true);
     try {
       const response = await axios.get("http://localhost:8000/api/user", {
@@ -126,6 +149,8 @@ const DashboardPage = () => {
 
   // Initial setup and logout handling
   useEffect(() => {
+    if (authLoading) return;
+
     if (!auth.token) {
       console.log("🚪 No auth token detected - clearing data and redirecting");
       clearUserData();
@@ -134,19 +159,26 @@ const DashboardPage = () => {
       fetchUsers();
       fetchSavedItems();
     }
-  }, [auth.token, navigate, fetchUsers, fetchSavedItems, clearUserData]);
+  }, [
+    auth.token,
+    authLoading,
+    navigate,
+    fetchUsers,
+    fetchSavedItems,
+    clearUserData,
+  ]);
 
   // Monitor auth state changes for logout detection
   useEffect(() => {
     const prevAuthState = sessionStorage.getItem("prevAuthState");
     const currentAuthState = auth.token ? "logged-in" : "logged-out";
-    
+
     if (prevAuthState === "logged-in" && currentAuthState === "logged-out") {
       console.log("🔄 Auth state changed: User logged out - clearing wishlist");
       clearUserData();
       toast.success("Wishlist cleared on logout");
     }
-    
+
     sessionStorage.setItem("prevAuthState", currentAuthState);
   }, [auth.token, clearUserData]);
 
@@ -154,14 +186,17 @@ const DashboardPage = () => {
   useEffect(() => {
     if (editingUser) {
       console.log("Editing user: ", editingUser);
-      
+
       // Fetch the actual password from backend for the selected user
       const fetchUserPassword = async () => {
         try {
-          const response = await axios.get(`http://localhost:8000/api/user/${editingUser._id}/password`, {
-            headers: { Authorization: `Bearer ${auth.token}` },
-          });
-          
+          const response = await axios.get(
+            `http://localhost:8000/api/user/${editingUser._id}/password`,
+            {
+              headers: { Authorization: `Bearer ${auth.token}` },
+            },
+          );
+
           if (response.data.success && response.data.password) {
             setActualPassword(response.data.password);
             setOriginalPassword(response.data.password);
@@ -173,9 +208,9 @@ const DashboardPage = () => {
           setOriginalPassword("userpassword123");
         }
       };
-      
+
       fetchUserPassword();
-      
+
       setFormData({
         email: editingUser.email,
         address: editingUser.address || "",
@@ -185,10 +220,13 @@ const DashboardPage = () => {
       // When not editing, try to get current user's actual password
       const getCurrentUserPassword = async () => {
         try {
-          const response = await axios.get(`http://localhost:8000/api/user/${auth.user._id}/password`, {
-            headers: { Authorization: `Bearer ${auth.token}` },
-          });
-          
+          const response = await axios.get(
+            `http://localhost:8000/api/user/${auth.user._id}/password`,
+            {
+              headers: { Authorization: `Bearer ${auth.token}` },
+            },
+          );
+
           if (response.data.success && response.data.password) {
             setActualPassword(response.data.password);
             setOriginalPassword(response.data.password);
@@ -201,10 +239,10 @@ const DashboardPage = () => {
           setOriginalPassword(fallbackPassword);
         }
       };
-      
+
       getCurrentUserPassword();
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         email: auth.user?.email || "",
         address: auth.user?.address || "",
         password: "••••••••••", // Show as dots
@@ -222,7 +260,7 @@ const DashboardPage = () => {
   const handlePasswordChange = (e) => {
     const value = e.target.value;
     setFormData((prev) => ({ ...prev, password: value }));
-    
+
     // If user is typing a new password, store it as the actual password
     if (value && value !== "••••••••••") {
       setActualPassword(value);
@@ -233,7 +271,7 @@ const DashboardPage = () => {
   const handleSendPasswordToEmail = async () => {
     const emailToUse = editingUser?.email || auth.user?.email;
     const passwordToSend = actualPassword; // Use the real password
-    
+
     if (!emailToUse) {
       toast.error("No email address available");
       return;
@@ -245,23 +283,27 @@ const DashboardPage = () => {
     }
 
     setSendingEmail(true);
-    
+
     try {
       // Send the actual password to the backend
-      const response = await axios.post("http://localhost:8000/api/send-password-email", {
-        email: emailToUse,
-        password: passwordToSend, // Send the real password
-        userId: editingUser?._id || auth.user?._id,
-        fromEmail: ADMIN_EMAIL, // Include the admin email for sending
-        adminEmail: ADMIN_EMAIL
-      }, {
-        headers: { Authorization: `Bearer ${auth.token}` },
-      });
+      const response = await axios.post(
+        "http://localhost:8000/api/send-password-email",
+        {
+          email: emailToUse,
+          password: passwordToSend, // Send the real password
+          userId: editingUser?._id || auth.user?._id,
+          fromEmail: ADMIN_EMAIL, // Include the admin email for sending
+          adminEmail: ADMIN_EMAIL,
+        },
+        {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        },
+      );
 
       if (response.data.success) {
         toast.success(`Password sent from ${ADMIN_EMAIL} to ${emailToUse}!`, {
           icon: "📧",
-          duration: 4000
+          duration: 4000,
         });
       } else {
         toast.error("Failed to send password email");
@@ -269,10 +311,13 @@ const DashboardPage = () => {
     } catch (error) {
       console.error("Error sending password email:", error);
       // For demo purposes, show what password would be sent
-      toast.success(`Password "${passwordToSend}" sent from ${ADMIN_EMAIL} to ${emailToUse}!`, {
-        icon: "📧",
-        duration: 4000
-      });
+      toast.success(
+        `Password "${passwordToSend}" sent from ${ADMIN_EMAIL} to ${emailToUse}!`,
+        {
+          icon: "📧",
+          duration: 4000,
+        },
+      );
     } finally {
       setSendingEmail(false);
     }
@@ -280,11 +325,11 @@ const DashboardPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Always show "saved profile" message regardless of actual save operation
     toast.success("Profile saved successfully!", {
       duration: 3000,
-      icon: "💾"
+      icon: "💾",
     });
 
     const url = editingUser
@@ -299,8 +344,9 @@ const DashboardPage = () => {
     };
 
     // Check if password was actually changed (not just the original dots)
-    const isPasswordChanged = formData.password && 
-      formData.password.trim() !== "" && 
+    const isPasswordChanged =
+      formData.password &&
+      formData.password.trim() !== "" &&
       formData.password !== "••••••••••";
 
     // Include password if it's provided and changed
@@ -308,9 +354,9 @@ const DashboardPage = () => {
       submitData.password = actualPassword; // Use the actual password for database storage
     }
 
-    console.log("📤 Submitting data to database:", { 
-      ...submitData, 
-      password: submitData.password ? "[PROTECTED]" : "Not included" 
+    console.log("📤 Submitting data to database:", {
+      ...submitData,
+      password: submitData.password ? "[PROTECTED]" : "Not included",
     });
 
     try {
@@ -323,17 +369,20 @@ const DashboardPage = () => {
 
       if (response.data.success) {
         const isCurrentUser = editingUser?._id === auth.user?._id;
-        
+
         // Show additional confirmation for address saving
         if (!editingUser && formData.address) {
           setTimeout(() => {
-            toast.success(`📍 Address "${formData.address}" saved to database!`, {
-              duration: 3000,
-              icon: "🏠"
-            });
+            toast.success(
+              `📍 Address "${formData.address}" saved to database!`,
+              {
+                duration: 3000,
+                icon: "🏠",
+              },
+            );
           }, 1000);
         }
-        
+
         fetchUsers();
         setFormData({ email: "", address: "", password: "" });
         setEditingUser(null);
@@ -362,7 +411,7 @@ const DashboardPage = () => {
         `http://localhost:8000/api/user/${userId}`,
         {
           headers: { Authorization: `Bearer ${auth.token}` },
-        }
+        },
       );
       if (response.data.success) {
         toast.success(response.data.message);
@@ -396,7 +445,7 @@ const DashboardPage = () => {
   const addItemToCart = (item) => {
     const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existingItemIndex = existingCart.findIndex(
-      (cartItem) => cartItem.cartItemId === item.cartItemId
+      (cartItem) => cartItem.cartItemId === item.cartItemId,
     );
 
     if (existingItemIndex !== -1) {
@@ -408,10 +457,13 @@ const DashboardPage = () => {
 
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       addToCart(existingItem);
-      toast.success(`${item.name} quantity increased! Now ${existingItem.quantity} in cart`, {
-        icon: "🔢",
-        duration: 3000
-      });
+      toast.success(
+        `${item.name} quantity increased! Now ${existingItem.quantity} in cart`,
+        {
+          icon: "🔢",
+          duration: 3000,
+        },
+      );
     } else {
       // Use originalPrice if available, otherwise parse the formatted price
       const unitPrice = item.originalPrice || parsePrice(item.price);
@@ -423,13 +475,13 @@ const DashboardPage = () => {
         unitPrice,
         totalPrice: unitPrice,
       };
-      
+
       const updatedCart = [...existingCart, newItem];
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       addToCart(newItem);
       toast.success(`${item.name} added to cart!`, {
         icon: "🛒",
-        duration: 3000
+        duration: 3000,
       });
     }
   };
@@ -440,7 +492,7 @@ const DashboardPage = () => {
       (item) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.category &&
-          item.category.toLowerCase().includes(searchTerm.toLowerCase()))
+          item.category.toLowerCase().includes(searchTerm.toLowerCase())),
     )
     .sort((a, b) => {
       switch (sortBy) {
@@ -467,7 +519,8 @@ const DashboardPage = () => {
       <div className="mb-4">
         <h2 className="mb-2">📊 Dashboard</h2>
         <div className="alert alert-success" role="alert">
-          <strong>Welcome back, {auth.user?.name}!</strong> You are now viewing the dashboard.
+          <strong>Welcome back, {auth.user?.name}!</strong> You are now viewing
+          the dashboard.
         </div>
       </div>
 
@@ -491,7 +544,20 @@ const DashboardPage = () => {
             }}
           >
             ❤️ Saved Items ({savedItems.length})
-            {savedItems.length === 0 && <span className="text-muted"> - Empty</span>}
+            {savedItems.length === 0 && (
+              <span className="text-muted"> - Empty</span>
+            )}
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "orders" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("orders");
+              fetchMyOrders();
+            }}
+          >
+            📦 My Orders ({myOrders.length})
           </button>
         </li>
       </ul>
@@ -502,7 +568,9 @@ const DashboardPage = () => {
           {/* User Form Section */}
           <div className="card mb-4">
             <div className="card-body">
-              <h5 className="mb-3">{editingUser ? "Edit User Information" : "Save User Profile"}</h5>
+              <h5 className="mb-3">
+                {editingUser ? "Edit User Information" : "Save User Profile"}
+              </h5>
               <form onSubmit={handleSubmit} className="row g-3">
                 <div className="col-md-4">
                   <label htmlFor="email" className="form-label">
@@ -512,16 +580,21 @@ const DashboardPage = () => {
                     type="email"
                     id="email"
                     name="email"
-                    value={editingUser ? formData.email : auth.user?.email || ""}
+                    value={
+                      editingUser ? formData.email : auth.user?.email || ""
+                    }
                     onChange={editingUser ? handleChange : undefined}
                     readOnly={!editingUser}
-                    className={`form-control ${!editingUser ? 'bg-light' : ''}`}
+                    className={`form-control ${!editingUser ? "bg-light" : ""}`}
                     required={editingUser}
                   />
                 </div>
                 <div className="col-md-4">
                   <label htmlFor="address" className="form-label">
-                    Address <span className="text-success">(Will be saved to database)</span>
+                    Address{" "}
+                    <span className="text-success">
+                      (Will be saved to database)
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -534,7 +607,8 @@ const DashboardPage = () => {
                     required
                   />
                   <div className="form-text">
-                    <i className="fas fa-database"></i> Your address will be securely stored in our database
+                    <i className="fas fa-database"></i> Your address will be
+                    securely stored in our database
                   </div>
                 </div>
                 <div className="col-md-4">
@@ -549,13 +623,19 @@ const DashboardPage = () => {
                       value={formData.password}
                       onChange={handlePasswordChange}
                       className="form-control"
-                      placeholder={editingUser ? "Click to change password" : "Enter password"}
+                      placeholder={
+                        editingUser
+                          ? "Click to change password"
+                          : "Enter password"
+                      }
                       required={!editingUser}
-                      autoComplete={editingUser ? "new-password" : "current-password"}
+                      autoComplete={
+                        editingUser ? "new-password" : "current-password"
+                      }
                       onFocus={(e) => {
                         // Clear dots when user starts typing
                         if (e.target.value === "••••••••••") {
-                          setFormData(prev => ({ ...prev, password: "" }));
+                          setFormData((prev) => ({ ...prev, password: "" }));
                         }
                       }}
                     />
@@ -571,7 +651,10 @@ const DashboardPage = () => {
                       type="button"
                       className="btn btn-outline-info"
                       onClick={handleSendPasswordToEmail}
-                      disabled={sendingEmail || (!editingUser?.email && !auth.user?.email)}
+                      disabled={
+                        sendingEmail ||
+                        (!editingUser?.email && !auth.user?.email)
+                      }
                       title="Send actual password to email"
                     >
                       {sendingEmail ? (
@@ -581,37 +664,51 @@ const DashboardPage = () => {
                       )}
                     </button>
                   </div>
-                  {!showPassword && formData.password && formData.password !== "••••••••••" && (
-                    <div className="mt-1">
-                      <small className="text-muted">
-                        Password: {formData.password.replace(/./g, '•')} ({formData.password.length} characters)
-                      </small>
-                    </div>
-                  )}
+                  {!showPassword &&
+                    formData.password &&
+                    formData.password !== "••••••••••" && (
+                      <div className="mt-1">
+                        <small className="text-muted">
+                          Password: {formData.password.replace(/./g, "•")} (
+                          {formData.password.length} characters)
+                        </small>
+                      </div>
+                    )}
                   {editingUser && (
                     <div className="form-text">
-                      {formData.password === "••••••••••" ? 
-                        "Current password shown as dots - click to change" : 
-                        "Leave empty or click outside to keep current password"
-                      }
+                      {formData.password === "••••••••••"
+                        ? "Current password shown as dots - click to change"
+                        : "Leave empty or click outside to keep current password"}
                     </div>
                   )}
-                  {!editingUser && formData.password && formData.password !== "••••••••••" && (
-                    <div className="form-text">
-                      <small className={`${formData.password.length >= 6 ? 'text-success' : 'text-warning'}`}>
-                        Password strength: {formData.password.length >= 8 ? 'Strong' : formData.password.length >= 6 ? 'Medium' : 'Weak'}
-                      </small>
-                    </div>
-                  )}
+                  {!editingUser &&
+                    formData.password &&
+                    formData.password !== "••••••••••" && (
+                      <div className="form-text">
+                        <small
+                          className={`${formData.password.length >= 6 ? "text-success" : "text-warning"}`}
+                        >
+                          Password strength:{" "}
+                          {formData.password.length >= 8
+                            ? "Strong"
+                            : formData.password.length >= 6
+                              ? "Medium"
+                              : "Weak"}
+                        </small>
+                      </div>
+                    )}
                   <div className="form-text">
                     <small className="text-info">
-                      📧 Click "Send Real Password" to receive the actual registration password via email from {ADMIN_EMAIL}
+                      📧 Click "Send Real Password" to receive the actual
+                      registration password via email from {ADMIN_EMAIL}
                     </small>
                   </div>
                   {actualPassword && (
                     <div className="form-text">
                       <small className="text-success">
-                        ✅ Real password ready to send: {actualPassword.replace(/./g, '•')} ({actualPassword.length} chars)
+                        ✅ Real password ready to send:{" "}
+                        {actualPassword.replace(/./g, "•")} (
+                        {actualPassword.length} chars)
                       </small>
                     </div>
                   )}
@@ -640,7 +737,9 @@ const DashboardPage = () => {
                   {!editingUser && (
                     <div className="mt-2">
                       <small className="text-muted">
-                        <i className="fas fa-info-circle"></i> Clicking "Save Profile" will store your address and password in the database
+                        <i className="fas fa-info-circle"></i> Clicking "Save
+                        Profile" will store your address and password in the
+                        database
                       </small>
                     </div>
                   )}
@@ -656,7 +755,11 @@ const DashboardPage = () => {
               <p className="text-muted">
                 Saved user profiles will appear here.
               </p>
-              <button className="btn btn-primary" onClick={fetchUsers} disabled={loadingUsers}>
+              <button
+                className="btn btn-primary"
+                onClick={fetchUsers}
+                disabled={loadingUsers}
+              >
                 {loadingUsers ? "Loading..." : "Refresh Users"}
               </button>
             </div>
@@ -677,13 +780,22 @@ const DashboardPage = () => {
                       <tr key={user._id}>
                         <td>
                           <div className="d-flex align-items-center">
-                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{width: '60px', height: '60px', fontSize: '24px'}}>
-                              {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                            <div
+                              className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                              style={{
+                                width: "60px",
+                                height: "60px",
+                                fontSize: "24px",
+                              }}
+                            >
+                              {user.name
+                                ? user.name.charAt(0).toUpperCase()
+                                : user.email.charAt(0).toUpperCase()}
                             </div>
                           </div>
                         </td>
                         <td>
-                          <strong>{user.name || 'N/A'}</strong>
+                          <strong>{user.name || "N/A"}</strong>
                           {auth?.user?._id === user._id && (
                             <span className="badge bg-primary ms-2">You</span>
                           )}
@@ -697,7 +809,7 @@ const DashboardPage = () => {
                         <td>
                           <div className="d-flex flex-column">
                             <span className="mb-1">
-                              📍 {user.address || 'No address saved'}
+                              📍 {user.address || "No address saved"}
                             </span>
                             {user.address ? (
                               <small className="text-success">
@@ -741,7 +853,7 @@ const DashboardPage = () => {
           {/* Refresh button */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4>Your Saved Items</h4>
-            <button 
+            <button
               className="btn btn-outline-primary btn-sm"
               onClick={fetchSavedItems}
               title="Refresh saved items"
@@ -764,7 +876,7 @@ const DashboardPage = () => {
                   className="form-select"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  style={{ maxWidth: '200px' }}
+                  style={{ maxWidth: "200px" }}
                 >
                   <option value="name">Sort by Name</option>
                   <option value="price">Sort by Price</option>
@@ -778,17 +890,26 @@ const DashboardPage = () => {
           {filteredAndSortedItems.length === 0 ? (
             <div className="text-center py-5">
               <div className="mb-4">
-                <i className="fas fa-heart-broken" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
+                <i
+                  className="fas fa-heart-broken"
+                  style={{ fontSize: "4rem", color: "#dee2e6" }}
+                ></i>
               </div>
-              <h4>{savedItems.length === 0 ? "No saved items yet" : "No items match your search"}</h4>
+              <h4>
+                {savedItems.length === 0
+                  ? "No saved items yet"
+                  : "No items match your search"}
+              </h4>
               <p className="text-muted">
-                {savedItems.length === 0 
+                {savedItems.length === 0
                   ? "Items you save for later will appear here."
-                  : "Try adjusting your search terms or filters."
-                }
+                  : "Try adjusting your search terms or filters."}
               </p>
               {savedItems.length === 0 && (
-                <button className="btn btn-primary" onClick={() => navigate("/shop")}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => navigate("/shop")}
+                >
                   Browse Products
                 </button>
               )}
@@ -799,22 +920,27 @@ const DashboardPage = () => {
                 <table className="table mb-0">
                   <thead className="table-light">
                     <tr>
-                      <th style={{width: '80px'}}>Image</th>
+                      <th style={{ width: "80px" }}>Image</th>
                       <th>Details</th>
-                      <th style={{width: '120px'}}>Price</th>
-                      <th style={{width: '200px'}}>Actions</th>
+                      <th style={{ width: "120px" }}>Price</th>
+                      <th style={{ width: "200px" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAndSortedItems.map((item, index) => {
-                      const price = item.originalPrice || parsePrice(item.price);
-                      const savedItemIndex = savedItems.findIndex(savedItem => 
-                        (savedItem.id && savedItem.id === item.id) || 
-                        (savedItem.cartItemId && savedItem.cartItemId === item.cartItemId)
+                      const price =
+                        item.originalPrice || parsePrice(item.price);
+                      const savedItemIndex = savedItems.findIndex(
+                        (savedItem) =>
+                          (savedItem.id && savedItem.id === item.id) ||
+                          (savedItem.cartItemId &&
+                            savedItem.cartItemId === item.cartItemId),
                       );
-                      
+
                       return (
-                        <tr key={`saved-item-${item.id || item.cartItemId || index}`}>
+                        <tr
+                          key={`saved-item-${item.id || item.cartItemId || index}`}
+                        >
                           <td>
                             <img
                               src={item.image || "/images/default.jpg"}
@@ -837,7 +963,10 @@ const DashboardPage = () => {
                               <>
                                 <br />
                                 <small className="text-muted">
-                                  Saved: {new Date(item.dateAdded).toLocaleDateString()}
+                                  Saved:{" "}
+                                  {new Date(
+                                    item.dateAdded,
+                                  ).toLocaleDateString()}
                                 </small>
                               </>
                             )}
@@ -847,11 +976,14 @@ const DashboardPage = () => {
                               <strong className="text-success">
                                 R {price.toFixed(2)}
                               </strong>
-                              {item.originalPrice && item.price && item.originalPrice !== parsePrice(item.price) && (
-                                <small className="text-muted text-decoration-line-through">
-                                  R {parsePrice(item.price).toFixed(2)}
-                                </small>
-                              )}
+                              {item.originalPrice &&
+                                item.price &&
+                                item.originalPrice !==
+                                  parsePrice(item.price) && (
+                                  <small className="text-muted text-decoration-line-through">
+                                    R {parsePrice(item.price).toFixed(2)}
+                                  </small>
+                                )}
                             </div>
                           </td>
                           <td>
@@ -889,33 +1021,46 @@ const DashboardPage = () => {
                   </tbody>
                 </table>
               </div>
-              
+
               {/* Summary footer */}
               <div className="card-footer bg-light">
                 <div className="row text-center">
                   <div className="col-md-3">
-                    <strong>Total Items:</strong> {filteredAndSortedItems.length}
+                    <strong>Total Items:</strong>{" "}
+                    {filteredAndSortedItems.length}
                   </div>
                   <div className="col-md-3">
-                    <strong>Total Value:</strong> R {filteredAndSortedItems.reduce((total, item) => {
-                      const price = item.originalPrice || parsePrice(item.price);
-                      return total + price;
-                    }, 0).toFixed(2)}
-                  </div>
-                  <div className="col-md-3">
-                    <strong>Avg. Price:</strong> R {filteredAndSortedItems.length > 0 ? 
-                      (filteredAndSortedItems.reduce((total, item) => {
-                        const price = item.originalPrice || parsePrice(item.price);
+                    <strong>Total Value:</strong> R{" "}
+                    {filteredAndSortedItems
+                      .reduce((total, item) => {
+                        const price =
+                          item.originalPrice || parsePrice(item.price);
                         return total + price;
-                      }, 0) / filteredAndSortedItems.length).toFixed(2) : '0.00'
-                    }
+                      }, 0)
+                      .toFixed(2)}
                   </div>
                   <div className="col-md-3">
-                    <button 
+                    <strong>Avg. Price:</strong> R{" "}
+                    {filteredAndSortedItems.length > 0
+                      ? (
+                          filteredAndSortedItems.reduce((total, item) => {
+                            const price =
+                              item.originalPrice || parsePrice(item.price);
+                            return total + price;
+                          }, 0) / filteredAndSortedItems.length
+                        ).toFixed(2)
+                      : "0.00"}
+                  </div>
+                  <div className="col-md-3">
+                    <button
                       className="btn btn-success btn-sm"
                       onClick={() => {
-                        filteredAndSortedItems.forEach(item => addItemToCart(item));
-                        toast.success(`Added all ${filteredAndSortedItems.length} items to cart!`);
+                        filteredAndSortedItems.forEach((item) =>
+                          addItemToCart(item),
+                        );
+                        toast.success(
+                          `Added all ${filteredAndSortedItems.length} items to cart!`,
+                        );
                       }}
                       disabled={filteredAndSortedItems.length === 0}
                     >
@@ -923,6 +1068,95 @@ const DashboardPage = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {/* My Orders Tab */}
+      {activeTab === "orders" && (
+        <div>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4>My Orders</h4>
+            <button
+              className="btn btn-outline-primary btn-sm"
+              onClick={fetchMyOrders}
+              disabled={loadingOrders}
+            >
+              {loadingOrders ? "Loading..." : "🔄 Refresh"}
+            </button>
+          </div>
+
+          {myOrders.length === 0 ? (
+            <div className="text-center py-5">
+              <h4>No orders yet</h4>
+              <p className="text-muted">Orders you place will appear here.</p>
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/shop")}
+              >
+                Browse Products
+              </button>
+            </div>
+          ) : (
+            <div className="card">
+              <div className="card-body p-0">
+                <table className="table mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Order</th>
+                      <th>Items</th>
+                      <th>Total</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myOrders.map((order) => (
+                      <tr key={order._id}>
+                        <td>
+                          <small className="text-muted">
+                            #{order._id.slice(-6)}
+                          </small>
+                        </td>
+                        <td>
+                          {order.items.map((item, i) => (
+                            <div key={i}>
+                              <small>
+                                {item.quantity}x {item.name}
+                              </small>
+                            </div>
+                          ))}
+                        </td>
+                        <td>
+                          <strong>R{order.totalAmount.toFixed(2)}</strong>
+                        </td>
+                        <td>
+                          <span
+                            className={`badge text-capitalize ${
+                              order.status === "delivered"
+                                ? "bg-success"
+                                : order.status === "shipped"
+                                  ? "bg-info"
+                                  : order.status === "paid"
+                                    ? "bg-primary"
+                                    : order.status === "cancelled"
+                                      ? "bg-danger"
+                                      : "bg-secondary"
+                            }`}
+                          >
+                            {order.status}
+                          </span>
+                        </td>
+                        <td>
+                          <small>
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </small>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -937,10 +1171,7 @@ const DashboardPage = () => {
               📧 Email notifications sent from: <strong>{ADMIN_EMAIL}</strong>
             </small>
           </div>
-          <button 
-            className="btn btn-outline-danger" 
-            onClick={handleLogout}
-          >
+          <button className="btn btn-outline-danger" onClick={handleLogout}>
             🚪 Logout & Clear Data
           </button>
         </div>
