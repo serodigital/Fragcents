@@ -13,6 +13,20 @@ import {
 
 const router = express.Router();
 
+// CREATE ORDER
+// Supports:
+// - Logged-in users
+// - Guest users
+// - Paystack payments
+//
+// IMPORTANT:
+// - Stock is reduced ONLY for paid orders
+// - Product quantity is reduced
+// - Product sold is increased
+// - FragCents confirmation email is sent
+//   after a paid order is saved
+// =====================================
+
 router.post("/create", async (req, res) => {
   try {
     console.log("\n=================================");
@@ -30,7 +44,13 @@ router.post("/create", async (req, res) => {
       subtotal,
       deliveryFee,
       totalAmount,
+
+      // PAYMENT
       paymentMethod,
+      paymentReference,
+      paymentStatus,
+      orderStatus,
+      paidAt,
     } = req.body;
 
     let cleanUser = null;
@@ -119,15 +139,30 @@ router.post("/create", async (req, res) => {
         });
       }
 
+      // =====================================
+      // CHECK PRODUCT
+      // =====================================
+
+      const productExists = await Product.findById(
+        item.product
+      );
       const productExists = await Product.findById(item.product);
 
       if (!productExists) {
         return res.status(400).json({
           success: false,
-          message: `Product does not exist in database: ${item.product}`,
+          message:
+            `Product does not exist in database: ${item.product}`,
         });
       }
 
+      // =====================================
+      // CHECK CURRENT STOCK
+      // =====================================
+
+      const availableQuantity = Number(
+        productExists.quantity || 0
+      );
       const availableQuantity = Number(productExists.quantity || 0);
 
       if (availableQuantity <= 0) {
@@ -140,7 +175,9 @@ router.post("/create", async (req, res) => {
       if (quantity > availableQuantity) {
         return res.status(400).json({
           success: false,
-          message: `Not enough stock for ${productExists.name}. Only ${availableQuantity} left.`,
+          message:
+            `Not enough stock for ${productExists.name}. ` +
+            `Only ${availableQuantity} left.`,
         });
       }
 
@@ -152,6 +189,9 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // =====================================
+    // MONEY
+    // =====================================
     const allowedPaymentMethods = [
       "PayFast - Credit/Debit Card",
       "PayFast - Instant EFT",
@@ -180,6 +220,11 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    if (
+      cleanSubtotal < 0 ||
+      cleanDeliveryFee < 0 ||
+      cleanTotalAmount < 0
+    ) {
     if (cleanSubtotal < 0 || cleanDeliveryFee < 0 || cleanTotalAmount < 0) {
       return res.status(400).json({
         success: false,
@@ -188,6 +233,116 @@ router.post("/create", async (req, res) => {
     }
 
     const finalOrderNumber =
+      orderNumber ||
+      `FRAG-${Math.floor(
+        100000 + Math.random() * 900000
+      )}`;
+
+    // =====================================
+    // CHECK DUPLICATE PAYMENT
+    // =====================================
+
+    if (paymentReference) {
+      const existingOrder = await Order.findOne({
+        paymentReference,
+      });
+
+      if (existingOrder) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An order already exists for this payment.",
+          order: existingOrder,
+        });
+      }
+    }
+
+    // =====================================
+    // CREATE ORDER
+    // =====================================
+
+    const order = new Order({
+      orderNumber: finalOrderNumber,
+
+      user: cleanUser,
+
+      customer: {
+        name: customer.name.trim(),
+        email: customer.email.trim(),
+        phone: customer.phone.trim(),
+      },
+
+      deliveryAddress: {
+        address: deliveryAddress.address.trim(),
+        city: deliveryAddress.city.trim(),
+        postalCode: deliveryAddress.postalCode.trim(),
+
+        ...(deliveryAddress.province && {
+          province: deliveryAddress.province.trim(),
+        }),
+
+        ...(deliveryAddress.country && {
+          country: deliveryAddress.country.trim(),
+        }),
+      },
+
+      products: cleanedProducts,
+
+      subtotal: Number(
+        cleanSubtotal.toFixed(2)
+      ),
+
+      deliveryFee: Number(
+        cleanDeliveryFee.toFixed(2)
+      ),
+
+      totalAmount: Number(
+        cleanTotalAmount.toFixed(2)
+      ),
+
+      paymentMethod:
+        paymentMethod || "Paystack",
+
+      paymentReference:
+        paymentReference || undefined,
+
+      paymentStatus:
+        paymentStatus || "pending",
+
+      orderStatus:
+        orderStatus || "pending",
+
+      paidAt:
+        paidAt || undefined,
+    });
+
+    // =====================================
+    // REDUCE STOCK ONLY AFTER PAYMENT
+    // =====================================
+
+    if (paymentStatus === "paid") {
+     
+      console.log("PAYMENT IS PAID");
+      console.log("UPDATING PRODUCT STOCK");
+      
+
+      for (const item of cleanedProducts) {
+        const product = await Product.findById(
+          item.product
+        );
+
+        if (!product) {
+          throw new Error(
+            `Product not found while updating stock: ${item.product}`
+          );
+        }
+
+        const currentQuantity = Number(
+          product.quantity || 0
+        );
+
+        const purchaseQuantity = Number(
+          item.quantity
       orderNumber || `FRAG-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const updatedProducts = [];
@@ -210,16 +365,110 @@ router.post("/create", async (req, res) => {
           { new: true },
         );
 
-        if (!updatedProduct) {
+        // Safety check
+        if (
+          currentQuantity < purchaseQuantity
+        ) {
           throw new Error(
+            `Not enough stock for ${product.name}. ` +
+            `Available: ${currentQuantity}, ` +
+            `Requested: ${purchaseQuantity}`
             `Not enough stock available for ${item.name}. The product may have just been purchased by another customer.`,
           );
         }
 
-        updatedProducts.push({
-          product: item.product,
-          quantity: item.quantity,
-        });
+        // Reduce stock
+        product.quantity =
+          currentQuantity - purchaseQuantity;
+
+        // Increase sold count
+        product.sold =
+          Number(product.sold || 0) +
+          purchaseQuantity;
+
+        await product.save();
+
+        console.log(
+          `Product: ${product.name}`
+        );
+
+        console.log(
+          `Quantity before: ${currentQuantity}`
+        );
+
+        console.log(
+          `Quantity purchased: ${purchaseQuantity}`
+        );
+
+        console.log(
+          `Quantity after: ${product.quantity}`
+        );
+
+        console.log(
+          `Sold: ${product.sold}`
+        );
+
+        console.log("---------------------------------");
+      }
+
+      console.log(
+        "PRODUCT STOCK UPDATED SUCCESSFULLY"
+      );
+
+      console.log(
+        "=================================\n"
+      );
+    }
+
+    // =====================================
+    // SAVE ORDER
+    // =====================================
+
+    const savedOrder = await order.save();
+
+    // =====================================
+    // SEND FRAGCENTS CONFIRMATION EMAIL
+    // ONLY AFTER PAID ORDER IS SAVED
+    // =====================================
+
+    if (savedOrder.paymentStatus === "paid") {
+      try {
+        // Create product list
+        const productList = savedOrder.products
+          .map(
+            (item) =>
+              `${item.name} x${item.quantity} - R${Number(
+                item.price
+              ).toFixed(2)}`
+          )
+          .join("\n");
+
+        // Create email
+        const emailText = `
+Hello ${savedOrder.customer.name},
+
+Thank you for shopping with FragCents!
+
+Your payment has been successfully received and your order has been confirmed.
+
+ORDER DETAILS
+
+Order Number: ${savedOrder.orderNumber}
+
+Payment Method: ${savedOrder.paymentMethod}
+
+Payment Reference: ${
+          savedOrder.paymentReference || "N/A"
+        }
+
+Payment Status: ${savedOrder.paymentStatus}
+
+Order Status: ${savedOrder.orderStatus}
+
+
+PRODUCTS
+
+${productList}
 
         console.log(`Stock updated: ${updatedProduct.name}`);
         console.log(`Remaining quantity: ${updatedProduct.quantity}`);
@@ -265,57 +514,61 @@ router.post("/create", async (req, res) => {
           )
           .join("\n");
 
-        const emailText = `
-FRAGCENTS - ORDER CONFIRMATION
+ORDER TOTAL
 =================================
 
-Thank you for your order, ${savedOrder.customer.name}!
+Subtotal: R${Number(
+          savedOrder.subtotal
+        ).toFixed(2)}
 
-Your payment was successful and your order has been received.
+Delivery Fee: R${Number(
+          savedOrder.deliveryFee
+        ).toFixed(2)}
 
-ORDER DETAILS
--------------
-Order Number: ${savedOrder.orderNumber}
-Order Status: ${savedOrder.orderStatus}
-Payment Status: ${savedOrder.paymentStatus}
-Payment Method: ${savedOrder.paymentMethod}
-Payment Date: ${savedOrder.paidAt.toLocaleString()}
+TOTAL PAID: R${Number(
+          savedOrder.totalAmount
+        ).toFixed(2)}
 
-CUSTOMER INFORMATION
---------------------
-Name: ${savedOrder.customer.name}
-Email: ${savedOrder.customer.email}
-Phone: ${savedOrder.customer.phone}
 
 DELIVERY ADDRESS
-----------------
-${savedOrder.deliveryAddress.address}
-${savedOrder.deliveryAddress.city}
-${savedOrder.deliveryAddress.postalCode}
-${savedOrder.deliveryAddress.province || ""}
-${savedOrder.deliveryAddress.country || ""}
-
-ITEMS ORDERED
--------------
-${itemsText}
-
-ORDER SUMMARY
--------------
-Subtotal: R${savedOrder.subtotal.toFixed(2)}
-Delivery Fee: R${savedOrder.deliveryFee.toFixed(2)}
-TOTAL PAID: R${savedOrder.totalAmount.toFixed(2)}
-
 =================================
 
-Thank you for shopping with Fragcents!
+${savedOrder.deliveryAddress.address}
 
-Your order is currently being processed.
+${savedOrder.deliveryAddress.city}
 
-Fragcents
+${savedOrder.deliveryAddress.province || ""}
+
+${savedOrder.deliveryAddress.postalCode}
+
+${savedOrder.deliveryAddress.country || ""}
+
+
+Your order is now being processed.
+
+We will keep you updated as your order moves through the delivery process.
+
+Thank you for choosing FragCents!
+
+Regards,
+
+FragCents
+Customer Support
 `;
 
+        // Send email
         await sendEmail(
           savedOrder.customer.email,
+          `FragCents Order Confirmation - ${savedOrder.orderNumber}`,
+          emailText
+        );
+
+        console.log(
+          
+        );
+
+        console.log(
+          "FRAGCENTS CONFIRMATION EMAIL SENT"
           `Fragcents Order Confirmation - ${savedOrder.orderNumber}`,
           emailText,
         );
@@ -323,7 +576,102 @@ Fragcents
         console.log(
           `Order confirmation email sent to ${savedOrder.customer.email}`,
         );
+
+        console.log(
+          "Email:",
+          savedOrder.customer.email
+        );
+
+        console.log(
+          
+        );
+
       } catch (emailError) {
+        // Email failure should NOT cancel the order
+        console.error(
+          
+        );
+
+        console.error(
+          "FRAGCENTS EMAIL ERROR"
+        );
+
+        console.error(
+          emailError.message
+        );
+
+        console.error(
+          "================================="
+        );
+      }
+    }
+
+    // =====================================
+    // SUCCESS
+    // =====================================
+
+    console.log("\n=================================");
+    console.log("ORDER SAVED SUCCESSFULLY");
+    console.log("=================================");
+
+    console.log(
+      "Order ID:",
+      savedOrder._id
+    );
+
+    console.log(
+      "Order Number:",
+      savedOrder.orderNumber
+    );
+
+    console.log(
+      "Payment Method:",
+      savedOrder.paymentMethod
+    );
+
+    console.log(
+      "Payment Reference:",
+      savedOrder.paymentReference
+    );
+
+    console.log(
+      "Payment Status:",
+      savedOrder.paymentStatus
+    );
+
+    console.log(
+      "Order Status:",
+      savedOrder.orderStatus
+    );
+
+    console.log(
+      "Total:",
+      savedOrder.totalAmount
+    );
+
+    console.log(
+      "=================================\n"
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Order created successfully.",
+      order: savedOrder,
+    });
+
+  } catch (error) {
+    console.error(
+      
+    );
+
+    console.error(
+      "CREATE ORDER ERROR"
+    );
+
+    console.error(
+     
+    );
+
         console.error(
           "Order was saved, but confirmation email failed:",
           emailError.message,
@@ -387,8 +735,15 @@ Fragcents
     console.error("CREATE ORDER ERROR");
     console.error("=================================");
     console.error(error);
-    console.error("Message:", error.message);
-    console.error("=================================\n");
+
+    console.error(
+      "Message:",
+      error.message
+    );
+
+    console.error(
+      "=================================\n"
+    );
 
     return res.status(500).json({
       success: false,

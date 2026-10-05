@@ -2,29 +2,19 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
-    // =====================================
-    // ORDER NUMBER
-    // =====================================
-    orderNumber: {
+  orderNumber: {
       type: String,
       required: true,
       unique: true,
     },
 
-    // =====================================
-    // USER
-    // Optional because guest checkout is allowed
-    // =====================================
-    user: {
+  user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
 
-    // =====================================
-    // CUSTOMER INFORMATION
-    // =====================================
-    customer: {
+  customer: {
       name: {
         type: String,
         required: true,
@@ -42,9 +32,6 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    // =====================================
-    // DELIVERY ADDRESS
-    // =====================================
     deliveryAddress: {
       address: {
         type: String,
@@ -73,9 +60,6 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    // =====================================
-    // PRODUCTS
-    // =====================================
     products: [
       {
         product: {
@@ -101,9 +85,6 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
-    // =====================================
-    // ORDER AMOUNTS
-    // =====================================
     subtotal: {
       type: Number,
       required: true,
@@ -120,44 +101,36 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // =====================================
-    // PAYFAST PAYMENT METHOD
-    // =====================================
     paymentMethod: {
       type: String,
-      enum: [
-        "PayFast - Credit/Debit Card",
-        "PayFast - Instant EFT",
-        "PayFast - Capitec Pay",
-      ],
       required: true,
+      default: "PayFast",
     },
 
-    // =====================================
-    // PAYMENT STATUS
-    // =====================================
+    paymentReference: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true,
+    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
 
-    // =====================================
-    // ORDER STATUS
-    // =====================================
     orderStatus: {
       type: String,
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
 
-    // =====================================
-    // PAYMENT DATE
-    // =====================================
-    paidAt: {
+   paidAt: {
       type: Date,
     },
   },
+
   {
     timestamps: true,
   },
