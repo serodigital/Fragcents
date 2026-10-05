@@ -20,13 +20,11 @@ const orderSchema = new mongoose.Schema(
         required: true,
         trim: true,
       },
-
       email: {
         type: String,
         required: true,
         trim: true,
       },
-
       phone: {
         type: String,
         required: true,
@@ -40,25 +38,21 @@ const orderSchema = new mongoose.Schema(
         required: true,
         trim: true,
       },
-
       city: {
         type: String,
         required: true,
         trim: true,
       },
-
       postalCode: {
         type: String,
         required: true,
         trim: true,
       },
-
       province: {
         type: String,
         required: false,
         trim: true,
       },
-
       country: {
         type: String,
         required: false,
@@ -73,19 +67,16 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-
         name: {
           type: String,
           required: true,
           trim: true,
         },
-
         quantity: {
           type: Number,
           required: true,
           min: 1,
         },
-
         price: {
           type: Number,
           required: true,
@@ -99,13 +90,11 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-
     deliveryFee: {
       type: Number,
       required: true,
       min: 0,
     },
-
     totalAmount: {
       type: Number,
       required: true,
@@ -133,13 +122,7 @@ const orderSchema = new mongoose.Schema(
 
     orderStatus: {
       type: String,
-      enum: [
-        "pending",
-        "processing",
-        "shipped",
-        "delivered",
-        "cancelled",
-      ],
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
 
@@ -150,7 +133,7 @@ const orderSchema = new mongoose.Schema(
 
   {
     timestamps: true,
-  }
+  },
 );
 
 const Order = mongoose.model("Order", orderSchema);

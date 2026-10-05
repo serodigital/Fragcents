@@ -1,0 +1,172 @@
+
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --sd-charcoal: #1c1917;
+  --sd-ivory: #f7f3ec;
+  --sd-gold: #b8935a;
+  --sd-gold-dark: #96774a;
+  --sd-wine: #5c2a34;
+  --sd-text-muted: #6b6560;
+
+  /* Bootstrap variable overrides */
+  --bs-primary: var(--sd-charcoal);
+  --bs-primary-rgb: 28, 25, 23;
+  --bs-body-color: #2c2825;
+  --bs-body-bg: var(--sd-ivory);
+  --bs-border-color: #e4dccf;
+  --bs-link-color: var(--sd-wine);
+  --bs-link-hover-color: var(--sd-gold-dark);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #2c2825;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ---- Navbar ---- */
+.navbar.bg-primary {
+  background-color: var(--sd-charcoal) !important;
+}
+
+.navbar-brand {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.navbar-dark .nav-link {
+  color: rgba(247, 243, 236, 0.85) !important;
+  transition: color 0.15s ease;
+}
+
+.navbar-dark .nav-link:hover {
+  color: var(--sd-gold) !important;
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+  background-color: var(--sd-charcoal);
+  border-color: var(--sd-charcoal);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--sd-gold-dark);
+  border-color: var(--sd-gold-dark);
+}
+
+.btn-outline-primary {
+  color: var(--sd-charcoal);
+  border-color: var(--sd-charcoal);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--sd-charcoal);
+  border-color: var(--sd-charcoal);
+  color: var(--sd-ivory);
+}
+
+.btn-warning {
+  background-color: var(--sd-gold);
+  border-color: var(--sd-gold);
+  color: var(--sd-charcoal);
+}
+
+.btn-warning:hover {
+  background-color: var(--sd-gold-dark);
+  border-color: var(--sd-gold-dark);
+  color: var(--sd-ivory);
+}
+
+/* ---- Cards ---- */
+.card {
+  border-color: var(--bs-border-color);
+  border-radius: 6px;
+}
+
+.card-header.bg-primary {
+  background-color: var(--sd-charcoal) !important;
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ---- Admin sidebar active/hover state ---- */
+.btn.disabled.btn-primary {
+  background-color: var(--sd-wine);
+  border-color: var(--sd-wine);
+  opacity: 1;
+}
+
+/* ---- Badges ---- */
+.badge.bg-success {
+  background-color: #4a7a5e !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--sd-wine) !important;
+}
+
+.badge.bg-secondary {
+  background-color: #8a8378 !important;
+}
+
+.badge.bg-info {
+  background-color: var(--sd-gold-dark) !important;
+  color: var(--sd-charcoal);
+}
+
+.badge.bg-primary {
+  background-color: var(--sd-charcoal) !important;
+}
+
+/* ---- Welcome banner (replaces flat orange) ---- */
+.sd-welcome-banner {
+  background: linear-gradient(135deg, var(--sd-charcoal) 0%, var(--sd-wine) 100%);
+  color: var(--sd-ivory);
+  border-radius: 8px;
+}
+
+.sd-welcome-banner h2 {
+  color: var(--sd-ivory);
+  font-weight: 600;
+}
+
+.sd-welcome-banner p {
+  color: rgba(247, 243, 236, 0.8);
+}
+
+/* ---- Alerts (low stock, filter banners) ---- */
+.alert-warning {
+  background-color: #f4e6d4;
+  border-color: var(--sd-gold);
+  color: #6b4a1f;
+}
+
+.alert-info {
+  background-color: #f0e9e0;
+  border-color: var(--sd-wine);
+  color: var(--sd-wine);
+}
+
+/* ---- Text-muted tone-down ---- */
+.text-muted {
+  color: var(--sd-text-muted) !important;
+}
+
+/* ---- Product/category/supplier border accents ---- */
+.border-success {
+  border-color: #4a7a5e !important;
+}
+
+.border-danger {
+  border-color: var(--sd-wine) !important;
+}

@@ -7,12 +7,14 @@ const AuthProvider = ({ children }) => {
     user: null,
     token: "",
   });
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const storedAuth = localStorage.getItem("auth");
     if (storedAuth) {
       setAuth(JSON.parse(storedAuth));
     }
+    setAuthLoading(false);
   }, []);
 
   useEffect(() => {
@@ -23,8 +25,12 @@ const AuthProvider = ({ children }) => {
     }
   }, [auth]);
 
+  const logout = () => {
+    setAuth({ user: null, token: "" });
+  };
+
   return (
-    <AuthContext.Provider value={{ auth, setAuth }}>
+    <AuthContext.Provider value={{ auth, setAuth, authLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );
