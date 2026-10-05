@@ -11,12 +11,14 @@ const router = express.Router();
 // Supports:
 // - Logged-in users
 // - Guest users
+// - Paystack payments
 //
 // IMPORTANT:
-// - Only paid orders reduce stock
+// - Stock is reduced ONLY for paid orders
 // - Product quantity is reduced
 // - Product sold is increased
-// - Cannot purchase more than available stock
+// - FragCents confirmation email is sent
+//   after a paid order is saved
 // =====================================
 
 router.post("/create", async (req, res) => {
@@ -36,7 +38,13 @@ router.post("/create", async (req, res) => {
       subtotal,
       deliveryFee,
       totalAmount,
+
+      // PAYMENT
       paymentMethod,
+      paymentReference,
+      paymentStatus,
+      orderStatus,
+      paidAt,
     } = req.body;
 
     // =====================================
@@ -108,10 +116,6 @@ router.post("/create", async (req, res) => {
     for (const item of products) {
       console.log("Checking product:", item);
 
-      // -------------------------------------
-      // Product ID
-      // -------------------------------------
-
       if (!item.product) {
         return res.status(400).json({
           success: false,
@@ -130,20 +134,12 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // -------------------------------------
-      // Product name
-      // -------------------------------------
-
       if (!item.name) {
         return res.status(400).json({
           success: false,
           message: "Product name is missing.",
         });
       }
-
-      // -------------------------------------
-      // Quantity
-      // -------------------------------------
 
       const quantity = Number(item.quantity);
 
@@ -158,10 +154,6 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // -------------------------------------
-      // Price
-      // -------------------------------------
-
       const price = Number(item.price);
 
       if (!Number.isFinite(price) || price < 0) {
@@ -171,22 +163,25 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // -------------------------------------
-      // Check product exists
-      // -------------------------------------
+      // =====================================
+      // CHECK PRODUCT
+      // =====================================
 
-      const productExists = await Product.findById(item.product);
+      const productExists = await Product.findById(
+        item.product
+      );
 
       if (!productExists) {
         return res.status(400).json({
           success: false,
-          message: `Product does not exist in database: ${item.product}`,
+          message:
+            `Product does not exist in database: ${item.product}`,
         });
       }
 
-      // -------------------------------------
-      // Check stock
-      // -------------------------------------
+      // =====================================
+      // CHECK CURRENT STOCK
+      // =====================================
 
       const availableQuantity = Number(
         productExists.quantity || 0
@@ -202,39 +197,17 @@ router.post("/create", async (req, res) => {
       if (quantity > availableQuantity) {
         return res.status(400).json({
           success: false,
-          message: `Not enough stock for ${productExists.name}. Only ${availableQuantity} left.`,
+          message:
+            `Not enough stock for ${productExists.name}. ` +
+            `Only ${availableQuantity} left.`,
         });
       }
-
-      // -------------------------------------
-      // Add cleaned product
-      // -------------------------------------
 
       cleanedProducts.push({
         product: item.product,
         name: productExists.name.trim(),
         quantity,
         price,
-      });
-    }
-
-    // =====================================
-    // PAYMENT METHOD
-    // =====================================
-
-    const allowedPaymentMethods = [
-      "PayFast - Credit/Debit Card",
-      "PayFast - Instant EFT",
-      "PayFast - Capitec Pay",
-    ];
-
-    if (
-      !paymentMethod ||
-      !allowedPaymentMethods.includes(paymentMethod)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or missing PayFast payment method.",
       });
     }
 
@@ -256,8 +229,6 @@ router.post("/create", async (req, res) => {
         message: "Invalid order amount.",
       });
     }
-
-    // Prevent negative amounts
 
     if (
       cleanSubtotal < 0 ||
@@ -281,346 +252,381 @@ router.post("/create", async (req, res) => {
       )}`;
 
     // =====================================
-    // IMPORTANT:
-    // REDUCE PRODUCT STOCK
+    // CHECK DUPLICATE PAYMENT
     // =====================================
-    //
-    // We only reach this section after:
-    // - Customer information is valid
-    // - Address is valid
-    // - Products are valid
-    // - Products exist
-    // - Enough stock exists
-    // - PayFast payment method is valid
-    //
-    // We reduce quantity and increase sold.
 
-    const updatedProducts = [];
+    if (paymentReference) {
+      const existingOrder = await Order.findOne({
+        paymentReference,
+      });
 
-    try {
+      if (existingOrder) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An order already exists for this payment.",
+          order: existingOrder,
+        });
+      }
+    }
+
+    // =====================================
+    // CREATE ORDER
+    // =====================================
+
+    const order = new Order({
+      orderNumber: finalOrderNumber,
+
+      user: cleanUser,
+
+      customer: {
+        name: customer.name.trim(),
+        email: customer.email.trim(),
+        phone: customer.phone.trim(),
+      },
+
+      deliveryAddress: {
+        address: deliveryAddress.address.trim(),
+        city: deliveryAddress.city.trim(),
+        postalCode: deliveryAddress.postalCode.trim(),
+
+        ...(deliveryAddress.province && {
+          province: deliveryAddress.province.trim(),
+        }),
+
+        ...(deliveryAddress.country && {
+          country: deliveryAddress.country.trim(),
+        }),
+      },
+
+      products: cleanedProducts,
+
+      subtotal: Number(
+        cleanSubtotal.toFixed(2)
+      ),
+
+      deliveryFee: Number(
+        cleanDeliveryFee.toFixed(2)
+      ),
+
+      totalAmount: Number(
+        cleanTotalAmount.toFixed(2)
+      ),
+
+      paymentMethod:
+        paymentMethod || "Paystack",
+
+      paymentReference:
+        paymentReference || undefined,
+
+      paymentStatus:
+        paymentStatus || "pending",
+
+      orderStatus:
+        orderStatus || "pending",
+
+      paidAt:
+        paidAt || undefined,
+    });
+
+    // =====================================
+    // REDUCE STOCK ONLY AFTER PAYMENT
+    // =====================================
+
+    if (paymentStatus === "paid") {
+     
+      console.log("PAYMENT IS PAID");
+      console.log("UPDATING PRODUCT STOCK");
+      
+
       for (const item of cleanedProducts) {
-        console.log(
-          `Updating stock for ${item.name}...`
+        const product = await Product.findById(
+          item.product
         );
 
-        // Atomically decrease stock only if
-        // enough stock still exists.
-
-        const updatedProduct =
-          await Product.findOneAndUpdate(
-            {
-              _id: item.product,
-              quantity: { $gte: item.quantity },
-            },
-            {
-              $inc: {
-                quantity: -item.quantity,
-                sold: item.quantity,
-              },
-            },
-            {
-              new: true,
-            }
-          );
-
-        // -------------------------------------
-        // Stock changed between validation
-        // and update
-        // -------------------------------------
-
-        if (!updatedProduct) {
+        if (!product) {
           throw new Error(
-            `Not enough stock available for ${item.name}. The product may have just been purchased by another customer.`
+            `Product not found while updating stock: ${item.product}`
           );
         }
 
-        updatedProducts.push({
-          product: item.product,
-          quantity: item.quantity,
-        });
+        const currentQuantity = Number(
+          product.quantity || 0
+        );
+
+        const purchaseQuantity = Number(
+          item.quantity
+        );
+
+        // Safety check
+        if (
+          currentQuantity < purchaseQuantity
+        ) {
+          throw new Error(
+            `Not enough stock for ${product.name}. ` +
+            `Available: ${currentQuantity}, ` +
+            `Requested: ${purchaseQuantity}`
+          );
+        }
+
+        // Reduce stock
+        product.quantity =
+          currentQuantity - purchaseQuantity;
+
+        // Increase sold count
+        product.sold =
+          Number(product.sold || 0) +
+          purchaseQuantity;
+
+        await product.save();
 
         console.log(
-          `Stock updated: ${updatedProduct.name}`
+          `Product: ${product.name}`
         );
 
         console.log(
-          `Remaining quantity: ${updatedProduct.quantity}`
+          `Quantity before: ${currentQuantity}`
         );
 
         console.log(
-          `Total sold: ${updatedProduct.sold}`
+          `Quantity purchased: ${purchaseQuantity}`
         );
+
+        console.log(
+          `Quantity after: ${product.quantity}`
+        );
+
+        console.log(
+          `Sold: ${product.sold}`
+        );
+
+        console.log("---------------------------------");
       }
 
-      // =====================================
-      // CREATE ORDER
-      // =====================================
+      console.log(
+        "PRODUCT STOCK UPDATED SUCCESSFULLY"
+      );
 
-      const order = new Order({
-        orderNumber: finalOrderNumber,
+      console.log(
+        "=================================\n"
+      );
+    }
 
-        // Logged-in user:
-        // MongoDB ObjectId
-        //
-        // Guest:
-        // null
-        user: cleanUser,
+    // =====================================
+    // SAVE ORDER
+    // =====================================
 
-        // -------------------------------------
-        // Customer
-        // -------------------------------------
+    const savedOrder = await order.save();
 
-        customer: {
-          name: customer.name.trim(),
-          email: customer.email.trim(),
-          phone: customer.phone.trim(),
-        },
+    // =====================================
+    // SEND FRAGCENTS CONFIRMATION EMAIL
+    // ONLY AFTER PAID ORDER IS SAVED
+    // =====================================
 
-        // -------------------------------------
-        // Delivery address
-        // -------------------------------------
-
-        deliveryAddress: {
-          address: deliveryAddress.address.trim(),
-          city: deliveryAddress.city.trim(),
-          postalCode: deliveryAddress.postalCode.trim(),
-
-          ...(deliveryAddress.province && {
-            province: deliveryAddress.province.trim(),
-          }),
-
-          ...(deliveryAddress.country && {
-            country: deliveryAddress.country.trim(),
-          }),
-        },
-
-        // -------------------------------------
-        // Products
-        // -------------------------------------
-
-        products: cleanedProducts,
-
-        // -------------------------------------
-        // Amounts
-        // -------------------------------------
-
-        subtotal: Number(
-          cleanSubtotal.toFixed(2)
-        ),
-
-        deliveryFee: Number(
-          cleanDeliveryFee.toFixed(2)
-        ),
-
-        totalAmount: Number(
-          cleanTotalAmount.toFixed(2)
-        ),
-
-        // -------------------------------------
-        // Payment
-        // -------------------------------------
-
-        paymentMethod,
-
-        paymentStatus: "paid",
-
-        // -------------------------------------
-        // Order status
-        // -------------------------------------
-
-        orderStatus: "processing",
-
-        paidAt: new Date(),
-      });
-
-      // =====================================
-      // SAVE ORDER
-      // =====================================
-
-      const savedOrder = await order.save();
-      // =====================================
-      // SEND ORDER CONFIRMATION EMAIL
-      // =====================================
-
+    if (savedOrder.paymentStatus === "paid") {
       try {
-        const itemsText = savedOrder.products
+        // Create product list
+        const productList = savedOrder.products
           .map(
             (item) =>
-              `${item.name} x ${item.quantity} - R${(
-                item.price * item.quantity
+              `${item.name} x${item.quantity} - R${Number(
+                item.price
               ).toFixed(2)}`
           )
           .join("\n");
 
+        // Create email
         const emailText = `
-FRAGCENTS - ORDER CONFIRMATION
-=================================
+Hello ${savedOrder.customer.name},
 
-Thank you for your order, ${savedOrder.customer.name}!
+Thank you for shopping with FragCents!
 
-Your payment was successful and your order has been received.
+Your payment has been successfully received and your order has been confirmed.
 
 ORDER DETAILS
--------------
-Order Number: ${savedOrder.orderNumber}
-Order Status: ${savedOrder.orderStatus}
-Payment Status: ${savedOrder.paymentStatus}
-Payment Method: ${savedOrder.paymentMethod}
-Payment Date: ${savedOrder.paidAt.toLocaleString()}
-
-CUSTOMER INFORMATION
---------------------
-Name: ${savedOrder.customer.name}
-Email: ${savedOrder.customer.email}
-Phone: ${savedOrder.customer.phone}
-
-DELIVERY ADDRESS
-----------------
-${savedOrder.deliveryAddress.address}
-${savedOrder.deliveryAddress.city}
-${savedOrder.deliveryAddress.postalCode}
-${savedOrder.deliveryAddress.province || ""}
-${savedOrder.deliveryAddress.country || ""}
-
-ITEMS ORDERED
--------------
-${itemsText}
-
-ORDER SUMMARY
--------------
-Subtotal: R${savedOrder.subtotal.toFixed(2)}
-Delivery Fee: R${savedOrder.deliveryFee.toFixed(2)}
-TOTAL PAID: R${savedOrder.totalAmount.toFixed(2)}
-
 =================================
 
-Thank you for shopping with Fragcents!
+Order Number: ${savedOrder.orderNumber}
 
-Your order is currently being processed.
+Payment Method: ${savedOrder.paymentMethod}
 
-Fragcents
+Payment Reference: ${
+          savedOrder.paymentReference || "N/A"
+        }
+
+Payment Status: ${savedOrder.paymentStatus}
+
+Order Status: ${savedOrder.orderStatus}
+
+
+PRODUCTS
+=================================
+
+${productList}
+
+
+ORDER TOTAL
+=================================
+
+Subtotal: R${Number(
+          savedOrder.subtotal
+        ).toFixed(2)}
+
+Delivery Fee: R${Number(
+          savedOrder.deliveryFee
+        ).toFixed(2)}
+
+TOTAL PAID: R${Number(
+          savedOrder.totalAmount
+        ).toFixed(2)}
+
+
+DELIVERY ADDRESS
+=================================
+
+${savedOrder.deliveryAddress.address}
+
+${savedOrder.deliveryAddress.city}
+
+${savedOrder.deliveryAddress.province || ""}
+
+${savedOrder.deliveryAddress.postalCode}
+
+${savedOrder.deliveryAddress.country || ""}
+
+
+Your order is now being processed.
+
+We will keep you updated as your order moves through the delivery process.
+
+Thank you for choosing FragCents!
+
+Regards,
+
+FragCents
+Customer Support
 `;
 
+        // Send email
         await sendEmail(
           savedOrder.customer.email,
-          `Fragcents Order Confirmation - ${savedOrder.orderNumber}`,
+          `FragCents Order Confirmation - ${savedOrder.orderNumber}`,
           emailText
         );
 
         console.log(
-          `Order confirmation email sent to ${savedOrder.customer.email}`
+          
         );
+
+        console.log(
+          "FRAGCENTS CONFIRMATION EMAIL SENT"
+        );
+
+        console.log(
+          "Email:",
+          savedOrder.customer.email
+        );
+
+        console.log(
+          
+        );
+
       } catch (emailError) {
-        // Do NOT fail the order if the email fails
+        // Email failure should NOT cancel the order
         console.error(
-          "Order was saved, but confirmation email failed:",
+          
+        );
+
+        console.error(
+          "FRAGCENTS EMAIL ERROR"
+        );
+
+        console.error(
           emailError.message
         );
-      }
-      // =====================================
-      // SUCCESS LOG
-      // =====================================
 
-      console.log("\n=================================");
-      console.log("ORDER SAVED TO MONGODB");
-      console.log("=================================");
-      console.log("Order ID:", savedOrder._id);
-      console.log(
-        "Order Number:",
-        savedOrder.orderNumber
-      );
-      console.log(
-        "User:",
-        savedOrder.user || "GUEST CHECKOUT"
-      );
-      console.log(
-        "Payment:",
-        savedOrder.paymentMethod
-      );
-      console.log(
-        "Total:",
-        savedOrder.totalAmount
-      );
-
-      console.log("\nSTOCK UPDATED:");
-
-      for (const updated of updatedProducts) {
-        console.log(
-          `Product ${updated.product}: -${updated.quantity}`
+        console.error(
+          "================================="
         );
       }
-
-      console.log("=================================\n");
-
-      // =====================================
-      // RESPONSE
-      // =====================================
-
-      return res.status(201).json({
-        success: true,
-        message:
-          "Order created successfully and stock updated.",
-        order: savedOrder,
-      });
-
-    } catch (stockOrOrderError) {
-      // =====================================
-      // ROLLBACK STOCK IF ORDER CREATION FAILS
-      // =====================================
-      //
-      // If we successfully reduced stock for one
-      // or more products but something fails later,
-      // restore that stock.
-
-      console.error(
-        "Order creation/stock update failed:",
-        stockOrOrderError.message
-      );
-
-      if (updatedProducts.length > 0) {
-        console.log(
-          "Rolling back stock changes..."
-        );
-
-        for (const updated of updatedProducts) {
-          try {
-            await Product.findByIdAndUpdate(
-              updated.product,
-              {
-                $inc: {
-                  quantity: updated.quantity,
-                  sold: -updated.quantity,
-                },
-              }
-            );
-
-            console.log(
-              `Stock restored for product ${updated.product}`
-            );
-          } catch (rollbackError) {
-            console.error(
-              `CRITICAL: Failed to rollback stock for ${updated.product}`,
-              rollbackError
-            );
-          }
-        }
-      }
-
-      return res.status(400).json({
-        success: false,
-        message:
-          stockOrOrderError.message ||
-          "Failed to create order.",
-      });
     }
 
+    // =====================================
+    // SUCCESS
+    // =====================================
+
+    console.log("\n=================================");
+    console.log("ORDER SAVED SUCCESSFULLY");
+    console.log("=================================");
+
+    console.log(
+      "Order ID:",
+      savedOrder._id
+    );
+
+    console.log(
+      "Order Number:",
+      savedOrder.orderNumber
+    );
+
+    console.log(
+      "Payment Method:",
+      savedOrder.paymentMethod
+    );
+
+    console.log(
+      "Payment Reference:",
+      savedOrder.paymentReference
+    );
+
+    console.log(
+      "Payment Status:",
+      savedOrder.paymentStatus
+    );
+
+    console.log(
+      "Order Status:",
+      savedOrder.orderStatus
+    );
+
+    console.log(
+      "Total:",
+      savedOrder.totalAmount
+    );
+
+    console.log(
+      "=================================\n"
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Order created successfully.",
+      order: savedOrder,
+    });
+
   } catch (error) {
-    console.error("\n=================================");
-    console.error("CREATE ORDER ERROR");
-    console.error("=================================");
+    console.error(
+      
+    );
+
+    console.error(
+      "CREATE ORDER ERROR"
+    );
+
+    console.error(
+     
+    );
+
     console.error(error);
-    console.error("Message:", error.message);
-    console.error("=================================\n");
+
+    console.error(
+      "Message:",
+      error.message
+    );
+
+    console.error(
+      "=================================\n"
+    );
 
     return res.status(500).json({
       success: false,
