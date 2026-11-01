@@ -32,9 +32,9 @@ const SecureCheckout = () => {
   const [loadingUser, setLoadingUser] =
     useState(false);
 
-  // =========================================================
+  
   // CUSTOMER INFORMATION
-  // =========================================================
+ 
 
   const [name, setName] =
     useState("");
@@ -45,9 +45,9 @@ const SecureCheckout = () => {
   const [phone, setPhone] =
     useState("");
 
-  // =========================================================
+  
   // DELIVERY INFORMATION
-  // =========================================================
+
 
   const [address, setAddress] =
     useState("");
@@ -64,15 +64,15 @@ const SecureCheckout = () => {
   const [country, setCountry] =
     useState("South Africa");
 
-  // =========================================================
+ 
   // LOAD LOGGED-IN USER
-  // =========================================================
+  
 
   useEffect(() => {
     const loadUser = async () => {
-      // =====================================================
+     
       // GUEST CHECKOUT
-      // =====================================================
+    
 
       if (
         !auth?.token ||
@@ -104,7 +104,7 @@ const SecureCheckout = () => {
       setLoadingUser(true);
 
       console.log(
-        "================================="
+     
       );
 
       console.log(
@@ -114,7 +114,7 @@ const SecureCheckout = () => {
       console.log(auth.user);
 
       console.log(
-        "================================="
+        
       );
 
       setUser(auth.user);
@@ -131,9 +131,9 @@ const SecureCheckout = () => {
         auth.user.phone || ""
       );
 
-      // =====================================================
+      
       // CHECK USER ID
-      // =====================================================
+      
 
       if (!auth.user._id) {
         console.log(
@@ -146,13 +146,13 @@ const SecureCheckout = () => {
       }
 
       try {
-        // ===================================================
+        
         // GET USER FROM DATABASE
-        // ===================================================
+        
 
         const response =
           await axios.get(
-            `http://localhost:8000/api/user/${auth.user._id}`,
+            `https://api.fragcents.co.za/api/user/${auth.user._id}`,
             {
               headers: {
                 Authorization:
@@ -695,7 +695,7 @@ const SecureCheckout = () => {
 
         const paymentResponse =
   await axios.post(
-    "http://localhost:8000/api/payfast/create",
+    "https://api.fragcents.co.za/api/payfast/create",
     {
       ...orderData,
 
@@ -756,9 +756,9 @@ const SecureCheckout = () => {
           );
         }
 
-        // ===================================================
+       
         // SAVE PAYFAST REFERENCE
-        // ===================================================
+        
 
         if (
           payfastData.paymentReference
