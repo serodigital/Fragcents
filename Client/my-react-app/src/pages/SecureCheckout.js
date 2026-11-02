@@ -2,7 +2,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
-
+//
 import {
   useNavigate,
 } from "react-router-dom";
@@ -693,6 +693,7 @@ const SecureCheckout = () => {
           "================================="
         );
 
+
         const paymentResponse =
   await axios.post(
     "https://api.fragcents.co.za/api/payfast/create",
@@ -1248,6 +1249,7 @@ const SecureCheckout = () => {
                 <span>
                   Delivery
                 </span>
+
 
                 <span>
                   {deliveryFee ===
