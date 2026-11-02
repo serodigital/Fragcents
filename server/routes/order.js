@@ -301,19 +301,14 @@ router.post("/create", async (req, res) => {
       ),
 
       paymentMethod:
-        paymentMethod || "Paystack",
+        paymentMethod || "Payfast",
 
       paymentReference:
         paymentReference || undefined,
 
-      paymentStatus:
-        paymentStatus || "pending",
-
-      orderStatus:
-        orderStatus || "pending",
-
-      paidAt:
-        paidAt || undefined,
+      paymentStatus: "pending",
+orderStatus: "pending",
+paidAt: undefined,
     });
 
     // =====================================

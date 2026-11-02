@@ -14,18 +14,31 @@ import { AuthProvider, useAuth } from "./Context/Auth";
 import { CartProvider, useCart } from "./Context/CartContext";
 import AdminCategories from "./pages/AdminCategories";
 import AdminProducts from "./pages/AdminProducts";
+<<<<<<< HEAD
 import ShoppingPage from "./pages/ShoppingPage";
 import ProductViewPage from "./pages/ProductViewPage";
 import Checkout from "./pages/Checkout";
 import SecureCheckout from "./pages/SecureCheckout";
 
 import { Buffer } from "buffer";
+=======
+import ShoppingPage from './pages/ShoppingPage';
+import ProductViewPage from './pages/ProductViewPage';
+import { Buffer } from 'buffer';
+import Checkout from "./pages/Checkout";
+import SecureCheckout from "./pages/SecureCheckout";
+import { Toaster } from "react-hot-toast";
+//import Payment from "./pages/Payment";
+import UserDatabaseTest from "./pages/UserDatabaseTest";
+import OrderPage from "./pages/Orders";
+>>>>>>> da4c9d0b (Update FragCents frontend and checkout)
 
 window.Buffer = Buffer;
 
 const App = () => {
   return (
     <>
+     <Toaster position="top-right" />
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -34,14 +47,22 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/user-database-test" element={<UserDatabaseTest />} />
         <Route path="/cart" element={<CartPage />} />
-
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/SecureCheckout" element={<SecureCheckout />} />
         {/* Shopping and Product Routes */}
         <Route path="/shop" element={<ShoppingPageWrapper />} />
         <Route path="/product-view/:id" element={<ProductViewPageWrapper />} />
+<<<<<<< HEAD
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/SecureCheckout" element={<SecureCheckout />} />
 
+=======
+        
+        <Route path="/orders" element={<OrderPage />} />
+        
+>>>>>>> da4c9d0b (Update FragCents frontend and checkout)
         {/* Admin Routes */}
         <Route
           path="/admin"
@@ -100,7 +121,9 @@ function ProductViewPageWrapper() {
       auth={auth}
       cart={cart}
       addToCart={addToCart}
+      
     />
+    
   );
 }
 
