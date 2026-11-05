@@ -8,6 +8,8 @@ import categoryRoutes from "./routes/category.js";
 import productRoutes from "./routes/product.js";
 import userRoutes from "./routes/user.js";
 import orderRoutes from "./routes/order.js";
+
+
 const app = express();
 
 // ===============================
@@ -25,8 +27,9 @@ mongoose
 // ===============================
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-
+///app.use("/api/paystack", paystackRoutes);
 // ===============================
 // 📌 Email Transporter
 // ===============================
@@ -69,8 +72,7 @@ app.post("/api/test-email", async (req, res) => {
 app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
-app.use("/api", userRoutes);
-app.use("/api", orderRoutes);
+app.use("/api/order", orderRoutes);
 
 // ===============================
 // 📌 Server Start

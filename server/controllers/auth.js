@@ -1,8 +1,8 @@
 import User from "../models/user.js";
 import { hashPassword, comparePassword } from "../helpers/auth.js";
 import jwt from "jsonwebtoken";
-import { sendEmail } from "../utils/email.js";
 import crypto from "crypto";
+import { sendEmail } from "../utils/email.js";
 
 const SECRET_KEY =
   process.env.JWT_SECRET ||

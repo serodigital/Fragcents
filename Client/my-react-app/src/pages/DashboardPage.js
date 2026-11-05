@@ -5,6 +5,8 @@ import { useAuth } from "../Context/Auth";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 const formatAddress = (address) => {
   if (!address) return null;
   if (typeof address === "string") return address;
@@ -55,7 +57,7 @@ const DashboardPage = () => {
     }
   }, []);
 
-  // Listen for localStorage changes (when items are saved from other components)
+  // Listen for localStorage changes
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === "savedItems") {
@@ -64,6 +66,7 @@ const DashboardPage = () => {
     };
 
     window.addEventListener("storage", handleStorageChange);
+    // Also check periodically (for same-tab updates)
     const intervalId = setInterval(fetchSavedItems, 2000);
 
     return () => {
@@ -97,7 +100,7 @@ const DashboardPage = () => {
 
     setLoadingOrders(true);
     try {
-      const response = await axios.get("http://localhost:8000/api/order/mine", {
+      const response = await axios.get(`${API_URL}/api/order/mine`, {
         headers: { Authorization: `Bearer ${auth.token}` },
       });
 
@@ -165,7 +168,7 @@ const DashboardPage = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:8000/api/user/${auth.user._id}`,
+        `${API_URL}/api/user/${auth.user._id}`,
         submitData,
         { headers: { Authorization: `Bearer ${auth.token}` } },
       );
@@ -294,6 +297,11 @@ const DashboardPage = () => {
           </button>
         </li>
         <li className="nav-item">
+          <button className="nav-link" onClick={() => navigate("/orders")}>
+            📦 My Orders
+          </button>
+        </li>
+        <li className="nav-item">
           <button
             className={`nav-link ${activeTab === "saved" ? "active" : ""}`}
             onClick={() => {
@@ -315,7 +323,7 @@ const DashboardPage = () => {
               fetchMyOrders();
             }}
           >
-            📦 My Orders ({myOrders.length})
+            📦 Order History ({myOrders.length})
           </button>
         </li>
       </ul>
@@ -419,6 +427,7 @@ const DashboardPage = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+
                 <select
                   className="form-select"
                   value={sortBy}
@@ -452,6 +461,7 @@ const DashboardPage = () => {
                   ? "Items you save for later will appear here."
                   : "Try adjusting your search terms or filters."}
               </p>
+
               {savedItems.length === 0 && (
                 <button
                   className="btn btn-primary"
@@ -473,6 +483,7 @@ const DashboardPage = () => {
                       <th style={{ width: "200px" }}>Actions</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {filteredAndSortedItems.map((item, index) => {
                       const price =
@@ -500,14 +511,17 @@ const DashboardPage = () => {
                               }}
                             />
                           </td>
+
                           <td>
                             <strong>{item.name}</strong>
                             <br />
+
                             <small className="text-muted">
                               {typeof item.category === "string"
                                 ? item.category
                                 : item.category?.name || "Uncategorized"}
                             </small>
+
                             {item.dateAdded && (
                               <>
                                 <br />
@@ -520,6 +534,7 @@ const DashboardPage = () => {
                               </>
                             )}
                           </td>
+
                           <td>
                             <div className="d-flex flex-column">
                               <strong className="text-success">
@@ -535,6 +550,7 @@ const DashboardPage = () => {
                                 )}
                             </div>
                           </td>
+
                           <td>
                             <div className="d-flex gap-2 flex-wrap">
                               <button
@@ -544,6 +560,7 @@ const DashboardPage = () => {
                               >
                                 🛒 Add to Cart
                               </button>
+
                               <button
                                 onClick={() => removeSavedItem(savedItemIndex)}
                                 className="btn btn-outline-danger btn-sm"
@@ -551,6 +568,7 @@ const DashboardPage = () => {
                               >
                                 🗑️ Remove
                               </button>
+
                               {item.productUrl && (
                                 <a
                                   href={item.productUrl}
@@ -577,6 +595,7 @@ const DashboardPage = () => {
                     <strong>Total Items:</strong>{" "}
                     {filteredAndSortedItems.length}
                   </div>
+
                   <div className="col-md-3">
                     <strong>Total Value:</strong> R{" "}
                     {filteredAndSortedItems
@@ -587,6 +606,7 @@ const DashboardPage = () => {
                       }, 0)
                       .toFixed(2)}
                   </div>
+
                   <div className="col-md-3">
                     <strong>Avg. Price:</strong> R{" "}
                     {filteredAndSortedItems.length > 0
@@ -622,7 +642,7 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {/* My Orders Tab */}
+      {/* Order History Tab */}
       {activeTab === "orders" && (
         <div>
           <div className="d-flex justify-content-between align-items-center mb-3">

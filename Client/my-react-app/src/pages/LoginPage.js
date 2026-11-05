@@ -4,8 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/Auth";
 import toast, { Toaster } from "react-hot-toast";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 const LoginPage = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+
   const { setAuth } = useAuth();
   const navigate = useNavigate();
 
@@ -18,23 +25,37 @@ const LoginPage = () => {
   // Handle login form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const { data } = await axios.post(
-        "http://localhost:8000/api/login",
-        formData,
-      );
+    if (loading) return;
+    setLoading(true);
 
-      if (data.token) {
+    try {
+      const { data } = await axios.post(`${API_URL}/api/login`, formData);
+
+      if (data.token && data.user) {
         toast.success("Login successful!");
 
-        // Store the full user object and token exactly as the backend sent them
-        setAuth({
-          user: data.user,
+        const loggedInUser = {
+          _id: data.user._id || data.user.id,
+          name: data.user.name || "",
+          email: data.user.email || "",
+          role: data.user.role ?? 0,
+          phone: data.user.phone || "",
+          address: data.user.address || {},
+        };
+
+        const authData = {
+          user: loggedInUser,
           token: data.token,
-        });
+        };
+
+        // Update AuthContext
+        setAuth(authData);
+
+        // Store the same structure in localStorage
+        localStorage.setItem("auth", JSON.stringify(authData));
 
         // Redirect based on user role
-        if (data.user.role === 1) {
+        if (loggedInUser.role === 1) {
           navigate("/admin");
         } else {
           navigate("/dashboard");
@@ -43,9 +64,12 @@ const LoginPage = () => {
         toast.error(data.error || "Invalid credentials");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error(
         error.response?.data?.error || "An error occurred. Please try again.",
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,10 +77,10 @@ const LoginPage = () => {
     <div className="container mt-5">
       <div className="row justify-content-center">
         <Toaster position="top-right" reverseOrder={false} />
+
         <div className="col-md-4 col-lg-3">
-          {" "}
-          {/* Adjusted form width */}
           <h2 className="text-center mb-4">Login</h2>
+
           <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
             {/* Email Input */}
             <div className="mb-3">
@@ -97,8 +121,12 @@ const LoginPage = () => {
             </div>
 
             {/* Submit Button */}
-            <button type="submit" className="btn btn-primary w-100">
-              Login
+            <button
+              type="submit"
+              className="btn btn-primary w-100 mt-3"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
         </div>
