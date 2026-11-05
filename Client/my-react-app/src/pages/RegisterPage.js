@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-import { useAuth } from "../Context/Auth"; // Import useAuth
+import { useAuth } from "../Context/Auth";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -10,9 +12,10 @@ const RegisterPage = () => {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { setAuth } = useAuth(); // Get setAuth from context
+  const { setAuth } = useAuth();
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -21,31 +24,41 @@ const RegisterPage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) return; // stops double clicks
+    setLoading(true);
+
     try {
-      const response = await axios.post("http://localhost:8000/api/register", formData);
+      const response = await axios.post(`${API_URL}/api/register`, formData);
 
-      if (response.data.message) {
-        toast.success(response.data.message);
-
-        // Save user and token in context & localStorage
-        setAuth({
-          user: response.data.user,
-          token: response.data.token,
-        });
-
-        navigate("/dashboard"); // Redirect to Dashboard
-      } else if (response.data.error) {
+      if (response.data.error) {
         toast.error(response.data.error);
+        return;
       }
+
+      toast.success(response.data.message || "Registered successfully!");
+
+      // Save user and token in context & localStorage
+      setAuth({
+        user: response.data.user,
+        token: response.data.token,
+      });
+
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "An error occurred. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-4 col-lg-3"> {/* Adjusted form width */}
+        <div className="col-md-4 col-lg-3">
           <h2 className="text-center mb-4">Register</h2>
           <Toaster position="top-right" reverseOrder={false} />
           <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
@@ -94,8 +107,12 @@ const RegisterPage = () => {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary w-100">
-              Register
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={loading}
+            >
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
         </div>

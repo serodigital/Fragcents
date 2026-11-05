@@ -4,7 +4,9 @@ import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/email.js";
 import crypto from "crypto";
 
-const SECRET_KEY = process.env.JWT_SECRET || "aJh9dLpEqF8nResBVUCjNwAywLGz4D79dm8ReqTYaVZKRqWtPhVpKmTwd9D8BMCHEGjdJuRHph8tskPfm64xvNezH3cWd2nLXKeqkS98auBMvF";
+const SECRET_KEY =
+  process.env.JWT_SECRET ||
+  "aJh9dLpEqF8nResBVUCjNwAywLGz4D79dm8ReqTYaVZKRqWtPhVpKmTwd9D8BMCHEGjdJuRHph8tskPfm64xvNezH3cWd2nLXKeqkS98auBMvF";
 
 export const register = async (req, res) => {
   try {
@@ -20,17 +22,20 @@ export const register = async (req, res) => {
     const hashedPassword = await hashPassword(password);
     const user = await User.create({ name, email, password: hashedPassword });
 
-    await sendEmail(
-      email,
-      "Welcome to FragCents 🎉",
-      `Hi ${name}, welcome to FragCents! Your account has been created successfully.`
-    );
-
     const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: "7d" });
 
+    // Send the welcome email in the background. If it fails, registration still succeeds.
+    sendEmail(
+      email,
+      "Welcome to FragCents 🎉",
+      `Hi ${name}, welcome to FragCents! Your account has been created successfully.`,
+    ).catch((emailErr) => {
+      console.error("Welcome email failed:", emailErr.message);
+    });
+
     res.json({
-      message: "Registration successful! Email sent.",
-      user: { name: user.name, email: user.email },
+      message: "Registration successful!",
+      user: { _id: user._id, name: user.name, email: user.email },
       token,
     });
   } catch (err) {
@@ -91,11 +96,16 @@ export const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.json({ message: "If that email exists, a reset link has been sent." });
+      return res.json({
+        message: "If that email exists, a reset link has been sent.",
+      });
     }
 
     const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
 
     user.resetPasswordToken = hashedToken;
     user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
@@ -106,7 +116,7 @@ export const forgotPassword = async (req, res) => {
     await sendEmail(
       email,
       "Reset your FragCents password",
-      `Hi ${user.name}, click the link below to reset your password. This link expires in 1 hour.\n\n${resetUrl}\n\nIf you didn't request this, you can ignore this email.`
+      `Hi ${user.name}, click the link below to reset your password. This link expires in 1 hour.\n\n${resetUrl}\n\nIf you didn't request this, you can ignore this email.`,
     );
 
     res.json({ message: "If that email exists, a reset link has been sent." });

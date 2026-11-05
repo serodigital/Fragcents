@@ -27,16 +27,11 @@ const LoginPage = () => {
       if (data.token) {
         toast.success("Login successful!");
 
-        // Store user and token in AuthContext and localStorage
+        // Store the full user object and token exactly as the backend sent them
         setAuth({
-          user: {
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-          },
+          user: data.user,
           token: data.token,
         });
-        localStorage.setItem("auth", JSON.stringify(data));
 
         // Redirect based on user role
         if (data.user.role === 1) {
