@@ -365,6 +365,7 @@ FragCents Customer Support
   }
 });
 
+router.get("/mine", requireSignIn, getMyOrders);
 router.get("/order/mine", requireSignIn, getMyOrders);
 router.get("/orders", requireSignIn, isAdmin, getAllOrders);
 router.get("/finance-summary", requireSignIn, isManager, getFinanceSummary);
