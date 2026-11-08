@@ -32,7 +32,7 @@ const AdminUsers = () => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/user", {
+      const { data } = await axios.get("/api/user", {
         headers: { Authorization: auth.token },
       });
       if (data.success) {
@@ -47,7 +47,7 @@ const AdminUsers = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/orders", {
+      const { data } = await axios.get("/api/orders", {
         headers: { Authorization: auth.token },
       });
       if (data.success) {
@@ -70,7 +70,7 @@ const AdminUsers = () => {
   const handleRoleChange = async (userId, newRole) => {
     try {
       const { data } = await axios.put(
-        `http://localhost:8000/api/user/${userId}/role`,
+        `/api/user/${userId}/role`,
         { role: Number(newRole) },
         { headers: { Authorization: auth.token } },
       );
@@ -87,10 +87,9 @@ const AdminUsers = () => {
 
   const handleDelete = async (userId) => {
     try {
-      const { data } = await axios.delete(
-        `http://localhost:8000/api/user/${userId}`,
-        { headers: { Authorization: auth.token } },
-      );
+      const { data } = await axios.delete(`/api/user/${userId}`, {
+        headers: { Authorization: auth.token },
+      });
       if (data.success) {
         toast.success("User deleted successfully");
         fetchUsers();

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useCart } from "../../Context/CartContext";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_URL = process.env.REACT_APP_API_URL || "";
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-ZA", {

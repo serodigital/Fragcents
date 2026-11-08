@@ -15,10 +15,10 @@ const AdminFinances = () => {
       setLoading(true);
       try {
         const [summaryRes, ordersRes] = await Promise.all([
-          axios.get("http://localhost:8000/api/finance-summary", {
+          axios.get("/api/finance-summary", {
             headers: { Authorization: `Bearer ${auth.token}` },
           }),
-          axios.get("http://localhost:8000/api/orders", {
+          axios.get("/api/orders", {
             headers: { Authorization: `Bearer ${auth.token}` },
           }),
         ]);
@@ -46,7 +46,7 @@ const AdminFinances = () => {
     setUpdatingOrderId(orderId);
     try {
       const response = await axios.put(
-        `http://localhost:8000/api/order/${orderId}/status`,
+        `/api/order/${orderId}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${auth.token}` } },
       );

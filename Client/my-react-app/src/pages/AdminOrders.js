@@ -49,7 +49,7 @@ const AdminOrders = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/orders", {
+      const { data } = await axios.get("/api/orders", {
         headers: { Authorization: auth.token },
       });
       if (data.success) {
@@ -69,7 +69,7 @@ const AdminOrders = () => {
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const { data } = await axios.put(
-        `http://localhost:8000/api/order/${orderId}/status`,
+        `/api/order/${orderId}/status`,
         { orderStatus: newStatus },
         { headers: { Authorization: auth.token } },
       );

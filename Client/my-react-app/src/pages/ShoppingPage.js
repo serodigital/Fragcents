@@ -32,7 +32,7 @@ const ShoppingPage = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/products");
+      const { data } = await axios.get("/api/products");
       if (data.products) {
         setProducts(data.products);
         setFilteredProducts(data.products);
@@ -54,9 +54,7 @@ const ShoppingPage = () => {
 
   const fetchProductCount = useCallback(async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/countProduct",
-      );
+      const response = await axios.get("/api/countProduct");
       setProductCount(response.data.count);
       console.log("Product Count:", response.data.count);
     } catch (error) {

@@ -93,7 +93,7 @@ const CartPage = () => {
 
   const getImageUrl = (item) => {
     if (item._id) {
-      return `http://localhost:8000/api/product/image/${item._id}`;
+      return `/api/product/image/${item._id}`;
     }
     return item.image || "/images/default.jpg";
   };

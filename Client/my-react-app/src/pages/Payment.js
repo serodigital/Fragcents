@@ -36,7 +36,7 @@ const Payment = () => {
 
       if (!parsedOrder.customer) {
         toast.error(
-          "Customer information is missing. Please return to checkout."
+          "Customer information is missing. Please return to checkout.",
         );
         navigate("/SecureCheckout");
         return;
@@ -44,7 +44,7 @@ const Payment = () => {
 
       if (!parsedOrder.deliveryAddress) {
         toast.error(
-          "Delivery information is missing. Please return to checkout."
+          "Delivery information is missing. Please return to checkout.",
         );
         navigate("/SecureCheckout");
         return;
@@ -54,9 +54,7 @@ const Payment = () => {
         !Array.isArray(parsedOrder.products) ||
         parsedOrder.products.length === 0
       ) {
-        toast.error(
-          "Your order has no products. Please return to your cart."
-        );
+        toast.error("Your order has no products. Please return to your cart.");
         navigate("/cart");
         return;
       }
@@ -77,9 +75,7 @@ const Payment = () => {
   // ==========================================
 
   const generateOrderNumber = () => {
-    const randomNumber = Math.floor(
-      100000 + Math.random() * 900000
-    );
+    const randomNumber = Math.floor(100000 + Math.random() * 900000);
 
     return `FRAG-${randomNumber}`;
   };
@@ -103,7 +99,7 @@ const Payment = () => {
       console.log("MISSING CUSTOMER:", order.customer);
 
       toast.error(
-        "Customer information is missing. Please return to checkout."
+        "Customer information is missing. Please return to checkout.",
       );
 
       return false;
@@ -115,25 +111,17 @@ const Payment = () => {
       !order.deliveryAddress.city ||
       !order.deliveryAddress.postalCode
     ) {
-      console.log(
-        "MISSING DELIVERY:",
-        order.deliveryAddress
-      );
+      console.log("MISSING DELIVERY:", order.deliveryAddress);
 
       toast.error(
-        "Delivery information is missing. Please return to checkout."
+        "Delivery information is missing. Please return to checkout.",
       );
 
       return false;
     }
 
-    if (
-      !Array.isArray(order.products) ||
-      order.products.length === 0
-    ) {
-      toast.error(
-        "Your order has no products. Please return to your cart."
-      );
+    if (!Array.isArray(order.products) || order.products.length === 0) {
+      toast.error("Your order has no products. Please return to your cart.");
 
       return false;
     }
@@ -156,25 +144,19 @@ const Payment = () => {
 
     setProcessing(true);
 
-    toast.loading(
-      "Verifying your Paystack payment...",
-      {
-        id: "payment-processing",
-      }
-    );
+    toast.loading("Verifying your Paystack payment...", {
+      id: "payment-processing",
+    });
 
     try {
       // ==========================================
       // GET PAYSTACK REFERENCE
       // ==========================================
 
-      const savedReference =
-        localStorage.getItem("paystackReference");
+      const savedReference = localStorage.getItem("paystackReference");
 
       if (!savedReference) {
-        throw new Error(
-          "Paystack payment reference was not found."
-        );
+        throw new Error("Paystack payment reference was not found.");
       }
 
       console.log("=================================");
@@ -189,33 +171,20 @@ const Payment = () => {
       // VERIFY PAYMENT WITH BACKEND
       // ==========================================
 
-      const verifyResponse =
-        await axios.get(
-          `http://localhost:8000/api/paystack/verify/${savedReference}`
-        );
+      const verifyResponse = await axios.get(
+        `/api/paystack/verify/${savedReference}`,
+      );
 
       console.log("=================================");
       console.log("PAYSTACK VERIFICATION RESPONSE");
       console.log("=================================");
-      console.log(
-        JSON.stringify(
-          verifyResponse.data,
-          null,
-          2
-        )
-      );
+      console.log(JSON.stringify(verifyResponse.data, null, 2));
       console.log("=================================");
 
-      const paymentData =
-        verifyResponse.data?.data;
+      const paymentData = verifyResponse.data?.data;
 
-      if (
-        !verifyResponse.data?.success ||
-        !paymentData
-      ) {
-        throw new Error(
-          "Unable to verify Paystack payment."
-        );
+      if (!verifyResponse.data?.success || !paymentData) {
+        throw new Error("Unable to verify Paystack payment.");
       }
 
       // ==========================================
@@ -224,7 +193,7 @@ const Payment = () => {
 
       if (paymentData.status !== "success") {
         throw new Error(
-          `Payment was not successful. Paystack status: ${paymentData.status}`
+          `Payment was not successful. Paystack status: ${paymentData.status}`,
         );
       }
 
@@ -232,89 +201,61 @@ const Payment = () => {
       // CHECK PAYMENT AMOUNT
       // ==========================================
 
-      const expectedAmount =
-        Math.round(
-          Number(order.totalAmount) * 100
-        );
+      const expectedAmount = Math.round(Number(order.totalAmount) * 100);
 
-      const paidAmount =
-        Number(paymentData.amount);
+      const paidAmount = Number(paymentData.amount);
 
       if (paidAmount !== expectedAmount) {
-        console.error(
-          "AMOUNT MISMATCH:",
-          {
-            expectedAmount,
-            paidAmount,
-          }
-        );
+        console.error("AMOUNT MISMATCH:", {
+          expectedAmount,
+          paidAmount,
+        });
 
-        throw new Error(
-          "Payment amount does not match the order amount."
-        );
+        throw new Error("Payment amount does not match the order amount.");
       }
 
       // ==========================================
       // GENERATE ORDER NUMBER
       // ==========================================
 
-      const newOrderNumber =
-        generateOrderNumber();
+      const newOrderNumber = generateOrderNumber();
 
       // ==========================================
       // PREPARE PRODUCTS
       // ==========================================
 
-      const products =
-        order.products.map((item) => {
-          const productId =
-            item.product || item._id;
+      const products = order.products.map((item) => {
+        const productId = item.product || item._id;
 
-          if (!productId) {
-            throw new Error(
-              `Product ID is missing for ${
-                item.name || "an item"
-              }.`
-            );
-          }
-
-          if (!item.name) {
-            throw new Error(
-              "Product name is missing."
-            );
-          }
-
-          const quantity = Number(
-            item.quantity || 1
+        if (!productId) {
+          throw new Error(
+            `Product ID is missing for ${item.name || "an item"}.`,
           );
+        }
 
-          const price = Number(item.price);
+        if (!item.name) {
+          throw new Error("Product name is missing.");
+        }
 
-          if (
-            !Number.isFinite(quantity) ||
-            quantity <= 0
-          ) {
-            throw new Error(
-              `Invalid quantity for ${item.name}.`
-            );
-          }
+        const quantity = Number(item.quantity || 1);
 
-          if (
-            !Number.isFinite(price) ||
-            price < 0
-          ) {
-            throw new Error(
-              `Invalid price for ${item.name}.`
-            );
-          }
+        const price = Number(item.price);
 
-          return {
-            product: productId,
-            name: item.name.trim(),
-            quantity,
-            price,
-          };
-        });
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          throw new Error(`Invalid quantity for ${item.name}.`);
+        }
+
+        if (!Number.isFinite(price) || price < 0) {
+          throw new Error(`Invalid price for ${item.name}.`);
+        }
+
+        return {
+          product: productId,
+          name: item.name.trim(),
+          quantity,
+          price,
+        };
+      });
 
       // ==========================================
       // CUSTOMER
@@ -331,23 +272,18 @@ const Payment = () => {
       // ==========================================
 
       const deliveryAddress = {
-        address:
-          order.deliveryAddress.address.trim(),
+        address: order.deliveryAddress.address.trim(),
 
-        city:
-          order.deliveryAddress.city.trim(),
+        city: order.deliveryAddress.city.trim(),
 
-        postalCode:
-          order.deliveryAddress.postalCode.trim(),
+        postalCode: order.deliveryAddress.postalCode.trim(),
 
         ...(order.deliveryAddress.province && {
-          province:
-            order.deliveryAddress.province.trim(),
+          province: order.deliveryAddress.province.trim(),
         }),
 
         ...(order.deliveryAddress.country && {
-          country:
-            order.deliveryAddress.country.trim(),
+          country: order.deliveryAddress.country.trim(),
         }),
       };
 
@@ -355,14 +291,11 @@ const Payment = () => {
       // MONEY
       // ==========================================
 
-      const subtotal =
-        Number(order.subtotal) || 0;
+      const subtotal = Number(order.subtotal) || 0;
 
-      const deliveryFee =
-        Number(order.deliveryFee) || 0;
+      const deliveryFee = Number(order.deliveryFee) || 0;
 
-      const totalAmount =
-        Number(order.totalAmount) || 0;
+      const totalAmount = Number(order.totalAmount) || 0;
 
       // ==========================================
       // CREATE PAID ORDER
@@ -379,26 +312,21 @@ const Payment = () => {
 
         products,
 
-        subtotal:
-          Number(subtotal.toFixed(2)),
+        subtotal: Number(subtotal.toFixed(2)),
 
-        deliveryFee:
-          Number(deliveryFee.toFixed(2)),
+        deliveryFee: Number(deliveryFee.toFixed(2)),
 
-        totalAmount:
-          Number(totalAmount.toFixed(2)),
+        totalAmount: Number(totalAmount.toFixed(2)),
 
         paymentMethod: "Paystack",
 
-        paymentReference:
-          savedReference,
+        paymentReference: savedReference,
 
         paymentStatus: "paid",
 
         orderStatus: "processing",
 
-        paidAt:
-          new Date().toISOString(),
+        paidAt: new Date().toISOString(),
       };
 
       // ==========================================
@@ -408,45 +336,22 @@ const Payment = () => {
       console.log("=================================");
       console.log("PAYSTACK PAYMENT VERIFIED");
       console.log("=================================");
-      console.log(
-        "Order Number:",
-        newOrderNumber
-      );
-      console.log(
-        "Payment Reference:",
-        savedReference
-      );
-      console.log(
-        "Payment Status:",
-        paymentData.status
-      );
-      console.log(
-        "Order Being Sent To Server:"
-      );
-      console.log(
-        JSON.stringify(
-          completedOrder,
-          null,
-          2
-        )
-      );
+      console.log("Order Number:", newOrderNumber);
+      console.log("Payment Reference:", savedReference);
+      console.log("Payment Status:", paymentData.status);
+      console.log("Order Being Sent To Server:");
+      console.log(JSON.stringify(completedOrder, null, 2));
       console.log("=================================");
 
       // ==========================================
       // SAVE ORDER TO DATABASE
       // ==========================================
 
-      const response =
-        await axios.post(
-          "http://localhost:8000/api/order/create",
-          completedOrder,
-          {
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-          }
-        );
+      const response = await axios.post("/api/order/create", completedOrder, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       console.log("=================================");
       console.log("DATABASE ORDER RESPONSE");
@@ -458,92 +363,55 @@ const Payment = () => {
       // SUCCESS
       // ==========================================
 
-      if (
-        response.data &&
-        response.data.success
-      ) {
-        const savedOrder =
-          response.data.order ||
-          completedOrder;
+      if (response.data && response.data.success) {
+        const savedOrder = response.data.order || completedOrder;
 
-        const savedOrderNumber =
-          savedOrder.orderNumber ||
-          newOrderNumber;
+        const savedOrderNumber = savedOrder.orderNumber || newOrderNumber;
 
-        setOrderNumber(
-          savedOrderNumber
-        );
+        setOrderNumber(savedOrderNumber);
 
         setProcessing(false);
 
-        toast.dismiss(
-          "payment-processing"
-        );
+        toast.dismiss("payment-processing");
 
-        toast.success(
-          "Payment successful! Order created."
-        );
+        toast.success("Payment successful! Order created.");
 
         setPaymentSuccess(true);
 
         // Save completed order
-        localStorage.setItem(
-          "completedOrder",
-          JSON.stringify(savedOrder)
-        );
+        localStorage.setItem("completedOrder", JSON.stringify(savedOrder));
 
         // Remove pending order
-        localStorage.removeItem(
-          "pendingOrder"
-        );
+        localStorage.removeItem("pendingOrder");
 
         // Remove Paystack reference
-        localStorage.removeItem(
-          "paystackReference"
-        );
+        localStorage.removeItem("paystackReference");
       } else {
         throw new Error(
-          response.data?.message ||
-            "Order could not be created."
+          response.data?.message || "Order could not be created.",
         );
       }
     } catch (error) {
-      console.error(
-        "================================="
-      );
-      console.error(
-        "PAYSTACK PAYMENT / ORDER ERROR"
-      );
-      console.error(
-        "================================="
-      );
+      console.error("=================================");
+      console.error("PAYSTACK PAYMENT / ORDER ERROR");
+      console.error("=================================");
 
       console.error(error);
 
-      console.error(
-        "SERVER RESPONSE:",
-        error.response?.data
-      );
+      console.error("SERVER RESPONSE:", error.response?.data);
 
-      console.error(
-        "HTTP STATUS:",
-        error.response?.status
-      );
+      console.error("HTTP STATUS:", error.response?.status);
 
-      console.error(
-        "================================="
-      );
+      console.error("=================================");
 
       setProcessing(false);
 
-      toast.dismiss(
-        "payment-processing"
-      );
+      toast.dismiss("payment-processing");
 
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Payment verification failed."
+          "Payment verification failed.",
       );
     }
   };
@@ -557,9 +425,7 @@ const Payment = () => {
       <div className="container py-5 text-center">
         <div className="spinner-border text-success mb-3"></div>
 
-        <h5>
-          Loading payment...
-        </h5>
+        <h5>Loading payment...</h5>
       </div>
     );
   }
@@ -578,7 +444,6 @@ const Payment = () => {
           }}
         >
           <div className="card-body text-center p-5">
-
             <div
               className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-4"
               style={{
@@ -590,121 +455,74 @@ const Payment = () => {
               ✓
             </div>
 
-            <h2 className="fw-bold text-success">
-              Payment Successful!
-            </h2>
+            <h2 className="fw-bold text-success">Payment Successful!</h2>
 
-            <p className="text-muted">
-              Thank you for your purchase.
-            </p>
+            <p className="text-muted">Thank you for your purchase.</p>
 
             <hr />
 
             <div className="row text-start mt-4">
-
               <div className="col-6 mb-3">
-                <small className="text-muted">
-                  Order Number
-                </small>
+                <small className="text-muted">Order Number</small>
 
-                <div className="fw-bold">
-                  {orderNumber}
-                </div>
+                <div className="fw-bold">{orderNumber}</div>
               </div>
 
               <div className="col-6 mb-3">
-                <small className="text-muted">
-                  Amount Paid
-                </small>
+                <small className="text-muted">Amount Paid</small>
 
                 <div className="fw-bold">
-                  R
-                  {Number(
-                    order.totalAmount
-                  ).toFixed(2)}
+                  R{Number(order.totalAmount).toFixed(2)}
                 </div>
               </div>
 
               <div className="col-6">
-                <small className="text-muted">
-                  Payment Method
-                </small>
+                <small className="text-muted">Payment Method</small>
 
-                <div className="fw-bold">
-                  Paystack
-                </div>
+                <div className="fw-bold">Paystack</div>
               </div>
 
               <div className="col-6">
-                <small className="text-muted">
-                  Status
-                </small>
+                <small className="text-muted">Status</small>
 
-                <div className="text-success fw-bold">
-                  Paid
-                </div>
+                <div className="text-success fw-bold">Paid</div>
               </div>
-
             </div>
 
             <div className="text-start mt-4">
+              <small className="text-muted">Customer</small>
 
-              <small className="text-muted">
-                Customer
-              </small>
+              <div className="fw-bold">{order.customer.name}</div>
 
-              <div className="fw-bold">
-                {order.customer.name}
-              </div>
+              <div className="text-muted">{order.customer.email}</div>
 
-              <div className="text-muted">
-                {order.customer.email}
-              </div>
-
-              <div className="text-muted">
-                {order.customer.phone}
-              </div>
-
+              <div className="text-muted">{order.customer.phone}</div>
             </div>
 
             <div className="text-start mt-3">
+              <small className="text-muted">Delivery Address</small>
 
-              <small className="text-muted">
-                Delivery Address
-              </small>
-
-              <div>
-                {order.deliveryAddress.address}
-              </div>
+              <div>{order.deliveryAddress.address}</div>
 
               <div>
-                {order.deliveryAddress.city},{" "}
-                {order.deliveryAddress.postalCode}
+                {order.deliveryAddress.city}, {order.deliveryAddress.postalCode}
               </div>
 
               {order.deliveryAddress.province && (
-                <div>
-                  {order.deliveryAddress.province}
-                </div>
+                <div>{order.deliveryAddress.province}</div>
               )}
 
               {order.deliveryAddress.country && (
-                <div>
-                  {order.deliveryAddress.country}
-                </div>
+                <div>{order.deliveryAddress.country}</div>
               )}
-
             </div>
 
             <button
               className="btn btn-success w-100 mt-4"
-              onClick={() =>
-                navigate("/")
-              }
+              onClick={() => navigate("/")}
             >
               Continue Shopping
             </button>
-
           </div>
         </div>
       </div>
@@ -717,32 +535,20 @@ const Payment = () => {
 
   return (
     <div className="container py-5">
-
-      <h2 className="mb-2">
-        Payment
-      </h2>
+      <h2 className="mb-2">Payment</h2>
 
       <p className="text-muted mb-4">
-        Complete your payment securely with
-        Paystack.
+        Complete your payment securely with Paystack.
       </p>
 
       <div className="row g-4">
-
         <div className="col-md-7">
-
           <div className="card shadow-sm">
-
             <div className="card-body">
-
-              <h5 className="fw-bold mb-4">
-                Payment Method
-              </h5>
+              <h5 className="fw-bold mb-4">Payment Method</h5>
 
               <div className="border border-success border-2 rounded p-3 mb-3">
-
                 <div className="form-check">
-
                   <input
                     className="form-check-input"
                     type="radio"
@@ -752,48 +558,32 @@ const Payment = () => {
                   />
 
                   <label className="form-check-label">
-
-                    <strong>
-                      Paystack
-                    </strong>
+                    <strong>Paystack</strong>
 
                     <br />
 
-                    <small className="text-muted">
-                      Secure online payment
-                    </small>
-
+                    <small className="text-muted">Secure online payment</small>
                   </label>
-
                 </div>
-
               </div>
 
               <div className="bg-light rounded p-4 mb-3">
-
-                <h6 className="fw-bold mb-3">
-                  Paystack Payment
-                </h6>
+                <h6 className="fw-bold mb-3">Paystack Payment</h6>
 
                 <p className="text-muted mb-3">
-                  Your payment has been
-                  initiated through Paystack.
+                  Your payment has been initiated through Paystack.
                 </p>
 
                 <div className="alert alert-info mb-0">
-                  <strong>
-                    Test Mode
-                  </strong>
+                  <strong>Test Mode</strong>
 
                   <br />
 
                   <small>
-                    This is a Paystack test
-                    payment. No real money will
-                    be transferred.
+                    This is a Paystack test payment. No real money will be
+                    transferred.
                   </small>
                 </div>
-
               </div>
 
               <button
@@ -804,28 +594,20 @@ const Payment = () => {
                 {processing ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>
-
                     Verifying Payment...
                   </>
                 ) : (
-                  <>
-                    Confirm Payment
-                  </>
+                  <>Confirm Payment</>
                 )}
               </button>
 
               <button
                 className="btn btn-outline-secondary w-100 mt-2"
-                onClick={() =>
-                  navigate(
-                    "/SecureCheckout"
-                  )
-                }
+                onClick={() => navigate("/SecureCheckout")}
                 disabled={processing}
               >
                 Back to Checkout
               </button>
-
             </div>
           </div>
         </div>
@@ -833,106 +615,60 @@ const Payment = () => {
         {/* ORDER SUMMARY */}
 
         <div className="col-md-5">
-
           <div className="card shadow-sm">
-
             <div className="card-body">
+              <h5 className="fw-bold mb-3">Order Summary</h5>
 
-              <h5 className="fw-bold mb-3">
-                Order Summary
-              </h5>
+              {order.products.map((item, index) => (
+                <div
+                  key={item.product || item._id || index}
+                  className="d-flex justify-content-between border-bottom py-2"
+                >
+                  <div>
+                    <strong>{item.name}</strong>
 
-              {order.products.map(
-                (item, index) => (
-                  <div
-                    key={
-                      item.product ||
-                      item._id ||
-                      index
-                    }
-                    className="d-flex justify-content-between border-bottom py-2"
-                  >
+                    <br />
 
-                    <div>
-                      <strong>
-                        {item.name}
-                      </strong>
-
-                      <br />
-
-                      <small className="text-muted">
-                        Qty:{" "}
-                        {item.quantity}
-                      </small>
-                    </div>
-
-                    <span>
-                      R
-                      {(
-                        Number(item.price) *
-                        Number(
-                          item.quantity || 1
-                        )
-                      ).toFixed(2)}
-                    </span>
-
+                    <small className="text-muted">Qty: {item.quantity}</small>
                   </div>
-                )
-              )}
+
+                  <span>
+                    R
+                    {(Number(item.price) * Number(item.quantity || 1)).toFixed(
+                      2,
+                    )}
+                  </span>
+                </div>
+              ))}
 
               <hr />
 
               <div className="d-flex justify-content-between mb-2">
-                <span>
-                  Subtotal
-                </span>
+                <span>Subtotal</span>
 
-                <span>
-                  R
-                  {Number(
-                    order.subtotal
-                  ).toFixed(2)}
-                </span>
+                <span>R{Number(order.subtotal).toFixed(2)}</span>
               </div>
 
               <div className="d-flex justify-content-between mb-2">
-                <span>
-                  Delivery
-                </span>
+                <span>Delivery</span>
 
                 <span>
-                  {Number(
-                    order.deliveryFee
-                  ) === 0
+                  {Number(order.deliveryFee) === 0
                     ? "FREE"
-                    : `R${Number(
-                        order.deliveryFee
-                      ).toFixed(2)}`}
+                    : `R${Number(order.deliveryFee).toFixed(2)}`}
                 </span>
               </div>
 
               <hr />
 
               <div className="d-flex justify-content-between">
+                <strong>Total</strong>
 
-                <strong>
-                  Total
-                </strong>
-
-                <strong>
-                  R
-                  {Number(
-                    order.totalAmount
-                  ).toFixed(2)}
-                </strong>
-
+                <strong>R{Number(order.totalAmount).toFixed(2)}</strong>
               </div>
-
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
   );

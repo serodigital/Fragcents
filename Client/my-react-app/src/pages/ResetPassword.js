@@ -16,10 +16,10 @@ const ResetPassword = () => {
       return;
     }
     try {
-      const { data } = await axios.post(
-        "http://localhost:8000/api/reset-password",
-        { token, password }
-      );
+      const { data } = await axios.post("/api/reset-password", {
+        token,
+        password,
+      });
       if (data.error) {
         toast.error(data.error);
       } else {
@@ -28,7 +28,8 @@ const ResetPassword = () => {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.error || "Something went wrong. Please try again."
+        error.response?.data?.error ||
+          "Something went wrong. Please try again.",
       );
     }
   };
@@ -41,7 +42,9 @@ const ResetPassword = () => {
           <h2 className="text-center mb-4">Reset Password</h2>
           <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
             <div className="mb-3">
-              <label htmlFor="password" className="form-label">New Password</label>
+              <label htmlFor="password" className="form-label">
+                New Password
+              </label>
               <input
                 type="password"
                 id="password"
@@ -53,7 +56,9 @@ const ResetPassword = () => {
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="form-label">
+                Confirm Password
+              </label>
               <input
                 type="password"
                 id="confirmPassword"

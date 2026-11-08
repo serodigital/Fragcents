@@ -14,7 +14,7 @@ const ProductsList = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/products");
+      const { data } = await axios.get("/api/products");
       if (data.products) {
         setProducts(data.products);
       }
@@ -25,7 +25,7 @@ const ProductsList = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/categories");
+      const { data } = await axios.get("/api/categories");
       if (data.categories) setCategories(data.categories);
     } catch (error) {
       toast.error("Error fetching categories.");
@@ -60,7 +60,7 @@ const ProductsList = () => {
   const handleUpdate = async () => {
     try {
       const { data } = await axios.put(
-        `http://localhost:8000/api/product/${editingProduct}`,
+        `/api/product/${editingProduct}`,
         editFormData,
         { headers: { Authorization: auth.token } },
       );
@@ -78,10 +78,9 @@ const ProductsList = () => {
 
   const handleDelete = async (id) => {
     try {
-      const { data } = await axios.delete(
-        `http://localhost:8000/api/product/${id}`,
-        { headers: { Authorization: auth.token } },
-      );
+      const { data } = await axios.delete(`/api/product/${id}`, {
+        headers: { Authorization: auth.token },
+      });
       if (data.error) {
         toast.error(data.error);
       } else {
@@ -126,7 +125,7 @@ const ProductsList = () => {
                 }`}
               >
                 <img
-                  src={`http://localhost:8000/api/product/image/${product._id}`}
+                  src={`/api/product/image/${product._id}`}
                   alt={product.name}
                   onError={(e) => {
                     e.target.onerror = null;

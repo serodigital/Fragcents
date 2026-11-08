@@ -44,9 +44,7 @@ const UserDatabaseTest = () => {
          * We also check id in case your login code
          * stored the ID under that name.
          */
-        const userId =
-          auth?.user?._id ||
-          auth?.user?.id;
+        const userId = auth?.user?._id || auth?.user?.id;
 
         console.log("USER ID FOUND:", userId);
 
@@ -58,7 +56,7 @@ const UserDatabaseTest = () => {
 
         if (!userId) {
           setError(
-            "User is logged in, but the user ID is missing from the authentication data."
+            "User is logged in, but the user ID is missing from the authentication data.",
           );
           setLoading(false);
           return;
@@ -69,14 +67,11 @@ const UserDatabaseTest = () => {
         console.log("USER ID:", userId);
         console.log("=================================");
 
-        const response = await axios.get(
-          `http://localhost:8000/api/user/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${auth.token}`,
-            },
-          }
-        );
+        const response = await axios.get(`/api/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        });
 
         console.log("=================================");
         console.log("DATABASE USER RESPONSE");
@@ -99,11 +94,7 @@ const UserDatabaseTest = () => {
         setEmail(databaseUser.email || "");
         setPhone(databaseUser.phone || "");
 
-        setRole(
-          databaseUser.role !== undefined
-            ? databaseUser.role
-            : ""
-        );
+        setRole(databaseUser.role !== undefined ? databaseUser.role : "");
 
         // -----------------------------
         // ADDRESS INFORMATION
@@ -126,7 +117,6 @@ const UserDatabaseTest = () => {
         }
 
         setLoading(false);
-
       } catch (err) {
         console.error("=================================");
         console.error("ERROR LOADING USER");
@@ -137,8 +127,8 @@ const UserDatabaseTest = () => {
 
         setError(
           err.response?.data?.message ||
-          err.response?.data?.error ||
-          "Could not load user information."
+            err.response?.data?.error ||
+            "Could not load user information.",
         );
 
         setLoading(false);
@@ -146,7 +136,6 @@ const UserDatabaseTest = () => {
     };
 
     loadUserFromDatabase();
-
   }, [auth, authLoading]);
 
   // -----------------------------
@@ -156,9 +145,7 @@ const UserDatabaseTest = () => {
   if (authLoading) {
     return (
       <div className="container py-5">
-        <div className="alert alert-info">
-          Checking logged-in user...
-        </div>
+        <div className="alert alert-info">Checking logged-in user...</div>
       </div>
     );
   }
@@ -184,39 +171,31 @@ const UserDatabaseTest = () => {
   if (error) {
     return (
       <div className="container py-5">
-
         <div className="alert alert-danger">
           <strong>Error:</strong> {error}
         </div>
 
         <div className="card mt-3">
           <div className="card-body">
-
             <h5>Authentication Debug Information</h5>
 
             <p>
-              <strong>Token:</strong>{" "}
-              {auth?.token ? "Found" : "Missing"}
+              <strong>Token:</strong> {auth?.token ? "Found" : "Missing"}
             </p>
 
             <p>
-              <strong>User:</strong>{" "}
-              {auth?.user ? "Found" : "Missing"}
+              <strong>User:</strong> {auth?.user ? "Found" : "Missing"}
             </p>
 
             <p>
-              <strong>_id:</strong>{" "}
-              {auth?.user?._id || "Missing"}
+              <strong>_id:</strong> {auth?.user?._id || "Missing"}
             </p>
 
             <p>
-              <strong>id:</strong>{" "}
-              {auth?.user?.id || "Missing"}
+              <strong>id:</strong> {auth?.user?.id || "Missing"}
             </p>
-
           </div>
         </div>
-
       </div>
     );
   }
@@ -227,49 +206,31 @@ const UserDatabaseTest = () => {
 
   return (
     <div className="container py-5">
-
       <div className="mb-4">
-
-        <h2 className="fw-bold">
-          User Database Test
-        </h2>
+        <h2 className="fw-bold">User Database Test</h2>
 
         <p className="text-muted">
-          These fields are populated directly from
-          the logged-in user's MongoDB document.
+          These fields are populated directly from the logged-in user's MongoDB
+          document.
         </p>
-
       </div>
 
       {/* USER INFORMATION */}
 
       <div className="card shadow-sm mb-4">
-
         <div className="card-header">
-          <h5 className="mb-0">
-            Customer Information
-          </h5>
+          <h5 className="mb-0">Customer Information</h5>
         </div>
 
         <div className="card-body">
-
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Name
-            </label>
+            <label className="form-label fw-bold">Name</label>
 
-            <input
-              type="text"
-              className="form-control"
-              value={name}
-              readOnly
-            />
+            <input type="text" className="form-control" value={name} readOnly />
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Email
-            </label>
+            <label className="form-label fw-bold">Email</label>
 
             <input
               type="email"
@@ -280,9 +241,7 @@ const UserDatabaseTest = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Phone
-            </label>
+            <label className="form-label fw-bold">Phone</label>
 
             <input
               type="text"
@@ -293,37 +252,23 @@ const UserDatabaseTest = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Role
-            </label>
+            <label className="form-label fw-bold">Role</label>
 
-            <input
-              type="text"
-              className="form-control"
-              value={role}
-              readOnly
-            />
+            <input type="text" className="form-control" value={role} readOnly />
           </div>
-
         </div>
       </div>
 
       {/* ADDRESS INFORMATION */}
 
       <div className="card shadow-sm mb-4">
-
         <div className="card-header">
-          <h5 className="mb-0">
-            Address Information
-          </h5>
+          <h5 className="mb-0">Address Information</h5>
         </div>
 
         <div className="card-body">
-
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Street
-            </label>
+            <label className="form-label fw-bold">Street</label>
 
             <input
               type="text"
@@ -334,22 +279,13 @@ const UserDatabaseTest = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              City
-            </label>
+            <label className="form-label fw-bold">City</label>
 
-            <input
-              type="text"
-              className="form-control"
-              value={city}
-              readOnly
-            />
+            <input type="text" className="form-control" value={city} readOnly />
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Province
-            </label>
+            <label className="form-label fw-bold">Province</label>
 
             <input
               type="text"
@@ -360,9 +296,7 @@ const UserDatabaseTest = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Postal Code
-            </label>
+            <label className="form-label fw-bold">Postal Code</label>
 
             <input
               type="text"
@@ -373,9 +307,7 @@ const UserDatabaseTest = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold">
-              Country
-            </label>
+            <label className="form-label fw-bold">Country</label>
 
             <input
               type="text"
@@ -384,25 +316,16 @@ const UserDatabaseTest = () => {
               readOnly
             />
           </div>
-
         </div>
       </div>
 
       {/* SUCCESS */}
 
       <div className="alert alert-success">
-
-        <strong>
-          Database connection successful.
-        </strong>
-
+        <strong>Database connection successful.</strong>
         <br />
-
-        The information above was retrieved from
-        your MongoDB user document.
-
+        The information above was retrieved from your MongoDB user document.
       </div>
-
     </div>
   );
 };

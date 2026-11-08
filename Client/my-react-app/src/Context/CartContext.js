@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useEffect,
-} from "react";
+import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 const CartContext = createContext();
 
@@ -26,7 +21,7 @@ const cartReducer = (state, action) => {
       // Find existing product using PRODUCT ID
       // NOT cartItemId
       const existingItem = state.find(
-        (item) => String(item._id || item.id) === String(productId)
+        (item) => String(item._id || item.id) === String(productId),
       );
 
       // ==========================================
@@ -81,8 +76,7 @@ const cartReducer = (state, action) => {
       // NEW PRODUCT
       // ==========================================
 
-      const availableStock =
-        Number(product.stock ?? product.quantity) || 0;
+      const availableStock = Number(product.stock ?? product.quantity) || 0;
 
       // Don't add products with no stock
       if (availableStock <= 0) {
@@ -108,9 +102,7 @@ const cartReducer = (state, action) => {
           .substring(2, 9)}`,
 
         // Use product image if supplied
-        image:
-          product.image ||
-          `http://localhost:8000/api/product/image/${productId}`,
+        image: product.image || `/api/product/image/${productId}`,
       };
 
       console.log("=================================");
@@ -127,9 +119,7 @@ const cartReducer = (state, action) => {
     // REMOVE ITEM
     // ==========================================
     case "REMOVE_FROM_CART":
-      return state.filter(
-        (item) => item.cartItemId !== action.payload
-      );
+      return state.filter((item) => item.cartItemId !== action.payload);
 
     // ==========================================
     // UPDATE QUANTITY
@@ -141,7 +131,7 @@ const cartReducer = (state, action) => {
               ...item,
               quantity: action.payload.quantity,
             }
-          : item
+          : item,
       );
 
     // ==========================================
@@ -184,10 +174,7 @@ export const CartProvider = ({ children }) => {
           });
         }
       } catch (error) {
-        console.error(
-          "Error loading cart from localStorage:",
-          error
-        );
+        console.error("Error loading cart from localStorage:", error);
 
         localStorage.removeItem("cart");
       }
@@ -229,11 +216,7 @@ export const CartProvider = ({ children }) => {
   // UPDATE CART
   // ==========================================
   const updateCart = (cartItemId, quantity) => {
-    console.log(
-      "Updating cart:",
-      cartItemId,
-      quantity
-    );
+    console.log("Updating cart:", cartItemId, quantity);
 
     if (quantity <= 0) {
       removeFromCart(cartItemId);
@@ -263,9 +246,8 @@ export const CartProvider = ({ children }) => {
   // ==========================================
   const getCartItemCount = () => {
     return cart.reduce(
-      (total, item) =>
-        total + (Number(item.quantity) || 1),
-      0
+      (total, item) => total + (Number(item.quantity) || 1),
+      0,
     );
   };
 
@@ -277,14 +259,9 @@ export const CartProvider = ({ children }) => {
       const price =
         typeof item.price === "number"
           ? item.price
-          : parseFloat(
-              String(item.price).replace(/[^\d.-]/g, "")
-            ) || 0;
+          : parseFloat(String(item.price).replace(/[^\d.-]/g, "")) || 0;
 
-      return (
-        total +
-        price * (Number(item.quantity) || 1)
-      );
+      return total + price * (Number(item.quantity) || 1);
     }, 0);
   };
 
@@ -312,9 +289,7 @@ export const useCart = () => {
   const context = useContext(CartContext);
 
   if (!context) {
-    throw new Error(
-      "useCart must be used within a CartProvider"
-    );
+    throw new Error("useCart must be used within a CartProvider");
   }
 
   return context;

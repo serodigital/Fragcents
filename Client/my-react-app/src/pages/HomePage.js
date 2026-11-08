@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import ProductCard from "../components/cards/ProductCard";
 import { useAuth } from "../Context/Auth";
 
-const BACKEND_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.REACT_APP_API_URL || "";
 
 export default function HomePage() {
   const { auth } = useAuth();

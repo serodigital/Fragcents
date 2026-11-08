@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "../Context/Auth";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_URL = process.env.REACT_APP_API_URL || "";
 
 const PROVINCES = [
   "Eastern Cape",
