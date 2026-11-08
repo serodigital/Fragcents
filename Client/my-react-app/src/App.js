@@ -22,6 +22,7 @@ import Checkout from "./pages/Checkout";
 import SecureCheckout from "./pages/SecureCheckout";
 import UserDatabaseTest from "./pages/UserDatabaseTest";
 import OrderPage from "./pages/Orders";
+import RegistrationSuccess from "./pages/RegistrationSuccess";
 
 window.Buffer = Buffer;
 
@@ -33,6 +34,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/registration-success" element={<RegistrationSuccess />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />

@@ -10,17 +10,33 @@ const SECRET_KEY =
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name) return res.json({ error: "Name is required" });
+    const { name, lastName, email, password, address } = req.body;
+
+    if (!name) return res.json({ error: "First name is required" });
+    if (!lastName) return res.json({ error: "Last name is required" });
     if (!email) return res.json({ error: "Email is required" });
     if (!password || password.length < 6)
       return res.json({ error: "Password must be at least 6 characters long" });
+    if (!address || !address.street || !address.city || !address.postalCode)
+      return res.json({ error: "Street, city and postal code are required" });
 
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.json({ error: "Email is already taken" });
 
     const hashedPassword = await hashPassword(password);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const user = await User.create({
+      name,
+      lastName,
+      email,
+      password: hashedPassword,
+      address: {
+        street: address.street,
+        city: address.city,
+        province: address.province || "",
+        postalCode: address.postalCode,
+        country: address.country || "South Africa",
+      },
+    });
 
     const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: "7d" });
 
@@ -35,7 +51,13 @@ export const register = async (req, res) => {
 
     res.json({
       message: "Registration successful!",
-      user: { _id: user._id, name: user.name, email: user.email },
+      user: {
+        _id: user._id,
+        name: user.name,
+        lastName: user.lastName,
+        email: user.email,
+        address: user.address,
+      },
       token,
     });
   } catch (err) {
@@ -63,8 +85,11 @@ export const login = async (req, res) => {
       user: {
         _id: user._id,
         name: user.name,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
+        phone: user.phone,
+        address: user.address,
       },
       token,
     });

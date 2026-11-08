@@ -48,13 +48,24 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, address, phone, password } = req.body;
+    const { name, lastName, email, address, phone, password } = req.body;
 
     if (!(await canAccess(req, id))) {
       return res.status(403).json({ success: false, message: "Not allowed" });
     }
 
     const updateData = {};
+
+    if (name !== undefined) {
+      if (!String(name).trim()) {
+        return res
+          .status(400)
+          .json({ success: false, message: "First name cannot be empty" });
+      }
+      updateData.name = String(name).trim();
+    }
+
+    if (lastName !== undefined) updateData.lastName = String(lastName).trim();
     if (address !== undefined) updateData.address = address;
     if (phone !== undefined) updateData.phone = phone;
 
@@ -92,7 +103,6 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ success: false, message: "Error updating user" });
   }
 };
-
 // Update a user's role (admin only, set on the route)
 export const updateUserRole = async (req, res) => {
   try {

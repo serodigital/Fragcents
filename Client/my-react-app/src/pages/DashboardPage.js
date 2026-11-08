@@ -7,46 +7,86 @@ import axios from "axios";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
-const formatAddress = (address) => {
-  if (!address) return null;
-  if (typeof address === "string") return address;
-  return [
-    address.street || address.address,
-    address.city,
-    address.province,
-    address.postalCode,
-    address.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
+const PROVINCES = [
+  "Eastern Cape",
+  "Free State",
+  "Gauteng",
+  "KwaZulu-Natal",
+  "Limpopo",
+  "Mpumalanga",
+  "Northern Cape",
+  "North West",
+  "Western Cape",
+];
+
+const emptyAddress = {
+  street: "",
+  city: "",
+  province: "",
+  postalCode: "",
+  country: "South Africa",
 };
+
+// Works with both the new address object and old plain-text addresses
+const normalizeAddress = (a) => {
+  if (a && typeof a === "object") {
+    return {
+      street: a.street || "",
+      city: a.city || "",
+      province: a.province || "",
+      postalCode: a.postalCode || "",
+      country: a.country || "South Africa",
+    };
+  }
+  return { ...emptyAddress, street: typeof a === "string" ? a : "" };
+};
+
+const emptyForm = {
+  name: "",
+  lastName: "",
+  email: "",
+  address: { ...emptyAddress },
+  password: "",
+};
+
+const categoryName = (category) =>
+  typeof category === "string" ? category : category?.name || "";
+
+const DetailRow = ({ label, value }) => (
+  <div className="d-flex justify-content-between border-bottom py-2">
+    <span className="text-muted">{label}</span>
+    <span className={value ? "fw-semibold" : "text-muted fst-italic"}>
+      {value || "Not added yet"}
+    </span>
+  </div>
+);
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { auth, logout, authLoading } = useAuth();
+  const { addToCart, cart } = useCart();
+  const { auth, setAuth, logout, authLoading } = useAuth();
 
-  // State for the logged-in user's own profile form
-  const [formData, setFormData] = useState({
-    email: "",
-    address: "",
-    password: "",
-  });
+  // Profile loaded from the database
+  const [profile, setProfile] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState(emptyForm);
   const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // State for wishlist
   const [savedItems, setSavedItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
 
-  // State for tabs
   const [activeTab, setActiveTab] = useState("profile");
 
-  // State for my orders
   const [myOrders, setMyOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Fetch saved items from localStorage with real-time updates
+  const cartCount = Array.isArray(cart)
+    ? cart.reduce((total, item) => total + (Number(item.quantity) || 1), 0)
+    : 0;
+
+  // ---------- Saved items ----------
   const fetchSavedItems = useCallback(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("savedItems") || "[]");
@@ -57,7 +97,6 @@ const DashboardPage = () => {
     }
   }, []);
 
-  // Listen for localStorage changes
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === "savedItems") {
@@ -66,7 +105,6 @@ const DashboardPage = () => {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    // Also check periodically (for same-tab updates)
     const intervalId = setInterval(fetchSavedItems, 2000);
 
     return () => {
@@ -75,18 +113,19 @@ const DashboardPage = () => {
     };
   }, [fetchSavedItems]);
 
-  // Clear user personal data on logout
+  // ---------- Logout ----------
   const clearUserData = useCallback(() => {
     setSavedItems([]);
     localStorage.removeItem("savedItems");
     localStorage.removeItem("cart");
-    setFormData({ email: "", address: "", password: "" });
+    setProfile(null);
+    setEditing(false);
+    setFormData(emptyForm);
     setSearchTerm("");
     setSortBy("name");
     setShowPassword(false);
   }, []);
 
-  // Handle explicit logout
   const handleLogout = useCallback(() => {
     toast.success("Logging out and clearing personal data...");
     clearUserData();
@@ -94,7 +133,29 @@ const DashboardPage = () => {
     navigate("/login");
   }, [clearUserData, logout, navigate]);
 
-  // Fetch the logged-in user's own orders
+  // ---------- Load the profile from the database ----------
+  const fetchProfile = useCallback(async () => {
+    if (!auth.token || !auth.user?._id) return;
+
+    try {
+      const { data } = await axios.get(`${API_URL}/api/user/${auth.user._id}`, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+
+      if (data.success && data.user) {
+        setProfile(data.user);
+        // Keep the login session (and navbar) in step with the database
+        setAuth((prev) => ({
+          ...prev,
+          user: { ...prev.user, ...data.user },
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    }
+  }, [auth.token, auth.user?._id, setAuth]);
+
+  // ---------- Orders ----------
   const fetchMyOrders = useCallback(async () => {
     if (!auth.token) return;
 
@@ -115,7 +176,7 @@ const DashboardPage = () => {
     }
   }, [auth.token]);
 
-  // Initial setup and logout handling
+  // ---------- Setup ----------
   useEffect(() => {
     if (authLoading) return;
 
@@ -124,10 +185,19 @@ const DashboardPage = () => {
       navigate("/login");
     } else {
       fetchSavedItems();
+      fetchMyOrders();
+      fetchProfile();
     }
-  }, [auth.token, authLoading, navigate, fetchSavedItems, clearUserData]);
+  }, [
+    auth.token,
+    authLoading,
+    navigate,
+    fetchSavedItems,
+    fetchMyOrders,
+    fetchProfile,
+    clearUserData,
+  ]);
 
-  // Monitor auth state changes for logout detection
   useEffect(() => {
     const prevAuthState = sessionStorage.getItem("prevAuthState");
     const currentAuthState = auth.token ? "logged-in" : "logged-out";
@@ -140,25 +210,62 @@ const DashboardPage = () => {
     sessionStorage.setItem("prevAuthState", currentAuthState);
   }, [auth.token, clearUserData]);
 
-  // Populate the form with the current user's own info
-  useEffect(() => {
+  // What to display: the database copy, or the login session until it loads
+  const shown = profile || auth.user || {};
+  const shownAddress = normalizeAddress(shown.address);
+
+  // ---------- Editing ----------
+  const startEditing = () => {
     setFormData({
-      email: auth.user?.email || "",
-      address: formatAddress(auth.user?.address) || "",
+      name: shown.name || "",
+      lastName: shown.lastName || "",
+      email: shown.email || "",
+      address: normalizeAddress(shown.address),
       password: "",
     });
-  }, [auth.user]);
+    setShowPassword(false);
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setShowPassword(false);
+    setFormData(emptyForm);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      address: { ...prev.address, [name]: value },
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
+
+    if (!formData.name.trim()) {
+      toast.error("First name is required");
+      return;
+    }
+
+    if (formData.password && formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    setSaving(true);
 
     const submitData = {
-      email: formData.email,
+      name: formData.name.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim(),
       address: formData.address,
     };
 
@@ -174,22 +281,32 @@ const DashboardPage = () => {
       );
 
       if (response.data.success) {
-        toast.success("Profile saved successfully!", {
-          duration: 3000,
-          icon: "💾",
-        });
-        setFormData((prev) => ({ ...prev, password: "" }));
+        toast.success("Profile saved successfully!");
+
+        setProfile(response.data.user);
+        setAuth((prev) => ({
+          ...prev,
+          user: { ...prev.user, ...response.data.user },
+        }));
+
+        setEditing(false);
         setShowPassword(false);
+        setFormData(emptyForm);
       } else {
         toast.error(response.data.message || "Failed to save profile.");
       }
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error("Something went wrong while saving your profile.");
+      toast.error(
+        error.response?.data?.message ||
+          "Something went wrong while saving your profile.",
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Wishlist handlers
+  // ---------- Wishlist / cart helpers ----------
   const removeSavedItem = (itemIndex) => {
     const updated = savedItems.filter((_, index) => index !== itemIndex);
     setSavedItems(updated);
@@ -223,10 +340,6 @@ const DashboardPage = () => {
       addToCart(existingItem);
       toast.success(
         `${item.name} quantity increased! Now ${existingItem.quantity} in cart`,
-        {
-          icon: "🔢",
-          duration: 3000,
-        },
       );
     } else {
       const unitPrice = item.originalPrice || parsePrice(item.price);
@@ -242,31 +355,31 @@ const DashboardPage = () => {
       const updatedCart = [...existingCart, newItem];
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       addToCart(newItem);
-      toast.success(`${item.name} added to cart!`, {
-        icon: "🛒",
-        duration: 3000,
-      });
+      toast.success(`${item.name} added to cart!`);
     }
   };
 
   const filteredAndSortedItems = savedItems
     .filter(
       (item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.category &&
-          item.category.toLowerCase().includes(searchTerm.toLowerCase())),
+        (item.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        categoryName(item.category)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
     )
     .sort((a, b) => {
       switch (sortBy) {
         case "name":
-          return a.name.localeCompare(b.name);
+          return (a.name || "").localeCompare(b.name || "");
         case "price": {
           const priceA = a.originalPrice || parsePrice(a.price);
           const priceB = b.originalPrice || parsePrice(b.price);
           return priceA - priceB;
         }
         case "category":
-          return (a.category || "").localeCompare(b.category || "");
+          return categoryName(a.category).localeCompare(
+            categoryName(b.category),
+          );
         case "dateAdded":
           return new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0);
         default:
@@ -274,165 +387,543 @@ const DashboardPage = () => {
       }
     });
 
+  const totalSavedValue = filteredAndSortedItems.reduce(
+    (total, item) => total + (item.originalPrice || parsePrice(item.price)),
+    0,
+  );
+
+  // ---------- Display values ----------
+  const firstName = shown.name || "";
+  const lastName = shown.lastName || "";
+  const fullName = `${firstName} ${lastName}`.trim();
+  const initials =
+    `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "?";
+
+  const addressMissing =
+    !shownAddress.street && !shownAddress.city && !shownAddress.postalCode;
+
+  const statusClass = (status) =>
+    status === "delivered"
+      ? "bg-success"
+      : status === "shipped"
+        ? "bg-info"
+        : status === "processing"
+          ? "bg-primary"
+          : status === "cancelled"
+            ? "bg-danger"
+            : "bg-secondary";
+
   return (
-    <div className="container mt-5">
+    <div className="container mt-4 mb-5 dash-page">
       <Toaster position="top-right" reverseOrder={false} />
 
-      <div className="mb-4">
-        <h2 className="mb-2">📊 Dashboard</h2>
-        <div className="alert alert-success" role="alert">
-          <strong>Welcome back, {auth.user?.name}!</strong> You are now viewing
-          the dashboard.
+      <style>{`
+        .dash-page .dash-hero {
+          background: #1c1612;
+          color: #f7f1e8;
+          border-radius: 16px;
+          padding: 24px 28px;
+        }
+        .dash-page .dash-avatar {
+          width: 72px;
+          height: 72px;
+          min-width: 72px;
+          border-radius: 50%;
+          background: #957a4a;
+          color: #fff;
+          font-family: "Playfair Display", serif;
+          font-size: 1.8rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .dash-page .dash-hero h2 {
+          font-family: "Playfair Display", serif;
+          margin: 0;
+        }
+        .dash-page .dash-hero small { color: #cbbfa9; }
+        .dash-page .dash-stat {
+          background: #fff;
+          border: 1px solid #e6dccb;
+          border-radius: 14px;
+          padding: 16px;
+          text-align: center;
+          cursor: pointer;
+          width: 100%;
+          transition: box-shadow 0.15s ease;
+        }
+        .dash-page .dash-stat:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+        .dash-page .dash-stat .num {
+          display: block;
+          font-family: "Playfair Display", serif;
+          font-size: 1.9rem;
+          color: #1c1612;
+          line-height: 1.1;
+        }
+        .dash-page .dash-stat .lbl { color: #7a6a55; font-size: 0.9rem; }
+        .dash-page .dash-tabs {
+          display: flex;
+          gap: 6px;
+          border-bottom: 1px solid #e6dccb;
+          overflow-x: auto;
+        }
+        .dash-page .dash-tabs button {
+          border: none;
+          background: none;
+          padding: 10px 18px;
+          color: #7a6a55;
+          border-bottom: 3px solid transparent;
+          white-space: nowrap;
+        }
+        .dash-page .dash-tabs button.active {
+          color: #1c1612;
+          font-weight: 600;
+          border-bottom-color: #957a4a;
+        }
+        .dash-page .dash-card {
+          background: #fff;
+          border: 1px solid #e6dccb;
+          border-radius: 14px;
+          padding: 24px;
+          height: 100%;
+        }
+        .dash-page .dash-card h5 {
+          font-family: "Playfair Display", serif;
+          margin-bottom: 16px;
+        }
+        .dash-page .btn-brand {
+          background: #957a4a;
+          border: none;
+          color: #fff;
+          padding: 10px 24px;
+          border-radius: 8px;
+        }
+        .dash-page .btn-brand.btn-sm { padding: 6px 16px; }
+        .dash-page .btn-brand:hover:not(:disabled) { background: #7d6639; color: #fff; }
+        .dash-page .btn-brand:disabled { opacity: 0.7; }
+        .dash-page .btn-outline-brand {
+          background: transparent;
+          border: 1px solid #957a4a;
+          color: #7d6639;
+          border-radius: 8px;
+        }
+        .dash-page .btn-outline-brand:hover { background: #957a4a; color: #fff; }
+        .dash-page .saved-img {
+          width: 100%;
+          height: 190px;
+          object-fit: cover;
+          border-radius: 12px 12px 0 0;
+          background: #f1eadf;
+        }
+        .dash-page .dash-note {
+          background: #f6efe2;
+          border: 1px solid #e6dccb;
+          color: #6b5a3c;
+          border-radius: 10px;
+          padding: 10px 14px;
+          font-size: 0.9rem;
+          margin-bottom: 16px;
+        }
+      `}</style>
+
+      {/* Profile header */}
+      <div className="dash-hero d-flex align-items-center gap-3 flex-wrap mb-4">
+        <div className="dash-avatar">{initials}</div>
+        <div className="flex-grow-1">
+          <h2>Welcome back, {firstName || "there"}</h2>
+          <small>
+            {fullName && <span>{fullName} · </span>}
+            {shown.email}
+          </small>
+        </div>
+        <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+
+      {/* Quick stats */}
+      <div className="row g-3 mb-4">
+        <div className="col-4">
+          <button className="dash-stat" onClick={() => setActiveTab("orders")}>
+            <span className="num">{myOrders.length}</span>
+            <span className="lbl">Orders</span>
+          </button>
+        </div>
+        <div className="col-4">
+          <button className="dash-stat" onClick={() => setActiveTab("saved")}>
+            <span className="num">{savedItems.length}</span>
+            <span className="lbl">Saved items</span>
+          </button>
+        </div>
+        <div className="col-4">
+          <button className="dash-stat" onClick={() => navigate("/cart")}>
+            <span className="num">{cartCount}</span>
+            <span className="lbl">In your cart</span>
+          </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <ul className="nav nav-tabs mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "profile" ? "active" : ""}`}
-            onClick={() => setActiveTab("profile")}
-          >
-            👤 My Profile
-          </button>
-        </li>
-        <li className="nav-item">
-          <button className="nav-link" onClick={() => navigate("/orders")}>
-            📦 My Orders
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "saved" ? "active" : ""}`}
-            onClick={() => {
-              setActiveTab("saved");
-              fetchSavedItems();
-            }}
-          >
-            ❤️ Saved Items ({savedItems.length})
-            {savedItems.length === 0 && (
-              <span className="text-muted"> - Empty</span>
-            )}
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "orders" ? "active" : ""}`}
-            onClick={() => {
-              setActiveTab("orders");
-              fetchMyOrders();
-            }}
-          >
-            📦 Order History ({myOrders.length})
-          </button>
-        </li>
-      </ul>
+      <div className="dash-tabs mb-4">
+        <button
+          className={activeTab === "profile" ? "active" : ""}
+          onClick={() => setActiveTab("profile")}
+        >
+          My Profile
+        </button>
+        <button
+          className={activeTab === "orders" ? "active" : ""}
+          onClick={() => {
+            setActiveTab("orders");
+            fetchMyOrders();
+          }}
+        >
+          My Orders ({myOrders.length})
+        </button>
+        <button
+          className={activeTab === "saved" ? "active" : ""}
+          onClick={() => {
+            setActiveTab("saved");
+            fetchSavedItems();
+          }}
+        >
+          Saved Items ({savedItems.length})
+        </button>
+      </div>
 
-      {/* My Profile Tab */}
+      {/* PROFILE TAB */}
       {activeTab === "profile" && (
-        <div className="card mb-4">
-          <div className="card-body">
-            <h5 className="mb-3">My Profile</h5>
-            <form onSubmit={handleSubmit} className="row g-3">
-              <div className="col-md-4">
-                <label htmlFor="email" className="form-label">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="form-control"
-                  required
-                />
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="address" className="form-label">
-                  Address{" "}
-                  <span className="text-success">
-                    (Will be saved to database)
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="form-control"
-                  placeholder="Enter your complete address"
-                />
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="password" className="form-label">
-                  New Password (optional)
-                </label>
-                <div className="input-group">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="form-control"
-                    placeholder="Leave blank to keep current password"
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? "👁️‍🗨️" : "👁️"}
-                  </button>
+        <div>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="mb-0">My Profile</h4>
+            {!editing && (
+              <button className="btn btn-brand btn-sm" onClick={startEditing}>
+                Edit Profile
+              </button>
+            )}
+          </div>
+
+          {/* VIEW MODE */}
+          {!editing && (
+            <>
+              {addressMissing && (
+                <div className="dash-note">
+                  Your delivery address is empty. Click Edit Profile to add it,
+                  so checkout is quicker next time.
                 </div>
-                <div className="form-text">
-                  Leave empty to keep your current password unchanged.
+              )}
+
+              <div className="row g-4">
+                <div className="col-lg-6">
+                  <div className="dash-card">
+                    <h5>Personal Details</h5>
+                    <DetailRow label="First name" value={shown.name} />
+                    <DetailRow label="Last name" value={shown.lastName} />
+                    <DetailRow label="Email" value={shown.email} />
+                    <DetailRow label="Password" value="••••••••" />
+                  </div>
+                </div>
+
+                <div className="col-lg-6">
+                  <div className="dash-card">
+                    <h5>Delivery Address</h5>
+                    <DetailRow label="Street" value={shownAddress.street} />
+                    <DetailRow label="City / Town" value={shownAddress.city} />
+                    <DetailRow label="Province" value={shownAddress.province} />
+                    <DetailRow
+                      label="Postal code"
+                      value={shownAddress.postalCode}
+                    />
+                    <DetailRow label="Country" value={shownAddress.country} />
+                  </div>
                 </div>
               </div>
-              <div className="col-12">
-                <button type="submit" className="btn btn-success">
-                  💾 Save Profile
+            </>
+          )}
+
+          {/* EDIT MODE */}
+          {editing && (
+            <form onSubmit={handleSubmit}>
+              <div className="row g-4">
+                <div className="col-lg-6">
+                  <div className="dash-card">
+                    <h5>Personal Details</h5>
+
+                    <div className="row g-3 mb-3">
+                      <div className="col-md-6">
+                        <label htmlFor="name" className="form-label">
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleChange}
+                          className="form-control"
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label htmlFor="lastName" className="form-label">
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleChange}
+                          className="form-control"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label htmlFor="email" className="form-label">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="form-control"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="password" className="form-label">
+                        New Password (optional)
+                      </label>
+                      <div className="input-group">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          id="password"
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          className="form-control"
+                          placeholder="Leave blank to keep current"
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? "Hide" : "Show"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-lg-6">
+                  <div className="dash-card">
+                    <h5>Delivery Address</h5>
+
+                    <div className="mb-3">
+                      <label htmlFor="street" className="form-label">
+                        Street
+                      </label>
+                      <input
+                        type="text"
+                        id="street"
+                        name="street"
+                        value={formData.address.street}
+                        onChange={handleAddressChange}
+                        className="form-control"
+                        placeholder="House number and street"
+                      />
+                    </div>
+
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label htmlFor="city" className="form-label">
+                          City / Town
+                        </label>
+                        <input
+                          type="text"
+                          id="city"
+                          name="city"
+                          value={formData.address.city}
+                          onChange={handleAddressChange}
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label htmlFor="province" className="form-label">
+                          Province
+                        </label>
+                        <select
+                          id="province"
+                          name="province"
+                          value={formData.address.province}
+                          onChange={handleAddressChange}
+                          className="form-select"
+                        >
+                          <option value="">Select province</option>
+                          {PROVINCES.map((province) => (
+                            <option key={province} value={province}>
+                              {province}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-md-6">
+                        <label htmlFor="postalCode" className="form-label">
+                          Postal Code
+                        </label>
+                        <input
+                          type="text"
+                          id="postalCode"
+                          name="postalCode"
+                          value={formData.address.postalCode}
+                          onChange={handleAddressChange}
+                          className="form-control"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 d-flex gap-2">
+                <button
+                  type="submit"
+                  className="btn btn-brand"
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={cancelEditing}
+                  disabled={saving}
+                >
+                  Cancel
                 </button>
               </div>
             </form>
-          </div>
+          )}
         </div>
       )}
 
-      {/* Saved Items Tab */}
-      {activeTab === "saved" && (
+      {/* ORDERS TAB */}
+      {activeTab === "orders" && (
         <div>
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4>Your Saved Items</h4>
+            <h4 className="mb-0">My Orders</h4>
             <button
-              className="btn btn-outline-primary btn-sm"
-              onClick={fetchSavedItems}
-              title="Refresh saved items"
+              className="btn btn-outline-brand btn-sm"
+              onClick={fetchMyOrders}
+              disabled={loadingOrders}
             >
-              🔄 Refresh
+              {loadingOrders ? "Loading..." : "Refresh"}
             </button>
           </div>
 
+          {myOrders.length === 0 ? (
+            <div className="dash-card text-center py-5">
+              <h4>No orders yet</h4>
+              <p className="text-muted">Orders you place will appear here.</p>
+              <button
+                className="btn btn-brand"
+                onClick={() => navigate("/shop")}
+              >
+                Start Shopping
+              </button>
+            </div>
+          ) : (
+            <div className="row g-3">
+              {myOrders.map((order) => (
+                <div className="col-12" key={order._id}>
+                  <div className="dash-card">
+                    <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                      <div>
+                        <strong>
+                          {order.orderNumber || `#${order._id.slice(-6)}`}
+                        </strong>
+                        <div className="text-muted small">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <span
+                        className={`badge text-capitalize ${statusClass(
+                          order.orderStatus,
+                        )}`}
+                      >
+                        {order.orderStatus}
+                      </span>
+                    </div>
+
+                    {(order.products || []).map((item, i) => (
+                      <div
+                        key={i}
+                        className="d-flex justify-content-between border-top py-2"
+                      >
+                        <span>
+                          {item.quantity} × {item.name}
+                        </span>
+                        <span className="text-muted">
+                          R{(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+
+                    <div className="d-flex justify-content-end border-top pt-2">
+                      <strong>
+                        Total: R{Number(order.totalAmount || 0).toFixed(2)}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SAVED ITEMS TAB */}
+      {activeTab === "saved" && (
+        <div>
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h4 className="mb-0">Your Saved Items</h4>
+            {filteredAndSortedItems.length > 0 && (
+              <button
+                className="btn btn-brand btn-sm"
+                onClick={() => {
+                  filteredAndSortedItems.forEach((item) => addItemToCart(item));
+                  toast.success(
+                    `Added all ${filteredAndSortedItems.length} items to cart!`,
+                  );
+                }}
+              >
+                Add All to Cart · R{totalSavedValue.toFixed(2)}
+              </button>
+            )}
+          </div>
+
           {savedItems.length > 0 && (
-            <div className="card mb-4">
-              <div className="card-body d-flex justify-content-between">
+            <div className="row g-2 mb-4">
+              <div className="col-md-8">
                 <input
                   type="text"
-                  className="form-control me-3"
+                  className="form-control"
                   placeholder="Search saved items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-
+              </div>
+              <div className="col-md-4">
                 <select
                   className="form-select"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  style={{ maxWidth: "200px" }}
                 >
                   <option value="name">Sort by Name</option>
                   <option value="price">Sort by Price</option>
@@ -444,13 +935,7 @@ const DashboardPage = () => {
           )}
 
           {filteredAndSortedItems.length === 0 ? (
-            <div className="text-center py-5">
-              <div className="mb-4">
-                <i
-                  className="fas fa-heart-broken"
-                  style={{ fontSize: "4rem", color: "#dee2e6" }}
-                ></i>
-              </div>
+            <div className="dash-card text-center py-5">
               <h4>
                 {savedItems.length === 0
                   ? "No saved items yet"
@@ -459,12 +944,11 @@ const DashboardPage = () => {
               <p className="text-muted">
                 {savedItems.length === 0
                   ? "Items you save for later will appear here."
-                  : "Try adjusting your search terms or filters."}
+                  : "Try adjusting your search terms."}
               </p>
-
               {savedItems.length === 0 && (
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-brand"
                   onClick={() => navigate("/shop")}
                 >
                   Browse Products
@@ -472,274 +956,77 @@ const DashboardPage = () => {
               )}
             </div>
           ) : (
-            <div className="card">
-              <div className="card-body p-0">
-                <table className="table mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: "80px" }}>Image</th>
-                      <th>Details</th>
-                      <th style={{ width: "120px" }}>Price</th>
-                      <th style={{ width: "200px" }}>Actions</th>
-                    </tr>
-                  </thead>
+            <div className="row g-4">
+              {filteredAndSortedItems.map((item, index) => {
+                const price = item.originalPrice || parsePrice(item.price);
+                const savedItemIndex = savedItems.findIndex(
+                  (savedItem) =>
+                    (savedItem.id && savedItem.id === item.id) ||
+                    (savedItem.cartItemId &&
+                      savedItem.cartItemId === item.cartItemId),
+                );
 
-                  <tbody>
-                    {filteredAndSortedItems.map((item, index) => {
-                      const price =
-                        item.originalPrice || parsePrice(item.price);
-                      const savedItemIndex = savedItems.findIndex(
-                        (savedItem) =>
-                          (savedItem.id && savedItem.id === item.id) ||
-                          (savedItem.cartItemId &&
-                            savedItem.cartItemId === item.cartItemId),
-                      );
-
-                      return (
-                        <tr
-                          key={`saved-item-${item.id || item.cartItemId || index}`}
-                        >
-                          <td>
-                            <img
-                              src={item.image || "/images/default.jpg"}
-                              alt={item.name}
-                              width="60"
-                              height="60"
-                              className="rounded object-fit-cover"
-                              onError={(e) => {
-                                e.target.src = "/images/default.jpg";
-                              }}
-                            />
-                          </td>
-
-                          <td>
-                            <strong>{item.name}</strong>
-                            <br />
-
-                            <small className="text-muted">
-                              {typeof item.category === "string"
-                                ? item.category
-                                : item.category?.name || "Uncategorized"}
-                            </small>
-
-                            {item.dateAdded && (
-                              <>
-                                <br />
-                                <small className="text-muted">
-                                  Saved:{" "}
-                                  {new Date(
-                                    item.dateAdded,
-                                  ).toLocaleDateString()}
-                                </small>
-                              </>
-                            )}
-                          </td>
-
-                          <td>
-                            <div className="d-flex flex-column">
-                              <strong className="text-success">
-                                R {price.toFixed(2)}
-                              </strong>
-                              {item.originalPrice &&
-                                item.price &&
-                                item.originalPrice !==
-                                  parsePrice(item.price) && (
-                                  <small className="text-muted text-decoration-line-through">
-                                    R {parsePrice(item.price).toFixed(2)}
-                                  </small>
-                                )}
-                            </div>
-                          </td>
-
-                          <td>
-                            <div className="d-flex gap-2 flex-wrap">
-                              <button
-                                onClick={() => addItemToCart(item)}
-                                className="btn btn-primary btn-sm"
-                                title="Add to cart"
-                              >
-                                🛒 Add to Cart
-                              </button>
-
-                              <button
-                                onClick={() => removeSavedItem(savedItemIndex)}
-                                className="btn btn-outline-danger btn-sm"
-                                title="Remove from saved items"
-                              >
-                                🗑️ Remove
-                              </button>
-
-                              {item.productUrl && (
-                                <a
-                                  href={item.productUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="btn btn-outline-info btn-sm"
-                                  title="View product details"
-                                >
-                                  👁️ View
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="card-footer bg-light">
-                <div className="row text-center">
-                  <div className="col-md-3">
-                    <strong>Total Items:</strong>{" "}
-                    {filteredAndSortedItems.length}
-                  </div>
-
-                  <div className="col-md-3">
-                    <strong>Total Value:</strong> R{" "}
-                    {filteredAndSortedItems
-                      .reduce((total, item) => {
-                        const price =
-                          item.originalPrice || parsePrice(item.price);
-                        return total + price;
-                      }, 0)
-                      .toFixed(2)}
-                  </div>
-
-                  <div className="col-md-3">
-                    <strong>Avg. Price:</strong> R{" "}
-                    {filteredAndSortedItems.length > 0
-                      ? (
-                          filteredAndSortedItems.reduce((total, item) => {
-                            const price =
-                              item.originalPrice || parsePrice(item.price);
-                            return total + price;
-                          }, 0) / filteredAndSortedItems.length
-                        ).toFixed(2)
-                      : "0.00"}
-                  </div>
-                  <div className="col-md-3">
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => {
-                        filteredAndSortedItems.forEach((item) =>
-                          addItemToCart(item),
-                        );
-                        toast.success(
-                          `Added all ${filteredAndSortedItems.length} items to cart!`,
-                        );
-                      }}
-                      disabled={filteredAndSortedItems.length === 0}
+                return (
+                  <div
+                    className="col-md-6 col-lg-4"
+                    key={`saved-item-${item.id || item.cartItemId || index}`}
+                  >
+                    <div
+                      className="dash-card p-0 d-flex flex-column"
+                      style={{ overflow: "hidden" }}
                     >
-                      🛒 Add All to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+                      <img
+                        src={item.image || "/images/default.jpg"}
+                        alt={item.name}
+                        className="saved-img"
+                        onError={(e) => {
+                          e.target.src = "/images/default.jpg";
+                        }}
+                      />
+                      <div className="p-3 d-flex flex-column flex-grow-1">
+                        <strong>{item.name}</strong>
+                        <small className="text-muted">
+                          {categoryName(item.category) || "Uncategorized"}
+                        </small>
+                        <div className="mt-2 mb-3">
+                          <strong style={{ color: "#7d6639" }}>
+                            R {price.toFixed(2)}
+                          </strong>
+                        </div>
 
-      {/* Order History Tab */}
-      {activeTab === "orders" && (
-        <div>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4>My Orders</h4>
-            <button
-              className="btn btn-outline-primary btn-sm"
-              onClick={fetchMyOrders}
-              disabled={loadingOrders}
-            >
-              {loadingOrders ? "Loading..." : "🔄 Refresh"}
-            </button>
-          </div>
-
-          {myOrders.length === 0 ? (
-            <div className="text-center py-5">
-              <h4>No orders yet</h4>
-              <p className="text-muted">Orders you place will appear here.</p>
-              <button
-                className="btn btn-primary"
-                onClick={() => navigate("/shop")}
-              >
-                Browse Products
-              </button>
-            </div>
-          ) : (
-            <div className="card">
-              <div className="card-body p-0">
-                <table className="table mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Order</th>
-                      <th>Items</th>
-                      <th>Total</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {myOrders.map((order) => (
-                      <tr key={order._id}>
-                        <td>
-                          <small className="text-muted">
-                            #{order._id.slice(-6)}
-                          </small>
-                        </td>
-                        <td>
-                          {(order.products || []).map((item, i) => (
-                            <div key={i}>
-                              <small>
-                                {item.quantity}x {item.name}
-                              </small>
-                            </div>
-                          ))}
-                        </td>
-                        <td>
-                          <strong>R{order.totalAmount.toFixed(2)}</strong>
-                        </td>
-                        <td>
-                          <span
-                            className={`badge text-capitalize ${
-                              order.orderStatus === "delivered"
-                                ? "bg-success"
-                                : order.orderStatus === "shipped"
-                                  ? "bg-info"
-                                  : order.orderStatus === "processing"
-                                    ? "bg-primary"
-                                    : order.orderStatus === "cancelled"
-                                      ? "bg-danger"
-                                      : "bg-secondary"
-                            }`}
+                        <div className="d-flex gap-2 flex-wrap mt-auto">
+                          <button
+                            onClick={() => addItemToCart(item)}
+                            className="btn btn-brand btn-sm"
                           >
-                            {order.orderStatus}
-                          </span>
-                        </td>
-                        <td>
-                          <small>
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </small>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            Add to Cart
+                          </button>
+                          <button
+                            onClick={() => removeSavedItem(savedItemIndex)}
+                            className="btn btn-outline-danger btn-sm"
+                          >
+                            Remove
+                          </button>
+                          {item.productUrl && (
+                            <a
+                              href={item.productUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-outline-brand btn-sm"
+                            >
+                              View
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
-
-      {/* Logout button */}
-      <div className="mt-5 pt-4 border-top">
-        <div className="d-flex justify-content-end">
-          <button className="btn btn-outline-danger" onClick={handleLogout}>
-            🚪 Logout & Clear Data
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
