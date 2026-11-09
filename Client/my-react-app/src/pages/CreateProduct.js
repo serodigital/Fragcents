@@ -19,7 +19,7 @@ const CreateProduct = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/categories");
+      const { data } = await axios.get("/api/categories");
       if (data.categories) {
         setCategories(data.categories);
         if (data.categories.length > 0) {
@@ -79,16 +79,12 @@ const CreateProduct = () => {
         }
       });
 
-      const { data } = await axios.post(
-        "http://localhost:8000/api/product",
-        productFormData,
-        {
-          headers: {
-            Authorization: token,
-            "Content-Type": "multipart/form-data",
-          },
+      const { data } = await axios.post("/api/product", productFormData, {
+        headers: {
+          Authorization: token,
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
       if (data.error) {
         toast.error(data.error);

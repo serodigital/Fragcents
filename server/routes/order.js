@@ -13,28 +13,18 @@ import {
 
 const router = express.Router();
 
+// =====================================
 // CREATE ORDER
-// Supports:
-// - Logged-in users
-// - Guest users
-// - Paystack payments
-//
-// IMPORTANT:
-// - Stock is reduced ONLY for paid orders
-// - Product quantity is reduced
-// - Product sold is increased
-// - FragCents confirmation email is sent
-//   after a paid order is saved
+// Supports logged-in users and guests.
+// - Stock is reduced atomically
+// - Stock is rolled back if anything fails
+// - Confirmation email is sent after the order is saved
 // =====================================
 
 router.post("/create", async (req, res) => {
-  try {
-    console.log("\n=================================");
-    console.log("CREATE ORDER REQUEST");
-    console.log("=================================");
-    console.log(JSON.stringify(req.body, null, 2));
-    console.log("=================================\n");
+  const updatedProducts = [];
 
+  try {
     const {
       orderNumber,
       user,
@@ -44,15 +34,11 @@ router.post("/create", async (req, res) => {
       subtotal,
       deliveryFee,
       totalAmount,
-
-      // PAYMENT
       paymentMethod,
       paymentReference,
-      paymentStatus,
-      orderStatus,
-      paidAt,
     } = req.body;
 
+    // ---------- USER ----------
     let cleanUser = null;
 
     if (user) {
@@ -65,6 +51,7 @@ router.post("/create", async (req, res) => {
       cleanUser = user;
     }
 
+    // ---------- CUSTOMER ----------
     if (!customer || !customer.name || !customer.email || !customer.phone) {
       return res.status(400).json({
         success: false,
@@ -72,6 +59,7 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // ---------- ADDRESS ----------
     if (
       !deliveryAddress ||
       !deliveryAddress.address ||
@@ -84,6 +72,7 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // ---------- PRODUCTS ----------
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({
         success: false,
@@ -94,8 +83,6 @@ router.post("/create", async (req, res) => {
     const cleanedProducts = [];
 
     for (const item of products) {
-      console.log("Checking product:", item);
-
       if (!item.product) {
         return res.status(400).json({
           success: false,
@@ -119,11 +106,7 @@ router.post("/create", async (req, res) => {
 
       const quantity = Number(item.quantity);
 
-      if (
-        !Number.isFinite(quantity) ||
-        quantity < 1 ||
-        !Number.isInteger(quantity)
-      ) {
+      if (!Number.isInteger(quantity) || quantity < 1) {
         return res.status(400).json({
           success: false,
           message: `Invalid quantity for ${item.name}.`,
@@ -139,30 +122,16 @@ router.post("/create", async (req, res) => {
         });
       }
 
-      // =====================================
-      // CHECK PRODUCT
-      // =====================================
-
-      const productExists = await Product.findById(
-        item.product
-      );
+      // Check the product exists and has stock
       const productExists = await Product.findById(item.product);
 
       if (!productExists) {
         return res.status(400).json({
           success: false,
-          message:
-            `Product does not exist in database: ${item.product}`,
+          message: `Product does not exist in database: ${item.product}`,
         });
       }
 
-      // =====================================
-      // CHECK CURRENT STOCK
-      // =====================================
-
-      const availableQuantity = Number(
-        productExists.quantity || 0
-      );
       const availableQuantity = Number(productExists.quantity || 0);
 
       if (availableQuantity <= 0) {
@@ -189,9 +158,7 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // =====================================
-    // MONEY
-    // =====================================
+    // ---------- PAYMENT METHOD ----------
     const allowedPaymentMethods = [
       "PayFast - Credit/Debit Card",
       "PayFast - Instant EFT",
@@ -205,6 +172,7 @@ router.post("/create", async (req, res) => {
       });
     }
 
+    // ---------- MONEY ----------
     const cleanSubtotal = Number(subtotal);
     const cleanDeliveryFee = Number(deliveryFee);
     const cleanTotalAmount = Number(totalAmount);
@@ -220,11 +188,6 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    if (
-      cleanSubtotal < 0 ||
-      cleanDeliveryFee < 0 ||
-      cleanTotalAmount < 0
-    ) {
     if (cleanSubtotal < 0 || cleanDeliveryFee < 0 || cleanTotalAmount < 0) {
       return res.status(400).json({
         success: false,
@@ -233,520 +196,176 @@ router.post("/create", async (req, res) => {
     }
 
     const finalOrderNumber =
-      orderNumber ||
-      `FRAG-${Math.floor(
-        100000 + Math.random() * 900000
-      )}`;
+      orderNumber || `FRAG-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // =====================================
-    // CHECK DUPLICATE PAYMENT
-    // =====================================
-
+    // ---------- DUPLICATE PAYMENT ----------
     if (paymentReference) {
-      const existingOrder = await Order.findOne({
-        paymentReference,
-      });
+      const existingOrder = await Order.findOne({ paymentReference });
 
       if (existingOrder) {
         return res.status(409).json({
           success: false,
-          message:
-            "An order already exists for this payment.",
+          message: "An order already exists for this payment.",
           order: existingOrder,
         });
       }
     }
 
-    // =====================================
-    // CREATE ORDER
-    // =====================================
+    // ---------- REDUCE STOCK (atomic) ----------
+    for (const item of cleanedProducts) {
+      const updatedProduct = await Product.findOneAndUpdate(
+        {
+          _id: item.product,
+          quantity: { $gte: item.quantity },
+        },
+        {
+          $inc: {
+            quantity: -item.quantity,
+            sold: item.quantity,
+          },
+        },
+        { new: true },
+      );
 
+      if (!updatedProduct) {
+        const stockError = new Error(
+          `Not enough stock available for ${item.name}. The product may have just been purchased by another customer.`,
+        );
+        stockError.isStockError = true;
+        throw stockError;
+      }
+
+      updatedProducts.push({
+        product: item.product,
+        quantity: item.quantity,
+      });
+    }
+
+    // ---------- SAVE ORDER ----------
     const order = new Order({
       orderNumber: finalOrderNumber,
-
       user: cleanUser,
-
       customer: {
         name: customer.name.trim(),
         email: customer.email.trim(),
         phone: customer.phone.trim(),
       },
-
       deliveryAddress: {
         address: deliveryAddress.address.trim(),
         city: deliveryAddress.city.trim(),
         postalCode: deliveryAddress.postalCode.trim(),
-
         ...(deliveryAddress.province && {
           province: deliveryAddress.province.trim(),
         }),
-
         ...(deliveryAddress.country && {
           country: deliveryAddress.country.trim(),
         }),
       },
-
       products: cleanedProducts,
-
-      subtotal: Number(
-        cleanSubtotal.toFixed(2)
-      ),
-
-      deliveryFee: Number(
-        cleanDeliveryFee.toFixed(2)
-      ),
-
-      totalAmount: Number(
-        cleanTotalAmount.toFixed(2)
-      ),
-
-      paymentMethod:
-        paymentMethod || "Payfast",
-
-      paymentReference:
-        paymentReference || undefined,
-
-      paymentStatus: "pending",
-orderStatus: "pending",
-paidAt: undefined,
+      subtotal: Number(cleanSubtotal.toFixed(2)),
+      deliveryFee: Number(cleanDeliveryFee.toFixed(2)),
+      totalAmount: Number(cleanTotalAmount.toFixed(2)),
+      paymentMethod,
+      paymentReference: paymentReference || undefined,
+      paymentStatus: "paid",
+      orderStatus: "processing",
+      paidAt: new Date(),
     });
-
-    // =====================================
-    // REDUCE STOCK ONLY AFTER PAYMENT
-    // =====================================
-
-    if (paymentStatus === "paid") {
-     
-      console.log("PAYMENT IS PAID");
-      console.log("UPDATING PRODUCT STOCK");
-      
-
-      for (const item of cleanedProducts) {
-        const product = await Product.findById(
-          item.product
-        );
-
-        if (!product) {
-          throw new Error(
-            `Product not found while updating stock: ${item.product}`
-          );
-        }
-
-        const currentQuantity = Number(
-          product.quantity || 0
-        );
-
-        const purchaseQuantity = Number(
-          item.quantity
-      orderNumber || `FRAG-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const updatedProducts = [];
-
-    try {
-      for (const item of cleanedProducts) {
-        console.log(`Updating stock for ${item.name}...`);
-
-        const updatedProduct = await Product.findOneAndUpdate(
-          {
-            _id: item.product,
-            quantity: { $gte: item.quantity },
-          },
-          {
-            $inc: {
-              quantity: -item.quantity,
-              sold: item.quantity,
-            },
-          },
-          { new: true },
-        );
-
-        // Safety check
-        if (
-          currentQuantity < purchaseQuantity
-        ) {
-          throw new Error(
-            `Not enough stock for ${product.name}. ` +
-            `Available: ${currentQuantity}, ` +
-            `Requested: ${purchaseQuantity}`
-            `Not enough stock available for ${item.name}. The product may have just been purchased by another customer.`,
-          );
-        }
-
-        // Reduce stock
-        product.quantity =
-          currentQuantity - purchaseQuantity;
-
-        // Increase sold count
-        product.sold =
-          Number(product.sold || 0) +
-          purchaseQuantity;
-
-        await product.save();
-
-        console.log(
-          `Product: ${product.name}`
-        );
-
-        console.log(
-          `Quantity before: ${currentQuantity}`
-        );
-
-        console.log(
-          `Quantity purchased: ${purchaseQuantity}`
-        );
-
-        console.log(
-          `Quantity after: ${product.quantity}`
-        );
-
-        console.log(
-          `Sold: ${product.sold}`
-        );
-
-        console.log("---------------------------------");
-      }
-
-      console.log(
-        "PRODUCT STOCK UPDATED SUCCESSFULLY"
-      );
-
-      console.log(
-        "=================================\n"
-      );
-    }
-
-    // =====================================
-    // SAVE ORDER
-    // =====================================
 
     const savedOrder = await order.save();
 
-    // =====================================
-    // SEND FRAGCENTS CONFIRMATION EMAIL
-    // ONLY AFTER PAID ORDER IS SAVED
-    // =====================================
+    // ---------- CONFIRMATION EMAIL (never blocks or breaks the order) ----------
+    const productList = savedOrder.products
+      .map(
+        (item) =>
+          `${item.name} x ${item.quantity} - R${(item.price * item.quantity).toFixed(2)}`,
+      )
+      .join("\n");
 
-    if (savedOrder.paymentStatus === "paid") {
-      try {
-        // Create product list
-        const productList = savedOrder.products
-          .map(
-            (item) =>
-              `${item.name} x${item.quantity} - R${Number(
-                item.price
-              ).toFixed(2)}`
-          )
-          .join("\n");
-
-        // Create email
-        const emailText = `
+    const emailText = `
 Hello ${savedOrder.customer.name},
 
 Thank you for shopping with FragCents!
 
-Your payment has been successfully received and your order has been confirmed.
+Your payment has been received and your order is confirmed.
 
 ORDER DETAILS
-
 Order Number: ${savedOrder.orderNumber}
-
 Payment Method: ${savedOrder.paymentMethod}
-
-Payment Reference: ${
-          savedOrder.paymentReference || "N/A"
-        }
-
-Payment Status: ${savedOrder.paymentStatus}
-
-Order Status: ${savedOrder.orderStatus}
-
+Payment Reference: ${savedOrder.paymentReference || "N/A"}
 
 PRODUCTS
-
 ${productList}
 
-        console.log(`Stock updated: ${updatedProduct.name}`);
-        console.log(`Remaining quantity: ${updatedProduct.quantity}`);
-        console.log(`Total sold: ${updatedProduct.sold}`);
-      }
-
-      const order = new Order({
-        orderNumber: finalOrderNumber,
-        user: cleanUser,
-        customer: {
-          name: customer.name.trim(),
-          email: customer.email.trim(),
-          phone: customer.phone.trim(),
-        },
-        deliveryAddress: {
-          address: deliveryAddress.address.trim(),
-          city: deliveryAddress.city.trim(),
-          postalCode: deliveryAddress.postalCode.trim(),
-          ...(deliveryAddress.province && {
-            province: deliveryAddress.province.trim(),
-          }),
-          ...(deliveryAddress.country && {
-            country: deliveryAddress.country.trim(),
-          }),
-        },
-        products: cleanedProducts,
-        subtotal: Number(cleanSubtotal.toFixed(2)),
-        deliveryFee: Number(cleanDeliveryFee.toFixed(2)),
-        totalAmount: Number(cleanTotalAmount.toFixed(2)),
-        paymentMethod,
-        paymentStatus: "paid",
-        orderStatus: "processing",
-        paidAt: new Date(),
-      });
-
-      const savedOrder = await order.save();
-
-      try {
-        const itemsText = savedOrder.products
-          .map(
-            (item) =>
-              `${item.name} x ${item.quantity} - R${(item.price * item.quantity).toFixed(2)}`,
-          )
-          .join("\n");
-
-ORDER TOTAL
-=================================
-
-Subtotal: R${Number(
-          savedOrder.subtotal
-        ).toFixed(2)}
-
-Delivery Fee: R${Number(
-          savedOrder.deliveryFee
-        ).toFixed(2)}
-
-TOTAL PAID: R${Number(
-          savedOrder.totalAmount
-        ).toFixed(2)}
-
+Subtotal: R${Number(savedOrder.subtotal).toFixed(2)}
+Delivery Fee: R${Number(savedOrder.deliveryFee).toFixed(2)}
+TOTAL PAID: R${Number(savedOrder.totalAmount).toFixed(2)}
 
 DELIVERY ADDRESS
-=================================
-
 ${savedOrder.deliveryAddress.address}
-
 ${savedOrder.deliveryAddress.city}
-
 ${savedOrder.deliveryAddress.province || ""}
-
 ${savedOrder.deliveryAddress.postalCode}
-
 ${savedOrder.deliveryAddress.country || ""}
 
-
-Your order is now being processed.
-
-We will keep you updated as your order moves through the delivery process.
-
-Thank you for choosing FragCents!
+Your order is now being processed. We will keep you updated.
 
 Regards,
-
-FragCents
-Customer Support
+FragCents Customer Support
 `;
 
-        // Send email
-        await sendEmail(
-          savedOrder.customer.email,
-          `FragCents Order Confirmation - ${savedOrder.orderNumber}`,
-          emailText
-        );
-
-        console.log(
-          
-        );
-
-        console.log(
-          "FRAGCENTS CONFIRMATION EMAIL SENT"
-          `Fragcents Order Confirmation - ${savedOrder.orderNumber}`,
-          emailText,
-        );
-
-        console.log(
-          `Order confirmation email sent to ${savedOrder.customer.email}`,
-        );
-
-        console.log(
-          "Email:",
-          savedOrder.customer.email
-        );
-
-        console.log(
-          
-        );
-
-      } catch (emailError) {
-        // Email failure should NOT cancel the order
-        console.error(
-          
-        );
-
-        console.error(
-          "FRAGCENTS EMAIL ERROR"
-        );
-
-        console.error(
-          emailError.message
-        );
-
-        console.error(
-          "================================="
-        );
-      }
-    }
-
-    // =====================================
-    // SUCCESS
-    // =====================================
-
-    console.log("\n=================================");
-    console.log("ORDER SAVED SUCCESSFULLY");
-    console.log("=================================");
+    sendEmail(
+      savedOrder.customer.email,
+      `FragCents Order Confirmation - ${savedOrder.orderNumber}`,
+      emailText,
+    ).catch((emailError) => {
+      console.error(
+        "Order saved, but confirmation email failed:",
+        emailError.message,
+      );
+    });
 
     console.log(
-      "Order ID:",
-      savedOrder._id
-    );
-
-    console.log(
-      "Order Number:",
-      savedOrder.orderNumber
-    );
-
-    console.log(
-      "Payment Method:",
-      savedOrder.paymentMethod
-    );
-
-    console.log(
-      "Payment Reference:",
-      savedOrder.paymentReference
-    );
-
-    console.log(
-      "Payment Status:",
-      savedOrder.paymentStatus
-    );
-
-    console.log(
-      "Order Status:",
-      savedOrder.orderStatus
-    );
-
-    console.log(
-      "Total:",
-      savedOrder.totalAmount
-    );
-
-    console.log(
-      "=================================\n"
+      `ORDER SAVED: ${savedOrder.orderNumber} (${savedOrder._id}) - R${savedOrder.totalAmount}`,
     );
 
     return res.status(201).json({
       success: true,
-      message: "Order created successfully.",
+      message: "Order created successfully and stock updated.",
       order: savedOrder,
     });
-
   } catch (error) {
-    console.error(
-      
-    );
+    console.error("CREATE ORDER ERROR:", error.message);
 
-    console.error(
-      "CREATE ORDER ERROR"
-    );
+    // Put the stock back if we already reduced it
+    if (updatedProducts.length > 0) {
+      console.log("Rolling back stock changes...");
 
-    console.error(
-     
-    );
-
-        console.error(
-          "Order was saved, but confirmation email failed:",
-          emailError.message,
-        );
-      }
-
-      console.log("\n=================================");
-      console.log("ORDER SAVED TO MONGODB");
-      console.log("=================================");
-      console.log("Order ID:", savedOrder._id);
-      console.log("Order Number:", savedOrder.orderNumber);
-      console.log("User:", savedOrder.user || "GUEST CHECKOUT");
-      console.log("Payment:", savedOrder.paymentMethod);
-      console.log("Total:", savedOrder.totalAmount);
-
-      console.log("\nSTOCK UPDATED:");
       for (const updated of updatedProducts) {
-        console.log(`Product ${updated.product}: -${updated.quantity}`);
-      }
-      console.log("=================================\n");
-
-      return res.status(201).json({
-        success: true,
-        message: "Order created successfully and stock updated.",
-        order: savedOrder,
-      });
-    } catch (stockOrOrderError) {
-      console.error(
-        "Order creation/stock update failed:",
-        stockOrOrderError.message,
-      );
-
-      if (updatedProducts.length > 0) {
-        console.log("Rolling back stock changes...");
-
-        for (const updated of updatedProducts) {
-          try {
-            await Product.findByIdAndUpdate(updated.product, {
-              $inc: {
-                quantity: updated.quantity,
-                sold: -updated.quantity,
-              },
-            });
-            console.log(`Stock restored for product ${updated.product}`);
-          } catch (rollbackError) {
-            console.error(
-              `CRITICAL: Failed to rollback stock for ${updated.product}`,
-              rollbackError,
-            );
-          }
+        try {
+          await Product.findByIdAndUpdate(updated.product, {
+            $inc: {
+              quantity: updated.quantity,
+              sold: -updated.quantity,
+            },
+          });
+        } catch (rollbackError) {
+          console.error(
+            `CRITICAL: Failed to roll back stock for ${updated.product}`,
+            rollbackError,
+          );
         }
       }
-
-      return res.status(400).json({
-        success: false,
-        message: stockOrOrderError.message || "Failed to create order.",
-      });
     }
-  } catch (error) {
-    console.error("\n=================================");
-    console.error("CREATE ORDER ERROR");
-    console.error("=================================");
-    console.error(error);
 
-    console.error(
-      "Message:",
-      error.message
-    );
-
-    console.error(
-      "=================================\n"
-    );
-
-    return res.status(500).json({
+    return res.status(error.isStockError ? 400 : 500).json({
       success: false,
       message: error.message || "Failed to create order.",
     });
   }
 });
 
+router.get("/mine", requireSignIn, getMyOrders);
 router.get("/order/mine", requireSignIn, getMyOrders);
 router.get("/orders", requireSignIn, isAdmin, getAllOrders);
 router.get("/finance-summary", requireSignIn, isManager, getFinanceSummary);

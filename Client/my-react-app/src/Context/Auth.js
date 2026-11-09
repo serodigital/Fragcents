@@ -9,16 +9,7 @@ const AuthProvider = ({ children }) => {
   });
   const [authLoading, setAuthLoading] = useState(true);
 
-  const [authLoading, setAuthLoading] = useState(true);
-
   useEffect(() => {
-<<<<<<< HEAD
-    const storedAuth = localStorage.getItem("auth");
-    if (storedAuth) {
-      setAuth(JSON.parse(storedAuth));
-    }
-    setAuthLoading(false);
-=======
     const loadAuth = () => {
       try {
         const storedAuth = localStorage.getItem("auth");
@@ -29,20 +20,15 @@ const AuthProvider = ({ children }) => {
         }
 
         const parsedAuth = JSON.parse(storedAuth);
-
         let user = parsedAuth.user || null;
 
-       
+        // Read the user ID from the token if it's available
         if (parsedAuth.token) {
           try {
             const tokenParts = parsedAuth.token.split(".");
 
             if (tokenParts.length === 3) {
-              const payload = JSON.parse(
-                atob(tokenParts[1])
-              );
-
-              console.log("JWT PAYLOAD:", payload);
+              const payload = JSON.parse(atob(tokenParts[1]));
 
               if (payload._id) {
                 user = {
@@ -52,49 +38,29 @@ const AuthProvider = ({ children }) => {
               }
             }
           } catch (tokenError) {
-            console.error(
-              "Could not read user ID from token:",
-              tokenError
-            );
+            console.error("Could not read user ID from token:", tokenError);
           }
         }
 
-        const updatedAuth = {
+        setAuth({
           ...parsedAuth,
           user,
-        };
-
-        console.log("AUTH LOADED:");
-        console.log(updatedAuth);
-
-        setAuth(updatedAuth);
-      } catch (error) {
-        console.error(
-          "Could not load authentication data:",
-          error
-        );
-
-        localStorage.removeItem("auth");
-
-        setAuth({
-          user: null,
-          token: "",
         });
+      } catch (error) {
+        console.error("Could not load authentication data:", error);
+        localStorage.removeItem("auth");
+        setAuth({ user: null, token: "" });
       }
 
       setAuthLoading(false);
     };
 
     loadAuth();
->>>>>>> da4c9d0b (Update FragCents frontend and checkout)
   }, []);
 
   useEffect(() => {
     if (auth.token) {
-      localStorage.setItem(
-        "auth",
-        JSON.stringify(auth)
-      );
+      localStorage.setItem("auth", JSON.stringify(auth));
     } else {
       localStorage.removeItem("auth");
     }
@@ -105,17 +71,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-<<<<<<< HEAD
     <AuthContext.Provider value={{ auth, setAuth, authLoading, logout }}>
-=======
-    <AuthContext.Provider
-      value={{
-        auth,
-        setAuth,
-        authLoading,
-      }}
-    >
->>>>>>> da4c9d0b (Update FragCents frontend and checkout)
       {children}
     </AuthContext.Provider>
   );

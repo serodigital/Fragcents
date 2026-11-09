@@ -14,7 +14,7 @@ const AdminCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/categories");
+      const { data } = await axios.get("/api/categories");
       if (data.categories) {
         setCategories(data.categories);
       } else {
@@ -36,7 +36,7 @@ const AdminCategories = () => {
     }
     try {
       const { data } = await axios.post(
-        "http://localhost:8000/api/categories",
+        "/api/categories",
         { name: newCategory, description: newDescription },
         { headers: { Authorization: auth.token } },
       );
@@ -56,7 +56,7 @@ const AdminCategories = () => {
   const handleUpdate = async (id) => {
     try {
       const { data } = await axios.put(
-        `http://localhost:8000/api/categories/${id}`,
+        `/api/categories/${id}`,
         { name: editName, description: editDescription },
         { headers: { Authorization: auth.token } },
       );
@@ -74,10 +74,9 @@ const AdminCategories = () => {
 
   const handleDelete = async (id) => {
     try {
-      const { data } = await axios.delete(
-        `http://localhost:8000/api/categories/${id}`,
-        { headers: { Authorization: auth.token } },
-      );
+      const { data } = await axios.delete(`/api/categories/${id}`, {
+        headers: { Authorization: auth.token },
+      });
       if (data.error) {
         toast.error(data.error);
       } else {

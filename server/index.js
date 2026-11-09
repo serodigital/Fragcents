@@ -9,7 +9,6 @@ import productRoutes from "./routes/product.js";
 import userRoutes from "./routes/user.js";
 import orderRoutes from "./routes/order.js";
 
-
 const app = express();
 
 // ===============================
@@ -29,6 +28,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use("/api", userRoutes);
 ///app.use("/api/paystack", paystackRoutes);
 // ===============================
 // 📌 Email Transporter

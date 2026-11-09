@@ -9,7 +9,7 @@ const AdminProducts = () => {
   const [categories, setCategories] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
-  
+
   // Form states
   const [formData, setFormData] = useState({
     name: "",
@@ -18,9 +18,9 @@ const AdminProducts = () => {
     category: "",
     quantity: "",
     shipping: false,
-    photo: null
+    photo: null,
   });
-  
+
   // Edit form states
   const [editFormData, setEditFormData] = useState({
     name: "",
@@ -29,13 +29,13 @@ const AdminProducts = () => {
     category: "",
     quantity: "",
     shipping: false,
-    photo: null
+    photo: null,
   });
 
   // Use useCallback to memoize the fetch functions
   const fetchProducts = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/products");
+      const { data } = await axios.get("/api/products");
       if (data.products) {
         setProducts(data.products);
       } else {
@@ -49,12 +49,15 @@ const AdminProducts = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/categories");
+      const { data } = await axios.get("/api/categories");
       if (data.categories) {
         setCategories(data.categories);
         // Set default category if available
         if (data.categories.length > 0) {
-          setFormData(prev => ({ ...prev, category: data.categories[0]._id }));
+          setFormData((prev) => ({
+            ...prev,
+            category: data.categories[0]._id,
+          }));
         }
       }
     } catch (error) {
@@ -71,9 +74,9 @@ const AdminProducts = () => {
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       setFormData({ ...formData, [name]: checked });
-    } else if (type === 'file') {
+    } else if (type === "file") {
       setFormData({ ...formData, photo: e.target.files[0] });
       setSelectedImage(URL.createObjectURL(e.target.files[0]));
     } else {
@@ -84,9 +87,9 @@ const AdminProducts = () => {
   // Handle edit form input changes
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       setEditFormData({ ...editFormData, [name]: checked });
-    } else if (type === 'file') {
+    } else if (type === "file") {
       setEditFormData({ ...editFormData, photo: e.target.files[0] });
     } else {
       setEditFormData({ ...editFormData, [name]: value });
@@ -103,29 +106,33 @@ const AdminProducts = () => {
     }
 
     try {
-      const token = auth?.token ? (auth.token.startsWith("Bearer ") ? auth.token : `Bearer ${auth.token}`) : "";
+      const token = auth?.token
+        ? auth.token.startsWith("Bearer ")
+          ? auth.token
+          : `Bearer ${auth.token}`
+        : "";
       const productFormData = new FormData();
 
       Object.keys(formData).forEach((key) => {
-        if (key === 'photo' && formData.photo) {
-          productFormData.append('photo', formData.photo);
-        } else if (key === 'shipping') {
-          productFormData.append('shipping', String(formData.shipping));
-        } else if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+        if (key === "photo" && formData.photo) {
+          productFormData.append("photo", formData.photo);
+        } else if (key === "shipping") {
+          productFormData.append("shipping", String(formData.shipping));
+        } else if (
+          formData[key] !== null &&
+          formData[key] !== undefined &&
+          formData[key] !== ""
+        ) {
           productFormData.append(key, formData[key]);
         }
       });
 
-      const { data } = await axios.post(
-        "http://localhost:8000/api/product",
-        productFormData,
-        {
-          headers: {
-            Authorization: token,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const { data } = await axios.post("/api/product", productFormData, {
+        headers: {
+          Authorization: token,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (data.error) {
         toast.error(data.error);
@@ -139,7 +146,7 @@ const AdminProducts = () => {
           category: categories.length > 0 ? categories[0]._id : "",
           quantity: "",
           shipping: false,
-          photo: null
+          photo: null,
         });
         setSelectedImage(null);
         fetchProducts();
@@ -155,13 +162,13 @@ const AdminProducts = () => {
     e.preventDefault();
     try {
       const { data } = await axios.put(
-        `http://localhost:8000/api/product/${editingProduct}`,
+        `/api/product/${editingProduct}`,
         editFormData,
         {
           headers: {
             Authorization: auth.token,
           },
-        }
+        },
       );
 
       if (data.error) {
@@ -180,14 +187,11 @@ const AdminProducts = () => {
   // Delete Product
   const handleDelete = async (id) => {
     try {
-      const { data } = await axios.delete(
-        `http://localhost:8000/api/product/${id}`,
-        {
-          headers: {
-            Authorization: auth.token,
-          },
-        }
-      );
+      const { data } = await axios.delete(`/api/product/${id}`, {
+        headers: {
+          Authorization: auth.token,
+        },
+      });
 
       if (data.error) {
         toast.error(data.error);
@@ -211,7 +215,7 @@ const AdminProducts = () => {
       category: product.category,
       quantity: product.quantity || "",
       shipping: product.shipping || false,
-      photo: null // Will be updated if user uploads new photo
+      photo: null, // Will be updated if user uploads new photo
     });
   };
 
@@ -222,9 +226,9 @@ const AdminProducts = () => {
 
   // Format price as currency
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'ZAR'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "ZAR",
     }).format(price);
   };
 
@@ -253,7 +257,7 @@ const AdminProducts = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <label className="form-label">Description*</label>
                   <textarea
@@ -265,7 +269,7 @@ const AdminProducts = () => {
                     required
                   ></textarea>
                 </div>
-                
+
                 <div className="mb-3">
                   <label className="form-label">Price*</label>
                   <input
@@ -279,7 +283,7 @@ const AdminProducts = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="col-md-6">
                 <div className="mb-3">
                   <label className="form-label">Category*</label>
@@ -298,7 +302,7 @@ const AdminProducts = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="mb-3">
                   <label className="form-label">Quantity*</label>
                   <input
@@ -311,7 +315,7 @@ const AdminProducts = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3 form-check">
                   <input
                     type="checkbox"
@@ -325,7 +329,7 @@ const AdminProducts = () => {
                     Shipping Required
                   </label>
                 </div>
-                
+
                 <div className="mb-3">
                   <label className="form-label">Photo</label>
                   <input
@@ -348,7 +352,7 @@ const AdminProducts = () => {
                 </div>
               </div>
             </div>
-            
+
             <button type="submit" className="btn btn-primary">
               Create Product
             </button>
@@ -383,7 +387,7 @@ const AdminProducts = () => {
                         {product.photo && product.photo.data ? (
                           <img
                             src={`data:${product.photo.contentType};base64,${Buffer.from(
-                              product.photo.data
+                              product.photo.data,
                             ).toString("base64")}`}
                             alt={product.name}
                             style={{ height: "50px" }}
@@ -463,8 +467,10 @@ const AdminProducts = () => {
                               onChange={handleEditChange}
                             />
                           </div>
+                        ) : product.shipping ? (
+                          "Yes"
                         ) : (
-                          product.shipping ? "Yes" : "No"
+                          "No"
                         )}
                       </td>
                       <td>

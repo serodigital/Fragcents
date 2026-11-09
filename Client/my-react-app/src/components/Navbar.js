@@ -21,7 +21,7 @@ const Navbar = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/categories");
+      const { data } = await axios.get("/api/categories");
       if (data.categories) {
         setCategories(data.categories);
       }

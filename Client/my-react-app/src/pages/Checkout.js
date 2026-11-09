@@ -95,6 +95,84 @@ const Checkout = () => {
       <div className="row">
         {/* LEFT SIDE */}
         <div className="col-md-8">
+          {/* PICK UP */}
+          <div className="card mb-4">
+            <div className="card-body">
+              <h5 className="fw-bold mb-3">Pick Up</h5>
+
+              <label className="form-label">Select a Store</label>
+
+              <select
+                className="form-select"
+                value={store}
+                onChange={(e) => setStore(e.target.value)}
+              >
+                <option value="">Select a Store</option>
+
+                <option value="pretoria">Pretoria</option>
+
+                <option value="johannesburg">Johannesburg</option>
+
+                <option value="cape-town">Cape Town</option>
+              </select>
+            </div>
+          </div>
+
+          {/* DELIVERY */}
+          <div className="card mb-4">
+            <div className="card-body">
+              <h5 className="fw-bold mb-3">Delivery</h5>
+
+              <label className="form-label">Enter Postal Code</label>
+
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter Postal Code"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* DISCOUNT */}
+          <div className="card mb-4">
+            <div className="card-body">
+              <h5 className="fw-bold">Do you have a discount code?</h5>
+
+              <div className="input-group mt-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter discount code"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                />
+
+                <button className="btn btn-outline-success">Apply</button>
+              </div>
+            </div>
+          </div>
+
+          {/* GIFT CARD */}
+          <div className="card mb-4">
+            <div className="card-body">
+              <h5 className="fw-bold">Do you have a Gift Card / wiCode?</h5>
+
+              <div className="input-group mt-3">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter Gift Card / wiCode"
+                  value={giftCardCode}
+                  onChange={(e) => setGiftCardCode(e.target.value)}
+                />
+
+                <button className="btn btn-outline-success">Apply</button>
+              </div>
+            </div>
+          </div>
+
           {/* ORDER ITEMS */}
           <div className="card mb-4">
             <div className="card-body">

@@ -1,50 +1,34 @@
-import express from 'express';
-import { requireSignIn, isAdmin } from '../middlewares/auth.js';
-import { register, login, secret } from "../controllers/auth.js";
-import { sendEmail } from "../utils/email.js"; // Import your email utility
+import express from "express";
+import { requireSignIn, isAdmin } from "../middlewares/auth.js";
+import {
+  register,
+  login,
+  secret,
+  forgotPassword,
+  resetPassword,
+} from "../controllers/auth.js";
+import {
+  getAllUsers,
+  getUser,
+  updateUser,
+  deleteUser,
+} from "../controllers/user.js";
 
 const router = express.Router();
 
 // Auth routes
-router.post('/register', register);
-router.post('/login', login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post("/register", register);
+router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 // Testing route
-router.get('/secret', requireSignIn, isAdmin, secret);
+router.get("/secret", requireSignIn, isAdmin, secret);
 
-// =======================
-// Send password email
-// =======================
-router.post('/send-password-email', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// User routes
+router.get("/user", requireSignIn, isAdmin, getAllUsers);
+router.get("/user/:id", requireSignIn, getUser);
+router.put("/user/:id", requireSignIn, updateUser);
+router.delete("/user/:id", requireSignIn, isAdmin, deleteUser);
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
-    await sendEmail(
-      email,
-      "Your FragCents Account Password",
-      `Hi, your password is: ${password}`
-    );
-
-    res.json({ success: true, message: "Password email sent!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-router.get('/user', requireSignIn, getUsers);
-
-router.get('/user/:id', requireSignIn, getUser);
-
-
-
-router.put('/user/:id', requireSignIn, updateUser);
-
-router.delete('/user/:id', requireSignIn, deleteUser);
 export default router;
