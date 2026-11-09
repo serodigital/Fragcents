@@ -1,15 +1,11 @@
-import React, { useState } from "react";
+
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContext";
 
 const Checkout = () => {
   const { cart } = useCart();
   const navigate = useNavigate();
-
-  const [store, setStore] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [discountCode, setDiscountCode] = useState("");
-  const [giftCardCode, setGiftCardCode] = useState("");
 
   // Same price handling as your Cart
   const parsePrice = (price) => {
