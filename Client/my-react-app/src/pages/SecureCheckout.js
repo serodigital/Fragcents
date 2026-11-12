@@ -4,7 +4,8 @@ import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/Auth";
 import toast from "react-hot-toast";
 import axios from "axios";
-const API_URL = process.env.REACT_APP_API_URL || "";
+const API_URL =
+  process.env.REACT_APP_API_URL || "";
 const SecureCheckout = () => {
   const navigate = useNavigate();
   const { cart } = useCart();
@@ -291,7 +292,7 @@ const SecureCheckout = () => {
       console.log("=================================");
 
       const paymentResponse = await axios.post(
-       `${API_URL}/api/payfast/create`,
+        `${API_URL}/api/payfast/create`,
         {
           ...orderData,
           amount: Number(totalPrice.toFixed(2)),
