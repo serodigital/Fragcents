@@ -23,6 +23,9 @@ import SecureCheckout from "./pages/SecureCheckout";
 import UserDatabaseTest from "./pages/UserDatabaseTest";
 import OrderPage from "./pages/Orders";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
+import Footer from "./components/Footer";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import RefundPolicy from "./pages/RefundPolicy";
 
 window.Buffer = Buffer;
 
@@ -31,50 +34,59 @@ const App = () => {
     <>
       <Toaster position="top-right" />
       <Navbar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/registration-success" element={<RegistrationSuccess />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/user-database-test" element={<UserDatabaseTest />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/SecureCheckout" element={<SecureCheckout />} />
-        <Route path="/orders" element={<OrderPage />} />
 
-        {/* Shopping and Product Routes */}
-        <Route path="/shop" element={<ShoppingPageWrapper />} />
-        <Route path="/product-view/:id" element={<ProductViewPageWrapper />} />
+      <main className="flex-grow-1">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/registration-success" element={<RegistrationSuccess />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/user-database-test" element={<UserDatabaseTest />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/SecureCheckout" element={<SecureCheckout />} />
+          <Route path="/orders" element={<OrderPage />} />
 
-        {/* Admin Routes */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/categories"
-          element={
-            <AdminRoute>
-              <AdminCategories />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/products"
-          element={
-            <AdminRoute>
-              <AdminProducts />
-            </AdminRoute>
-          }
-        />
-      </Routes>
+          {/* Legal Pages */}
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+
+          {/* Shopping and Product Routes */}
+          <Route path="/shop" element={<ShoppingPageWrapper />} />
+          <Route path="/product-view/:id" element={<ProductViewPageWrapper />} />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <AdminRoute>
+                <AdminCategories />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <AdminRoute>
+                <AdminProducts />
+              </AdminRoute>
+            }
+          />
+        </Routes>
+      </main>
+
+      <Footer />
     </>
   );
 };
