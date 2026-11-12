@@ -8,7 +8,8 @@ import categoryRoutes from "./routes/category.js";
 import productRoutes from "./routes/product.js";
 import userRoutes from "./routes/user.js";
 import orderRoutes from "./routes/order.js";
-
+import payfastRoutes from "./routes/payfast.js";
+import "dotenv/config";
 const app = express();
 
 // ===============================
@@ -29,7 +30,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use("/api", userRoutes);
-///app.use("/api/paystack", paystackRoutes);
+///app.use("/api/paystack", pays
+// tackRoutes);
 // ===============================
 // 📌 Email Transporter
 // ===============================
@@ -73,7 +75,7 @@ app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
 app.use("/api/order", orderRoutes);
-
+app.use("/api/payfast", payfastRoutes);
 // ===============================
 // 📌 Server Start
 // ===============================
