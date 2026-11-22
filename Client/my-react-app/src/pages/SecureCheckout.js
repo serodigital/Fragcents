@@ -4,12 +4,14 @@ import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/Auth";
 import toast from "react-hot-toast";
 import axios from "axios";
-const API_URL =
-  process.env.REACT_APP_API_URL || "";
+import { normalizePhone } from "../utils/phone";
+
+const API_URL = process.env.REACT_APP_API_URL || "";
+
 const SecureCheckout = () => {
   const navigate = useNavigate();
   const { cart } = useCart();
-  const { auth } = useAuth();
+  const { auth, setAuth } = useAuth();
 
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(false);
@@ -31,11 +33,6 @@ const SecureCheckout = () => {
     const loadUser = async () => {
       // GUEST CHECKOUT
       if (!auth?.token || !auth?.user) {
-        console.log("=================================");
-        console.log("GUEST CHECKOUT");
-        console.log("No logged-in user found.");
-        console.log("=================================");
-
         setUser(null);
         setLoadingUser(false);
         return;
@@ -43,45 +40,29 @@ const SecureCheckout = () => {
 
       setLoadingUser(true);
 
-      console.log("=================================");
-      console.log("AUTH USER FROM LOCAL STORAGE");
-      console.log(auth.user);
-      console.log("=================================");
-
       setUser(auth.user);
       setName(auth.user.name || "");
       setEmail(auth.user.email || "");
       setPhone(auth.user.phone || "");
 
-      // CHECK USER ID
       const userId = auth.user?._id || auth.user?.id;
 
       if (!userId) {
-        console.log("User ID missing from auth.user.");
         setLoadingUser(false);
         return;
       }
 
       try {
         // GET USER FROM DATABASE
-        const response = await axios.get(
-         `${API_URL}/api/user/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${auth.token}`,
-            },
-          }
-        );
-
-        console.log("=================================");
-        console.log("FULL USER PROFILE FROM DATABASE");
-        console.log(response.data);
-        console.log("=================================");
+        const response = await axios.get(`${API_URL}/api/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        });
 
         const databaseUser = response.data?.user;
 
         if (!databaseUser) {
-          console.log("No user profile returned from database.");
           setLoadingUser(false);
           return;
         }
@@ -109,17 +90,6 @@ const SecureCheckout = () => {
           setPostalCode(savedAddress.postalCode || "");
           setCountry(savedAddress.country || "South Africa");
         }
-
-        // DEBUG
-        console.log("=================================");
-        console.log("CHECKOUT DETAILS LOADED");
-        console.log("=================================");
-        console.log("User ID:", databaseUser._id);
-        console.log("Name:", databaseUser.name);
-        console.log("Email:", databaseUser.email);
-        console.log("Phone:", databaseUser.phone);
-        console.log("Address:", databaseUser.address);
-        console.log("=================================");
       } catch (error) {
         console.error("ERROR LOADING USER PROFILE:", error);
 
@@ -170,11 +140,34 @@ const SecureCheckout = () => {
   }, 0);
 
   // DELIVERY
-  const deliveryFee =
-    subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
+  const deliveryFee = subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
 
   // TOTAL
   const totalPrice = subtotal + deliveryFee;
+
+  // SAVE THE PHONE NUMBER TO THE CUSTOMER'S PROFILE (logged-in users only)
+  const savePhoneToProfile = async (cleanPhone) => {
+    const userId = user?._id || auth?.user?._id;
+    if (!auth?.token || !userId) return;
+    if (cleanPhone === user?.phone) return;
+
+    try {
+      await axios.put(
+        `${API_URL}/api/user/${userId}`,
+        { phone: cleanPhone },
+        { headers: { Authorization: `Bearer ${auth.token}` } },
+      );
+
+      setUser((prev) => (prev ? { ...prev, phone: cleanPhone } : prev));
+      setAuth((prev) => ({
+        ...prev,
+        user: { ...prev.user, phone: cleanPhone },
+      }));
+    } catch (error) {
+      // Never block a payment because the profile could not be updated
+      console.error("Could not save phone number to profile:", error);
+    }
+  };
 
   // PAY NOW
   const handlePayment = async () => {
@@ -198,6 +191,12 @@ const SecureCheckout = () => {
 
     if (!phone.trim()) {
       toast.error("Please enter your phone number.");
+      return;
+    }
+
+    const cleanPhone = normalizePhone(phone);
+    if (!cleanPhone) {
+      toast.error("Please enter a valid South African phone number.");
       return;
     }
 
@@ -227,15 +226,16 @@ const SecureCheckout = () => {
       return;
     }
 
+    // Remember the phone number on the customer's account
+    await savePhoneToProfile(cleanPhone);
+
     try {
       // PRODUCTS
       const products = cart.map((item) => {
         const productId = item.product || item._id;
 
         if (!productId) {
-          throw new Error(
-            `Product ID missing for ${item.name || "product"}`
-          );
+          throw new Error(`Product ID missing for ${item.name || "product"}`);
         }
 
         return {
@@ -250,7 +250,7 @@ const SecureCheckout = () => {
       const customer = {
         name: name.trim(),
         email: email.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
       };
 
       // DELIVERY ADDRESS
@@ -275,22 +275,10 @@ const SecureCheckout = () => {
         orderStatus: "pending",
       };
 
-      // DEBUG
-      console.log("=================================");
-      console.log("SECURE CHECKOUT ORDER");
-      console.log("=================================");
-      console.log(JSON.stringify(orderData, null, 2));
-      console.log("=================================");
-
       // SAVE PENDING ORDER LOCALLY
       localStorage.setItem("pendingOrder", JSON.stringify(orderData));
-      console.log("Pending order saved.");
 
       // CREATE PAYFAST PAYMENT
-      console.log("=================================");
-      console.log("STARTING PAYFAST PAYMENT");
-      console.log("=================================");
-
       const paymentResponse = await axios.post(
         `${API_URL}/api/payfast/create`,
         {
@@ -298,16 +286,14 @@ const SecureCheckout = () => {
           amount: Number(totalPrice.toFixed(2)),
           itemName: "FragCents Order",
           itemDescription: "Payment for FragCents order",
-        }
+        },
       );
-
-      console.log("PayFast response:", paymentResponse.data);
 
       // CHECK PAYFAST RESPONSE
       if (!paymentResponse.data?.success) {
         throw new Error(
           paymentResponse.data?.message ||
-            "Unable to initialize PayFast payment."
+            "Unable to initialize PayFast payment.",
         );
       }
 
@@ -315,15 +301,12 @@ const SecureCheckout = () => {
       const payfastData = paymentResponse.data;
 
       const paymentUrl =
-        payfastData.paymentUrl ||
-        "https://payment.payfast.io/eng/process";
+        payfastData.paymentUrl || "https://payment.payfast.io/eng/process";
 
       const formData = payfastData.formData;
 
       if (!formData || typeof formData !== "object") {
-        throw new Error(
-          "PayFast payment form data was not returned."
-        );
+        throw new Error("PayFast payment form data was not returned.");
       }
 
       // SAVE PAYFAST REFERENCE
@@ -333,15 +316,9 @@ const SecureCheckout = () => {
           paymentReference: payfastData.paymentReference,
         };
 
-        localStorage.setItem(
-          "pendingOrder",
-          JSON.stringify(updatedOrder)
-        );
+        localStorage.setItem("pendingOrder", JSON.stringify(updatedOrder));
 
-        localStorage.setItem(
-          "payfastReference",
-          payfastData.paymentReference
-        );
+        localStorage.setItem("payfastReference", payfastData.paymentReference);
       }
 
       // CREATE PAYFAST FORM
@@ -363,21 +340,18 @@ const SecureCheckout = () => {
 
       document.body.appendChild(form);
 
-      console.log("Redirecting to PayFast...");
       form.submit();
     } catch (error) {
-      console.error("=================================");
-      console.error("PAYFAST PAYMENT ERROR");
-      console.error("=================================");
-      console.error("Status:", error.response?.status);
-      console.error("Response:", error.response?.data);
-      console.error("Message:", error.message);
-      console.error("=================================");
+      console.error("PAYFAST PAYMENT ERROR:", {
+        status: error.response?.status,
+        response: error.response?.data,
+        message: error.message,
+      });
 
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Unable to start PayFast payment."
+          "Unable to start PayFast payment.",
       );
     }
   };
@@ -399,8 +373,8 @@ const SecureCheckout = () => {
         <div className="alert alert-info">
           <strong>Guest Checkout</strong>
           <br />
-          You can continue without creating an account.
-          Enter your details below.
+          You can continue without creating an account. Enter your details
+          below.
         </div>
       )}
 
@@ -409,8 +383,7 @@ const SecureCheckout = () => {
         <div className="alert alert-success">
           <strong>Welcome back, {user.name}</strong>
           <br />
-          Your saved customer information has been loaded
-          from your account.
+          Your saved customer information has been loaded from your account.
         </div>
       )}
 
@@ -418,8 +391,7 @@ const SecureCheckout = () => {
       {email && (
         <div className="alert alert-info">
           <i className="bi bi-envelope-fill me-2"></i>
-          Your order confirmation will be sent to:{" "}
-          <strong>{email}</strong>
+          Your order confirmation will be sent to: <strong>{email}</strong>
         </div>
       )}
 
@@ -429,15 +401,11 @@ const SecureCheckout = () => {
           {/* CUSTOMER */}
           <div className="card mb-4">
             <div className="card-body">
-              <h5 className="fw-bold mb-3">
-                Customer Information
-              </h5>
+              <h5 className="fw-bold mb-3">Customer Information</h5>
 
               {/* NAME */}
               <div className="mb-3">
-                <label className="form-label">
-                  Full Name
-                </label>
+                <label className="form-label">Full Name</label>
 
                 <input
                   type="text"
@@ -451,9 +419,7 @@ const SecureCheckout = () => {
 
               {/* EMAIL */}
               <div className="mb-3">
-                <label className="form-label">
-                  Email Address
-                </label>
+                <label className="form-label">Email Address</label>
 
                 <input
                   type="email"
@@ -465,20 +431,22 @@ const SecureCheckout = () => {
                 />
               </div>
 
-              {/* PHONE */}
+              {/* PHONE (always editable, so customers can add or correct it) */}
               <div className="mb-3">
-                <label className="form-label">
-                  Phone Number
-                </label>
+                <label className="form-label">Phone Number</label>
 
                 <input
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="form-control"
                   value={phone}
-                  readOnly={!!user}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter your phone number"
+                  placeholder="e.g. 072 043 1327"
                 />
+                <div className="form-text">
+                  We use this to contact you about your delivery.
+                </div>
               </div>
             </div>
           </div>
@@ -487,9 +455,7 @@ const SecureCheckout = () => {
           <div className="card mb-4">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="fw-bold mb-0">
-                  Delivery Information
-                </h5>
+                <h5 className="fw-bold mb-0">Delivery Information</h5>
 
                 {user && (
                   <button
@@ -505,9 +471,7 @@ const SecureCheckout = () => {
 
               {/* STREET */}
               <div className="mb-3">
-                <label className="form-label">
-                  Street Address
-                </label>
+                <label className="form-label">Street Address</label>
 
                 <input
                   type="text"
@@ -521,9 +485,7 @@ const SecureCheckout = () => {
 
               {/* CITY */}
               <div className="mb-3">
-                <label className="form-label">
-                  City
-                </label>
+                <label className="form-label">City</label>
 
                 <input
                   type="text"
@@ -537,9 +499,7 @@ const SecureCheckout = () => {
 
               {/* PROVINCE */}
               <div className="mb-3">
-                <label className="form-label">
-                  Province
-                </label>
+                <label className="form-label">Province</label>
 
                 <input
                   type="text"
@@ -553,9 +513,7 @@ const SecureCheckout = () => {
 
               {/* POSTAL CODE */}
               <div className="mb-3">
-                <label className="form-label">
-                  Postal Code
-                </label>
+                <label className="form-label">Postal Code</label>
 
                 <input
                   type="text"
@@ -569,9 +527,7 @@ const SecureCheckout = () => {
 
               {/* COUNTRY */}
               <div className="mb-3">
-                <label className="form-label">
-                  Country
-                </label>
+                <label className="form-label">Country</label>
 
                 <input
                   type="text"
@@ -589,9 +545,7 @@ const SecureCheckout = () => {
         <div className="col-md-5">
           <div className="card shadow-sm">
             <div className="card-body">
-              <h5 className="fw-bold mb-3">
-                Order Summary
-              </h5>
+              <h5 className="fw-bold mb-3">Order Summary</h5>
 
               {/* CART ITEMS */}
               {cart.map((item) => (
@@ -607,10 +561,7 @@ const SecureCheckout = () => {
                     </small>
                   </div>
 
-                  <span>
-                    R
-                    {getItemTotal(item).toFixed(2)}
-                  </span>
+                  <span>R{getItemTotal(item).toFixed(2)}</span>
                 </div>
               ))}
 
@@ -627,9 +578,7 @@ const SecureCheckout = () => {
                 <span>Delivery</span>
 
                 <span>
-                  {deliveryFee === 0
-                    ? "FREE"
-                    : `R${deliveryFee.toFixed(2)}`}
+                  {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
                 </span>
               </div>
 
