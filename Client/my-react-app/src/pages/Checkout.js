@@ -30,31 +30,21 @@ const Checkout = () => {
     return 0;
   };
 
-  // Item total
   const getItemTotal = (item) => {
     return parsePrice(item.price) * (item.quantity || 1);
   };
 
-  // Subtotal
-  const subtotal = cart.reduce(
-    (total, item) => total + getItemTotal(item),
-    0
-  );
+  const subtotal = cart.reduce((total, item) => total + getItemTotal(item), 0);
 
-  // Delivery
-  const deliveryFee =
-    subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
+  const deliveryFee = subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
 
-  // Final total
   const totalPrice = subtotal + deliveryFee;
 
-  // Total number of products
   const totalItems = cart.reduce(
     (total, item) => total + (item.quantity || 1),
-    0
+    0,
   );
 
-  // Product image
   const getImageUrl = (item) => {
     if (item._id) {
       return `${API_URL}/api/product/image/${item._id}`;
@@ -63,7 +53,6 @@ const Checkout = () => {
     return item.image || "/images/default.jpg";
   };
 
-  // Secure checkout
   const handleSecureCheckout = () => {
     const auth = localStorage.getItem("auth");
 
@@ -75,190 +64,118 @@ const Checkout = () => {
     navigate("/SecureCheckout");
   };
 
-  // If cart is empty
   if (cart.length === 0) {
     return (
       <div className="container py-5 text-center">
-        <h3>Your cart is empty</h3>
+        <h1 className="h3 mb-3">Your cart is empty</h1>
 
         <button
-          className="btn btn-primary mt-3"
+          className="btn btn-primary px-4"
           onClick={() => navigate("/shop")}
         >
-          Continue Shopping
+          Continue shopping
         </button>
       </div>
     );
   }
 
   return (
-    <div className="container py-4">
-
-      {/* PAGE TITLE */}
-      <h2 className="mb-4">
-        Checkout
-      </h2>
+    <div className="container py-4 mb-4">
+      <h1 className="h2 mb-4">Checkout</h1>
 
       <div className="row">
-
-        {/* LEFT SIDE */}
+        {/* LEFT SIDE: order items */}
         <div className="col-md-8">
-
-          {/* ORDER ITEMS */}
           <div className="card mb-4">
-
             <div className="card-body">
-
-              <h5 className="fw-bold mb-3">
-                Your Order
-              </h5>
+              <h2 className="h5 fw-bold mb-3">Your Order</h2>
 
               {cart.map((item) => (
-
                 <div
                   key={item.cartItemId}
                   className="d-flex justify-content-between align-items-center border-bottom py-3"
                 >
-
-                  {/* PRODUCT */}
                   <div className="d-flex align-items-center">
-
                     <img
                       src={getImageUrl(item)}
                       alt={item.name}
                       width="70"
                       height="70"
                       className="rounded me-3"
-                      style={{
-                        objectFit: "cover"
-                      }}
+                      style={{ objectFit: "cover" }}
                       onError={(e) => {
-                        e.target.src =
-                          "/images/default.jpg";
+                        e.target.src = "/images/default.jpg";
                       }}
                     />
 
                     <div>
-
-                      <h6 className="mb-1">
-                        {item.name}
-                      </h6>
-
+                      <h6 className="mb-1">{item.name}</h6>
                       <small className="text-muted">
-                        R{parsePrice(item.price).toFixed(2)}
-                        {" "}×{" "}
+                        R{parsePrice(item.price).toFixed(2)} ×{" "}
                         {item.quantity || 1}
                       </small>
-
                     </div>
-
                   </div>
 
-                  {/* ITEM TOTAL */}
-                  <strong>
-                    R{getItemTotal(item).toFixed(2)}
-                  </strong>
-
+                  <strong>R{getItemTotal(item).toFixed(2)}</strong>
                 </div>
-
               ))}
-
             </div>
-
           </div>
-
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT SIDE: summary */}
         <div className="col-md-4">
-
           <div
-            className="card shadow-sm sticky-top"
-            style={{
-              top: "20px",
-              backgroundColor: "#f1f8f4",
-              border: "none"
-            }}
+            className="card sd-summary-card shadow-sm sticky-top"
+            style={{ top: "20px" }}
           >
-
             <div className="card-body">
+              <h2 className="h4 fw-bold mb-4">Order Summary</h2>
 
-              <h4 className="fw-bold mb-4">
-                Order Summary
-              </h4>
-
-              {/* ITEMS */}
               <div className="d-flex justify-content-between mb-3">
-
                 <span>
-                  Subtotal ({totalItems}{" "}
-                  {totalItems === 1 ? "item" : "items"})
+                  Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"})
                 </span>
-
-                <strong>
-                  R{subtotal.toFixed(2)}
-                </strong>
-
+                <strong>R{subtotal.toFixed(2)}</strong>
               </div>
 
-              {/* DELIVERY */}
               <div className="d-flex justify-content-between mb-3">
-
                 <span>
                   Delivery
-
                   {subtotal >= 200 && (
                     <small className="text-success d-block">
                       Free delivery on orders over R200!
                     </small>
                   )}
                 </span>
-
-                <strong>
-                  R{deliveryFee.toFixed(2)}
-                </strong>
-
+                <strong>R{deliveryFee.toFixed(2)}</strong>
               </div>
 
               <hr />
 
-              {/* TOTAL */}
               <div className="d-flex justify-content-between mb-4">
-
-                <strong>
-                  Order Total
-                </strong>
-
-                <strong>
-                  R{totalPrice.toFixed(2)}
-                </strong>
-
+                <strong>Order Total</strong>
+                <strong>R{totalPrice.toFixed(2)}</strong>
               </div>
 
-              {/* CHECKOUT */}
               <button
-                className="btn btn-success w-100"
+                className="btn btn-warning w-100"
                 onClick={handleSecureCheckout}
               >
                 Secure Checkout
               </button>
 
-              {/* BACK */}
               <button
                 className="btn btn-outline-secondary w-100 mt-2"
                 onClick={() => navigate("/cart")}
               >
                 Back to Cart
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

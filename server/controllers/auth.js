@@ -8,13 +8,32 @@ const SECRET_KEY =
   process.env.JWT_SECRET ||
   "aJh9dLpEqF8nResBVUCjNwAywLGz4D79dm8ReqTYaVZKRqWtPhVpKmTwd9D8BMCHEGjdJuRHph8tskPfm64xvNezH3cWd2nLXKeqkS98auBMvF";
 
+// Accepts 072 043 1327, 0720431327, +27720431327 or 27720431327.
+// Returns the number as 0720431327, or null if it isn't valid.
+const normalizePhone = (value) => {
+  if (!value) return null;
+  let digits = String(value).replace(/[\s\-().]/g, "");
+  if (digits.startsWith("+27")) digits = "0" + digits.slice(3);
+  else if (digits.startsWith("0027")) digits = "0" + digits.slice(4);
+  else if (digits.startsWith("27") && digits.length === 11)
+    digits = "0" + digits.slice(2);
+  return /^0\d{9}$/.test(digits) ? digits : null;
+};
+
 export const register = async (req, res) => {
   try {
-    const { name, lastName, email, password, address } = req.body;
+    const { name, lastName, email, phone, password, address } = req.body;
 
     if (!name) return res.json({ error: "First name is required" });
     if (!lastName) return res.json({ error: "Last name is required" });
     if (!email) return res.json({ error: "Email is required" });
+
+    const cleanPhone = normalizePhone(phone);
+    if (!cleanPhone)
+      return res.json({
+        error: "Please enter a valid South African phone number",
+      });
+
     if (!password || password.length < 6)
       return res.json({ error: "Password must be at least 6 characters long" });
     if (!address || !address.street || !address.city || !address.postalCode)
@@ -28,6 +47,7 @@ export const register = async (req, res) => {
       name,
       lastName,
       email,
+      phone: cleanPhone,
       password: hashedPassword,
       address: {
         street: address.street,
@@ -56,6 +76,8 @@ export const register = async (req, res) => {
         name: user.name,
         lastName: user.lastName,
         email: user.email,
+        role: user.role,
+        phone: user.phone,
         address: user.address,
       },
       token,

@@ -72,10 +72,7 @@ export default function HomePage() {
 
         /* ---------- Hero ---------- */
         .home-page .home-hero {
-          background:
-            linear-gradient(160deg, rgba(28,22,18,0.88), rgba(28,22,18,0.7)),
-            url(/images/banner.jpg) center / cover no-repeat,
-            var(--ink);
+          background: var(--ink);
           color: var(--cream);
           min-height: 460px;
           display: flex;
@@ -92,7 +89,7 @@ export default function HomePage() {
           margin-bottom: 16px;
         }
         .home-page .home-hero h1 {
-          font-family: "Inter, serif;
+          font-family: "Inter", sans-serif;
           font-size: clamp(2.2rem, 6vw, 4rem);
           margin-bottom: 16px;
         }
@@ -131,7 +128,7 @@ export default function HomePage() {
         .home-page .home-section { padding: 64px 0; }
         .home-page .home-section.alt { background: var(--cream); }
         .home-page .section-title {
-          font-family: "Inter, serif;
+          font-family: "Inter", sans-serif;
           text-align: center;
           text-transform: uppercase;
           letter-spacing: 2px;
@@ -186,7 +183,7 @@ export default function HomePage() {
           background: var(--cream);
           border: 1px solid var(--line);
           color: var(--gold-dark);
-          font-family: "Inter, serif;
+          font-family: "Inter", sans-serif;
           font-size: 1.4rem;
           display: flex;
           align-items: center;
@@ -194,7 +191,7 @@ export default function HomePage() {
           margin: 0 auto 14px;
         }
         .home-page .why-item h6 {
-          font-family: "Inter, serif;
+          font-family: "Inter", sans-serif;
           margin-bottom: 6px;
         }
         .home-page .why-item p { color: #7a6a55; margin: 0; font-size: 0.95rem; }
@@ -207,22 +204,10 @@ export default function HomePage() {
           padding: 64px 16px;
         }
         .home-page .home-join h2 {
-          font-family: "Inter, serif;
+          font-family: "Inter", sans-serif;
           margin-bottom: 12px;
         }
 
-        /* ---------- Footer ---------- */
-        .home-page .home-footer {
-          background: #120e0b;
-          color: #cbbfa9;
-          padding: 36px 0 24px;
-        }
-        .home-page .home-footer a {
-          color: #cbbfa9;
-          text-decoration: none;
-          margin: 0 12px;
-        }
-        
         /* ---------- Tighter spacing ---------- */
         .home-page .home-section { padding: 40px 0; }
         .home-page .section-rule { margin-bottom: 28px; }
@@ -243,17 +228,61 @@ export default function HomePage() {
           font-size: 0.82rem !important;
           margin-bottom: 4px !important;
         }
+          
+        /* ---------- Split hero ---------- */
+        .home-page .home-hero {
+          text-align: left;
+          min-height: 0;
+          padding: 48px 16px;
+        }
+        .home-page .home-hero .container { width: 100%; }
+        .home-page .home-hero-grid {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 48px;
+          align-items: center;
+        }
+        .home-page .home-hero p { margin: 0 0 28px; }
+        .home-page .home-hero-photo img {
+          display: block;
+          width: 100%;
+          max-width: 340px;
+          aspect-ratio: 3 / 4;
+          object-fit: cover;
+          margin: 0 auto;
+          border-radius: 16px;
+          border: 1px solid rgba(205, 184, 138, 0.35);
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        }
+        @media (max-width: 767.98px) {
+          .home-page .home-hero { text-align: center; }
+          .home-page .home-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+          .home-page .home-hero-photo { order: -1; }
+        }
       `}</style>
 
       {/* Hero */}
       <header className="home-hero">
         <div className="container">
-          <div className="home-eyebrow">Fine Fragrances</div>
-          <h1>Discover a scent that is truly yours</h1>
-          <p>Carefully chosen perfumes for every mood, moment and memory.</p>
-          <Link to="/shop" className="btn btn-gold btn-lg">
-            Shop Now
-          </Link>
+          <div className="home-hero-grid">
+            <div className="home-hero-text">
+              <div className="home-eyebrow">Fine Fragrances</div>
+              <h1>Discover a scent that is truly yours</h1>
+              <p>
+                Carefully chosen perfumes for every mood, moment and memory.
+              </p>
+              <Link to="/shop" className="btn btn-gold btn-lg">
+                Shop Now
+              </Link>
+            </div>
+
+            <div className="home-hero-photo">
+              <img src="/hero.jpg" alt="FragCents fragrance bottle" />
+            </div>
+          </div>
         </div>
       </header>
 
@@ -366,26 +395,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* Footer */}
-      <footer className="home-footer text-center">
-        <div className="container">
-          <div className="brand mb-2">FragCents</div>
-          <div className="mb-3">
-            <Link to="/">Home</Link>
-            <Link to="/shop">Shop</Link>
-            <Link to="/cart">Cart</Link>
-            {isLoggedIn ? (
-              <Link to="/dashboard">My Account</Link>
-            ) : (
-              <Link to="/login">Login</Link>
-            )}
-          </div>
-          <small>
-            &copy; {new Date().getFullYear()} FragCents. All rights reserved.
-          </small>
-        </div>
-      </footer>
     </div>
   );
 }

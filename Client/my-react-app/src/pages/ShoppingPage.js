@@ -121,7 +121,7 @@ const ShoppingPage = () => {
 
   return (
     <div>
-      <Jumbotron title="EXPRESS YOURSELF THROUGH OUR TOP-SELLING FRAGRANCES" />
+      <Jumbotron title="Express yourself through our top-selling fragrances" />
 
       <div className="container-fluid">
         <div className="row">

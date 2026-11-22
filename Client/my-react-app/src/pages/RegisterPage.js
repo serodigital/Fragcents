@@ -18,11 +18,24 @@ const PROVINCES = [
   "Western Cape",
 ];
 
+// Accepts 072 043 1327, 0720431327, +27720431327 or 27720431327.
+// Returns the number as 0720431327, or null if it isn't valid.
+const normalizePhone = (value) => {
+  if (!value) return null;
+  let digits = String(value).replace(/[\s\-().]/g, "");
+  if (digits.startsWith("+27")) digits = "0" + digits.slice(3);
+  else if (digits.startsWith("0027")) digits = "0" + digits.slice(4);
+  else if (digits.startsWith("27") && digits.length === 11)
+    digits = "0" + digits.slice(2);
+  return /^0\d{9}$/.test(digits) ? digits : null;
+};
+
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
     street: "",
@@ -45,6 +58,12 @@ const RegisterPage = () => {
     event.preventDefault();
     if (loading) return; // stops double clicks
 
+    const cleanPhone = normalizePhone(formData.phone);
+    if (!cleanPhone) {
+      toast.error("Please enter a valid South African phone number");
+      return;
+    }
+
     if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters long");
       return;
@@ -62,6 +81,7 @@ const RegisterPage = () => {
         name: formData.name.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
+        phone: cleanPhone,
         password: formData.password,
         address: {
           street: formData.street.trim(),
@@ -152,6 +172,27 @@ const RegisterPage = () => {
                 autoComplete="email"
                 required
               />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="phone" className="form-label">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="e.g. 072 043 1327"
+                autoComplete="tel"
+                inputMode="tel"
+                required
+              />
+              <div className="form-text">
+                We use this to contact you about your delivery.
+              </div>
             </div>
 
             <div className="row">
