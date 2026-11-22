@@ -3,23 +3,17 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-dark text-white text-center py-4 mt-auto">
+    <footer className="site-footer mt-auto">
       <div className="container">
+        <nav className="site-footer-links">
+          <Link to="/terms-and-conditions">Terms &amp; Conditions</Link>
+          <span className="site-footer-divider" aria-hidden="true" />
+          <Link to="/refund-policy">Refund Policy</Link>
+        </nav>
 
-        <p className="mb-2">
-          <Link to="/terms-and-conditions" className="text-white text-decoration-none">
-            Terms & Conditions
-          </Link>
-          {" | "}
-          <Link to="/refund-policy" className="text-white text-decoration-none">
-            Refund Policy
-          </Link>
-        </p>
-
-        <p className="mb-0">
+        <p className="site-footer-copy">
           &copy; {new Date().getFullYear()} FragCents. All rights reserved.
         </p>
-
       </div>
     </footer>
   );

@@ -92,7 +92,7 @@ export default function HomePage() {
           margin-bottom: 16px;
         }
         .home-page .home-hero h1 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           font-size: clamp(2.2rem, 6vw, 4rem);
           margin-bottom: 16px;
         }
@@ -131,7 +131,7 @@ export default function HomePage() {
         .home-page .home-section { padding: 64px 0; }
         .home-page .home-section.alt { background: var(--cream); }
         .home-page .section-title {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           text-align: center;
           text-transform: uppercase;
           letter-spacing: 2px;
@@ -186,7 +186,7 @@ export default function HomePage() {
           background: var(--cream);
           border: 1px solid var(--line);
           color: var(--gold-dark);
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           font-size: 1.4rem;
           display: flex;
           align-items: center;
@@ -194,7 +194,7 @@ export default function HomePage() {
           margin: 0 auto 14px;
         }
         .home-page .why-item h6 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           margin-bottom: 6px;
         }
         .home-page .why-item p { color: #7a6a55; margin: 0; font-size: 0.95rem; }
@@ -207,7 +207,7 @@ export default function HomePage() {
           padding: 64px 16px;
         }
         .home-page .home-join h2 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           margin-bottom: 12px;
         }
 

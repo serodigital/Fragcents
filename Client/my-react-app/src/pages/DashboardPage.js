@@ -431,14 +431,14 @@ const DashboardPage = () => {
           border-radius: 50%;
           background: #957a4a;
           color: #fff;
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           font-size: 1.8rem;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .dash-page .dash-hero h2 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           margin: 0;
         }
         .dash-page .dash-hero small { color: #cbbfa9; }
@@ -455,7 +455,7 @@ const DashboardPage = () => {
         .dash-page .dash-stat:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
         .dash-page .dash-stat .num {
           display: block;
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           font-size: 1.9rem;
           color: #1c1612;
           line-height: 1.1;
@@ -488,7 +488,7 @@ const DashboardPage = () => {
           height: 100%;
         }
         .dash-page .dash-card h5 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           margin-bottom: 16px;
         }
         .dash-page .btn-brand {

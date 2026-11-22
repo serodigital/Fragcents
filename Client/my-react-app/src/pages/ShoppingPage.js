@@ -9,9 +9,8 @@ const ShoppingPage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [productCount, setProductCount] = useState(0);
-  const [page, setPage] = useState(1);
   const [categories, setCategories] = useState([]);
+  const [sortBy, setSortBy] = useState("newest");
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
     priceRange: "",
@@ -26,9 +25,6 @@ const ShoppingPage = () => {
       search: searchParams.get("search") || "",
     }));
   }, [searchParams]);
-
-  const arr = [...filteredProducts];
-  const sortedBySold = arr?.sort((a, b) => (a.sold < b.sold ? 1 : -1));
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -49,16 +45,6 @@ const ShoppingPage = () => {
       }
     } catch (error) {
       console.error(error);
-    }
-  }, []);
-
-  const fetchProductCount = useCallback(async () => {
-    try {
-      const response = await axios.get("/api/countProduct");
-      setProductCount(response.data.count);
-      console.log("Product Count:", response.data.count);
-    } catch (error) {
-      console.error("Error fetching product count:", error);
     }
   }, []);
 
@@ -111,17 +97,23 @@ const ShoppingPage = () => {
       availability: "",
       search: "",
     });
+    setSortBy("newest");
     navigate("/shop", { replace: true });
   };
 
   useEffect(() => {
     fetchProducts();
-    fetchProductCount();
-  }, [fetchProducts, fetchProductCount]);
+  }, [fetchProducts]);
 
   useEffect(() => {
     applyFilters();
   }, [applyFilters]);
+
+  // One list, sorted the way the customer chooses
+  const displayedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "best") return (b.sold || 0) - (a.sold || 0);
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
 
   const activeCategoryName = filters.category
     ? categories.find((c) => c._id === filters.category)?.name
@@ -133,6 +125,7 @@ const ShoppingPage = () => {
 
       <div className="container-fluid">
         <div className="row">
+          {/* Filters */}
           <div className="col-md-3 col-lg-2">
             <div className="card mb-4">
               <div className="card-header">
@@ -217,6 +210,7 @@ const ShoppingPage = () => {
             </div>
           </div>
 
+          {/* Products */}
           <div className="col-md-9 col-lg-10">
             {activeCategoryName && (
               <div className="alert alert-info py-2 px-3 mb-3">
@@ -228,32 +222,38 @@ const ShoppingPage = () => {
                 Search results for: <strong>{filters.search}</strong>
               </div>
             )}
-            <div className="row">
-              <div className="col-md-6">
-                <h2 className="p-3 mt-2 mb-2 h4 bg-light text-center">
-                  New Arrivals
-                </h2>
-                <div className="row">
-                  {filteredProducts?.map((p) => (
-                    <div className="col-lg-4 col-md-6 col-sm-12" key={p._id}>
-                      <ProductCard p={p} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="col-md-6">
-                <h2 className="p-3 mt-2 mb-2 h4 bg-light text-center">
-                  Best Sellers
-                </h2>
-                <div className="row">
-                  {sortedBySold?.map((p) => (
-                    <div className="col-lg-4 col-md-6 col-sm-12" key={p._id}>
-                      <ProductCard p={p} />
-                    </div>
-                  ))}
-                </div>
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-3 gap-2">
+              <h2 className="h4 mb-0">Our Fragrances</h2>
+              <div className="d-flex align-items-center gap-2">
+                <label className="form-label mb-0 small text-muted">
+                  Sort by
+                </label>
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: "auto" }}
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="newest">Newest</option>
+                  <option value="best">Best sellers</option>
+                </select>
               </div>
             </div>
+
+            {displayedProducts.length > 0 ? (
+              <div className="row g-4 mb-5">
+                {displayedProducts.map((p) => (
+                  <div className="col-6 col-md-4 col-xl-3" key={p._id}>
+                    <ProductCard p={p} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted my-5 text-center">
+                No products match your filters.
+              </p>
+            )}
           </div>
         </div>
       </div>

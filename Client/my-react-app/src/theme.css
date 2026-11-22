@@ -1,7 +1,3 @@
-
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
-
 :root {
   --sd-charcoal: #1c1917;
   --sd-ivory: #f7f3ec;
@@ -20,6 +16,7 @@
   --bs-link-hover-color: var(--sd-gold-dark);
 }
 
+/* Typography is now controlled by index.css 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: #2c2825;
@@ -30,6 +27,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   letter-spacing: 0.01em;
 }
+*/
 
 /* ---- Navbar ---- */
 .navbar.bg-primary {
@@ -37,8 +35,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .navbar-brand {
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
   letter-spacing: 0.03em;
 }
 
@@ -94,7 +92,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .card-header.bg-primary {
   background-color: var(--sd-charcoal) !important;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -169,4 +167,51 @@ h1, h2, h3, h4, h5, h6 {
 
 .border-danger {
   border-color: var(--sd-wine) !important;
+}
+
+/* ---- Footer ---- */
+.site-footer {
+  background-color: var(--sd-charcoal);
+  color: rgba(247, 243, 236, 0.7);
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+  font-size: 0.9rem;
+}
+
+.site-footer-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 0.9rem;
+}
+
+.site-footer-links a {
+  color: rgba(247, 243, 236, 0.9);
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: color 0.15s ease;
+}
+
+.site-footer-links a:hover {
+  color: var(--sd-gold);
+}
+
+.site-footer-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--sd-gold);
+  opacity: 0.6;
+}
+
+.site-footer-copy {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(247, 243, 236, 0.55);
+}
+
+/* Hide the old footer inside the Home page (the shared footer stays) */
+.home-page footer {
+  display: none !important;
 }
