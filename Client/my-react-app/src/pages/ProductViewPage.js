@@ -1,15 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import {
-  Container,
-  Row,
-  Col,
-  Button,
-  Spinner,
-  Image,
-  Card,
-} from "react-bootstrap";
+import { Container, Row, Col, Button, Spinner, Image } from "react-bootstrap";
+
+// Small grey placeholder (no external site needed)
+const PLACEHOLDER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='100%' height='100%' fill='#efe8dc'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#8a8378' font-family='sans-serif' font-size='18'>No image</text></svg>`,
+  );
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+  }).format(Number(price) || 0);
+
+const handleImgError = (e) => {
+  e.target.onerror = null;
+  e.target.src = PLACEHOLDER;
+};
+
+const ProductMiniCard = ({ item, showSold, onClick }) => (
+  <div className="sd-mini-card" onClick={onClick} role="button" tabIndex={0}>
+    <img
+      src={`/api/product/image/${item._id}`}
+      onError={handleImgError}
+      alt={item.name}
+    />
+    <div className="sd-mini-card-body">
+      <div className="sd-mini-card-name">{item.name}</div>
+      <div className="sd-mini-card-price">{formatPrice(item.price)}</div>
+      {showSold && item.sold > 0 && (
+        <div className="sd-mini-card-sold">{item.sold} sold</div>
+      )}
+    </div>
+  </div>
+);
 
 const ProductViewPage = ({ user, auth, cart, addToCart }) => {
   const { id } = useParams();
@@ -41,15 +68,15 @@ const ProductViewPage = ({ user, auth, cart, addToCart }) => {
         const allProducts =
           allProductsRes.data.products || allProductsRes.data || [];
 
-        // Get newest arrivals (latest 4 products)
+        // Newest arrivals (latest 4 products)
         const sortedByDate = [...allProducts].sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
         );
         setNewArrivals(sortedByDate.slice(0, 4));
 
-        // Get best sellers (top 4 products sorted by sold count)
+        // Best sellers (top 4 by sold count)
         const sortedBySold = [...allProducts]
-          .filter((p) => p.sold > 0) // Only include products that have been sold
+          .filter((p) => p.sold > 0)
           .sort((a, b) => (b.sold || 0) - (a.sold || 0));
         setBestSellers(sortedBySold.slice(0, 4));
       } catch (err) {
@@ -70,19 +97,19 @@ const ProductViewPage = ({ user, auth, cart, addToCart }) => {
 
   if (loading) {
     return (
-      <Container className="mt-5 text-center">
+      <Container className="py-5 text-center">
         <Spinner animation="border" role="status" />
-        <p className="mt-2">Loading product details...</p>
+        <p className="mt-2 text-muted">Loading product details...</p>
       </Container>
     );
   }
 
   if (error) {
     return (
-      <Container className="mt-5 text-center">
-        <h2 className="text-danger">{error}</h2>
+      <Container className="py-5 text-center">
+        <h1 className="h3 mb-3">{error}</h1>
         <Button variant="primary" onClick={() => window.history.back()}>
-          Go Back
+          Go back
         </Button>
       </Container>
     );
@@ -90,152 +117,105 @@ const ProductViewPage = ({ user, auth, cart, addToCart }) => {
 
   if (!product) {
     return (
-      <Container className="mt-5 text-center">
-        <h2>No product data available</h2>
+      <Container className="py-5 text-center">
+        <h1 className="h3">No product data available</h1>
       </Container>
     );
   }
 
-  const ProductMiniCard = ({ item, title }) => (
-    <Card
-      className="mb-3 shadow-sm border-0"
-      style={{ cursor: "pointer" }}
-      onClick={() => navigate(`/product-view/${item._id}`)}
-    >
-      <Row className="g-0 align-items-center">
-        <Col xs={4}>
-          <Image
-            src={
-              item._id
-                ? `/api/product/image/${item._id}`
-                : "https://via.placeholder.com/100"
-            }
-            onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
-            alt={item.name}
-            fluid
-            rounded
-            style={{ height: "60px", objectFit: "cover" }}
-          />
-        </Col>
-        <Col xs={8}>
-          <Card.Body className="p-2">
-            <Card.Title className="small mb-1" style={{ fontSize: "0.85rem" }}>
-              {item.name}
-            </Card.Title>
-            <Card.Text
-              className="text-success fw-bold mb-0"
-              style={{ fontSize: "0.8rem" }}
-            >
-              R{item.price?.toFixed(2)}
-            </Card.Text>
-            {title === "Best Sellers" && item.sold > 0 && (
-              <Card.Text
-                className="text-muted mb-0"
-                style={{ fontSize: "0.7rem" }}
-              >
-                {item.sold} sold
-              </Card.Text>
-            )}
-          </Card.Body>
-        </Col>
-      </Row>
-    </Card>
-  );
+  const outOfStock =
+    product.quantity !== undefined && Number(product.quantity) <= 0;
 
   return (
-    <Container className="mt-5">
-      <Row>
-        {/* Main Product Section (Left) */}
+    <Container className="py-4 mb-4">
+      <Link to="/shop" className="sd-back-link">
+        &larr; Back to shop
+      </Link>
+
+      {/* Main product */}
+      <Row className="g-4 mt-1 align-items-start">
         <Col md={6}>
-          <div className="text-center mb-4">
+          <div className="sd-product-image">
             <Image
-              src={
-                product._id
-                  ? `/api/product/image/${product._id}`
-                  : "https://via.placeholder.com/400"
-              }
-              onError={(e) =>
-                (e.target.src = "https://via.placeholder.com/400")
-              }
+              src={`/api/product/image/${product._id}`}
+              onError={handleImgError}
               alt={product.name}
               fluid
-              rounded
-              className="shadow"
-              style={{ maxHeight: "450px", objectFit: "contain" }}
             />
           </div>
+        </Col>
 
-          {/* Product Info */}
-          <div className="p-4 bg-light rounded shadow-sm text-center">
-            <h2 className="fw-bold">{product.name}</h2>
-            <p className="text-muted">{product.description}</p>
-            <h4 className="text-success fw-bold mb-3">
-              R{product.price?.toFixed(2)}
-            </h4>
+        <Col md={6}>
+          <div className="sd-product-info">
+            {product.category?.name && (
+              <div className="sd-product-eyebrow">{product.category.name}</div>
+            )}
+            <h1 className="sd-product-title">{product.name}</h1>
+            <div className="sd-product-price">{formatPrice(product.price)}</div>
+
+            <p className="sd-product-desc">{product.description}</p>
 
             {product.AvailableInBulk && (
-              <p className="text-info">
-                <i className="fas fa-box"></i> Available in bulk
+              <p className="small text-muted mb-3">Available in bulk</p>
+            )}
+
+            {outOfStock && (
+              <p className="small fw-semibold" style={{ color: "#5c2a34" }}>
+                Currently out of stock
               </p>
             )}
 
             <Button
-              variant="success"
+              variant="warning"
               size="lg"
+              className="w-100 mt-2"
               onClick={() => addToCart(product)}
-              disabled={!auth?.token}
-              className="mt-2"
+              disabled={!auth?.token || outOfStock}
             >
-              🛒 Add to Cart
+              Add to Cart
             </Button>
 
             {!auth?.token && (
-              <p className="text-danger mt-2">
-                Please login to add items to your cart.
+              <p className="small text-muted mt-3 mb-0">
+                Please <Link to="/login">log in</Link> to add items to your
+                cart.
               </p>
             )}
           </div>
         </Col>
+      </Row>
 
-        {/* Right column: New Arrivals and Best Sellers */}
+      {/* More fragrances */}
+      <Row className="g-4 mt-4">
         <Col md={6}>
-          <Row>
-            {/* New Arrivals Column */}
-            <Col md={6}>
-              <h5 className="mb-4 fw-bold text-primary border-bottom pb-2">
-                🆕 New Arrivals
-              </h5>
-              {newArrivals.length > 0 ? (
-                newArrivals.map((item) => (
-                  <ProductMiniCard
-                    key={item._id}
-                    item={item}
-                    title="New Arrivals"
-                  />
-                ))
-              ) : (
-                <p className="text-muted">No new arrivals found.</p>
-              )}
-            </Col>
+          <h2 className="sd-side-title">New Arrivals</h2>
+          {newArrivals.length > 0 ? (
+            newArrivals.map((item) => (
+              <ProductMiniCard
+                key={item._id}
+                item={item}
+                onClick={() => navigate(`/product-view/${item._id}`)}
+              />
+            ))
+          ) : (
+            <p className="text-muted">No new arrivals found.</p>
+          )}
+        </Col>
 
-            {/* Best Sellers Column */}
-            <Col md={6}>
-              <h5 className="mb-4 fw-bold text-warning border-bottom pb-2">
-                🏆 Best Sellers
-              </h5>
-              {bestSellers.length > 0 ? (
-                bestSellers.map((item) => (
-                  <ProductMiniCard
-                    key={item._id}
-                    item={item}
-                    title="Best Sellers"
-                  />
-                ))
-              ) : (
-                <p className="text-muted">No best sellers found.</p>
-              )}
-            </Col>
-          </Row>
+        <Col md={6}>
+          <h2 className="sd-side-title">Best Sellers</h2>
+          {bestSellers.length > 0 ? (
+            bestSellers.map((item) => (
+              <ProductMiniCard
+                key={item._id}
+                item={item}
+                showSold
+                onClick={() => navigate(`/product-view/${item._id}`)}
+              />
+            ))
+          ) : (
+            <p className="text-muted">No best sellers found.</p>
+          )}
         </Col>
       </Row>
     </Container>

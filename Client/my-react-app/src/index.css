@@ -12,7 +12,49 @@ code {
     monospace;
 }
 
-.btn-primary {
-  background-color: #007BFF;
-  border-color: #0056b3;
+/* =========================================================
+   FINAL GLOBAL TYPOGRAPHY & FORM CONSISTENCY
+   Font: Inter (E-commerce Standard)
+   ========================================================= */
+
+/* 1. Set the source of truth for the whole system */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #333333; /* Standard dark grey for readability */
+    -webkit-font-smoothing: antialiased; /* Makes text look sharper on Mac/iOS */
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. Force ALL form elements to inherit the system font */
+input,
+textarea,
+select,
+button {
+    font-family: inherit;
+    font-size: 16px; /* Prevents iOS auto-zoom on inputs */
+    line-height: 1.5;
+    letter-spacing: 0.02em; /* Slight spacing improves readability */
+}
+
+/* 3. Ensure headings match the system (Optional: Remove this if you want to keep the Serif header) */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em; /* Tighter spacing for large headers looks more premium */
+}
+
+/* 4. Specific Button Polish (The fix for your Register button) */
+button, 
+input[type="submit"],
+.btn {
+    font-weight: 500; /* Medium weight looks better than bold or normal */
+    cursor: pointer;
+    text-transform: none; /* Keeps text casing exactly as written */
+}
+
+/* 5. Small consistency check for the header navigation links */
+nav a, .header-links a {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    text-decoration: none;
 }

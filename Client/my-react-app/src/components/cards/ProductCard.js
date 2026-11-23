@@ -159,7 +159,7 @@ export default function ProductCard({ p }) {
         }
         .fc-card .fc-body { padding: 12px 14px 14px; }
         .fc-card .fc-name {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter, serif;
           font-size: 1rem;
           color: #1c1612;
           display: block;

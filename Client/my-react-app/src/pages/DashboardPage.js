@@ -4,6 +4,7 @@ import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/Auth";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
+import { normalizePhone } from "../utils/phone";
 
 const API_URL = process.env.REACT_APP_API_URL || "";
 
@@ -45,6 +46,7 @@ const emptyForm = {
   name: "",
   lastName: "",
   email: "",
+  phone: "",
   address: { ...emptyAddress },
   password: "",
 };
@@ -220,6 +222,7 @@ const DashboardPage = () => {
       name: shown.name || "",
       lastName: shown.lastName || "",
       email: shown.email || "",
+      phone: shown.phone || "",
       address: normalizeAddress(shown.address),
       password: "",
     });
@@ -255,6 +258,18 @@ const DashboardPage = () => {
       return;
     }
 
+    // Phone is optional here (older accounts may not have one),
+    // but if something is typed it must be a valid SA number
+    const phoneInput = formData.phone.trim();
+    let cleanPhone = null;
+    if (phoneInput) {
+      cleanPhone = normalizePhone(phoneInput);
+      if (!cleanPhone) {
+        toast.error("Please enter a valid South African phone number");
+        return;
+      }
+    }
+
     if (formData.password && formData.password.length < 6) {
       toast.error("Password must be at least 6 characters long");
       return;
@@ -268,6 +283,10 @@ const DashboardPage = () => {
       email: formData.email.trim(),
       address: formData.address,
     };
+
+    if (cleanPhone) {
+      submitData.phone = cleanPhone;
+    }
 
     if (formData.password && formData.password.trim() !== "") {
       submitData.password = formData.password;
@@ -431,14 +450,14 @@ const DashboardPage = () => {
           border-radius: 50%;
           background: #957a4a;
           color: #fff;
-          font-family: "Playfair Display", serif;
+          font-family: "Inter", sans-serif;
           font-size: 1.8rem;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .dash-page .dash-hero h2 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter", sans-serif;
           margin: 0;
         }
         .dash-page .dash-hero small { color: #cbbfa9; }
@@ -455,7 +474,7 @@ const DashboardPage = () => {
         .dash-page .dash-stat:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
         .dash-page .dash-stat .num {
           display: block;
-          font-family: "Playfair Display", serif;
+          font-family: "Inter", sans-serif;
           font-size: 1.9rem;
           color: #1c1612;
           line-height: 1.1;
@@ -488,7 +507,7 @@ const DashboardPage = () => {
           height: 100%;
         }
         .dash-page .dash-card h5 {
-          font-family: "Playfair Display", serif;
+          font-family: "Inter", sans-serif;
           margin-bottom: 16px;
         }
         .dash-page .btn-brand {
@@ -620,6 +639,7 @@ const DashboardPage = () => {
                     <DetailRow label="First name" value={shown.name} />
                     <DetailRow label="Last name" value={shown.lastName} />
                     <DetailRow label="Email" value={shown.email} />
+                    <DetailRow label="Phone" value={shown.phone} />
                     <DetailRow label="Password" value="••••••••" />
                   </div>
                 </div>
@@ -691,6 +711,23 @@ const DashboardPage = () => {
                         onChange={handleChange}
                         className="form-control"
                         required
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label htmlFor="phone" className="form-label">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="form-control"
+                        placeholder="e.g. 072 043 1327"
                       />
                     </div>
 
