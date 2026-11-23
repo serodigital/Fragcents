@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -11,17 +12,21 @@ const CartPage = () => {
   const toggleSaveForLater = (cartItemId) => {
     setSavedForLater((prev) => {
       const newSet = new Set(prev);
+
       if (newSet.has(cartItemId)) {
         newSet.delete(cartItemId);
       } else {
         newSet.add(cartItemId);
       }
+
       return newSet;
     });
   };
 
   const incrementQuantity = (cartItemId) => {
-    const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
+    const item = cart.find(
+      (cartItem) => cartItem.cartItemId === cartItemId
+    );
 
     if (!item) {
       console.error("Cart item not found:", cartItemId);
@@ -50,7 +55,9 @@ const CartPage = () => {
   };
 
   const decrementQuantity = (cartItemId) => {
-    const item = cart.find((cartItem) => cartItem.cartItemId === cartItemId);
+    const item = cart.find(
+      (cartItem) => cartItem.cartItemId === cartItemId
+    );
 
     if (!item) return;
 
@@ -66,16 +73,21 @@ const CartPage = () => {
       if (price > 10000) {
         return price / 100;
       }
+
       return price;
     }
+
     if (typeof price === "string") {
       const cleanPrice = price.replace(/[^\d.-]/g, "");
       const num = parseFloat(cleanPrice) || 0;
+
       if (num > 10000) {
         return num / 100;
       }
+
       return num;
     }
+
     return 0;
   };
 
@@ -83,18 +95,26 @@ const CartPage = () => {
     return parsePrice(item.price) * (item.quantity || 1);
   };
 
-  const subtotal = cart.reduce((total, item) => total + getItemTotal(item), 0);
-  const deliveryFee = subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
+  const subtotal = cart.reduce(
+    (total, item) => total + getItemTotal(item),
+    0
+  );
+
+  const deliveryFee =
+    subtotal >= 200 ? 0 : subtotal > 0 ? 50 : 0;
+
   const totalPrice = subtotal + deliveryFee;
+
   const totalItems = cart.reduce(
     (total, item) => total + (item.quantity || 1),
-    0,
+    0
   );
 
   const getImageUrl = (item) => {
     if (item._id) {
       return `/api/product/image/${item._id}`;
     }
+
     return item.image || "/images/default.jpg";
   };
 
@@ -165,7 +185,11 @@ const CartPage = () => {
                         </div>
                       )}
                     </div>
-                  </div>
+                  ))}
+
+                  {/* CLEAR CART */}
+                  {cart.length >= 3 && (
+                    <div className="fc-cart-clear-row">
 
                   <div className="d-flex align-items-center">
                     <div
@@ -194,6 +218,11 @@ const CartPage = () => {
                       >
                         +
                       </button>
+
+                      <span className="fc-cart-line-count">
+                        {cart.length} line items in cart
+                      </span>
+
                     </div>
                     <div className="text-end">
                       <p className="mb-0 fw-bold">
@@ -339,6 +368,7 @@ const CartPage = () => {
                 Continue Shopping
               </Link>
             </div>
+
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContext";
@@ -356,10 +357,23 @@ const SecureCheckout = () => {
     }
   };
 
-  // UI
+  // UI - DESIGN ONLY
   return (
-    <div className="container py-5">
-      <h2 className="mb-4">Secure Checkout</h2>
+    <div className="frag-checkout">
+      <style>{`
+        .frag-checkout {
+          --fc-navy: #957a4a;
+          --fc-navy-light: #263445;
+          --fc-cream: #f7f5f0;
+          --fc-gold: #263445;
+          --fc-text: #000307;
+          --fc-muted: #000000;
+          --fc-border: #e8e7e2;
+          background: var(--fc-cream);
+          min-height: 100vh;
+          padding: 55px 0 75px;
+          color: var(--fc-text);
+        }
 
       {/* LOADING */}
       {loadingUser && (
@@ -449,7 +463,6 @@ const SecureCheckout = () => {
                 </div>
               </div>
             </div>
-          </div>
 
           {/* DELIVERY */}
           <div className="card mb-4">
@@ -460,7 +473,7 @@ const SecureCheckout = () => {
                 {user && (
                   <button
                     type="button"
-                    className="btn btn-outline-primary btn-sm"
+                    className="fc-edit-btn"
                     onClick={() => navigate("/dashboard")}
                   >
                     <i className="bi bi-pencil-square me-1"></i>
@@ -539,7 +552,6 @@ const SecureCheckout = () => {
               </div>
             </div>
           </div>
-        </div>
 
         {/* RIGHT SIDE */}
         <div className="col-md-5">
@@ -563,51 +575,102 @@ const SecureCheckout = () => {
 
                   <span>R{getItemTotal(item).toFixed(2)}</span>
                 </div>
-              ))}
-
-              <hr />
-
-              {/* SUBTOTAL */}
-              <div className="d-flex justify-content-between mb-2">
-                <span>Subtotal</span>
-                <span>R{subtotal.toFixed(2)}</span>
               </div>
 
-              {/* DELIVERY */}
-              <div className="d-flex justify-content-between mb-2">
-                <span>Delivery</span>
+              <div className="fc-card-body">
+
+                {/* CART ITEMS */}
+                <div>
+                  {cart.map((item) => (
+                    <div
+                      key={item.cartItemId || item._id}
+                      className="fc-item"
+                    >
+                      <div>
+                        <div className="fc-item-name">
+                          {item.name}
+                        </div>
+                        <div className="fc-item-quantity">
+                          Quantity: {item.quantity || 1}
+                        </div>
+                      </div>
+
+                      <span className="fc-item-price">
+                        R{getItemTotal(item).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* PRICE BREAKDOWN */}
+                <div style={{ paddingTop: "20px" }}>
+
+                  <div className="fc-summary-row">
+                    <span>Subtotal</span>
+                    <strong>R{subtotal.toFixed(2)}</strong>
+                  </div>
 
                 <span>
                   {deliveryFee === 0 ? "FREE" : `R${deliveryFee.toFixed(2)}`}
                 </span>
               </div>
 
-              <hr />
+                </div>
 
-              {/* TOTAL */}
-              <div className="d-flex justify-content-between mb-4">
-                <strong>Total</strong>
-                <strong>R{totalPrice.toFixed(2)}</strong>
+                {/* TOTAL */}
+                <div className="fc-total">
+                  <span className="fc-total-label">Total Amount</span>
+                  <span className="fc-total-amount">
+                    R{totalPrice.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* DELIVERY NOTE */}
+                <div className="fc-delivery-note">
+                  <i className="bi bi-truck"></i>
+                  <span>
+                    {deliveryFee === 0
+                      ? "Great news! Your order qualifies for free delivery."
+                      : "Free delivery on orders of R200 or more."}
+                  </span>
+                </div>
+
+                {/* PAY NOW */}
+                <button
+                  className="fc-pay-btn"
+                  onClick={handlePayment}
+                  disabled={loadingUser}
+                >
+                  {loadingUser ? (
+                    "Loading..."
+                  ) : (
+                    <>
+                      <i className="bi bi-lock-fill me-2"></i>
+                      Proceed to Secure Payment
+                      <i className="bi bi-arrow-right ms-2"></i>
+                    </>
+                  )}
+                </button>
+
+                {/* BACK */}
+                <button
+                  className="fc-back-btn"
+                  onClick={() => navigate("/checkout")}
+                >
+                  <i className="bi bi-arrow-left me-2"></i>
+                  Back to Checkout
+                </button>
+
+                {/* PAYMENT TRUST */}
+                <div className="fc-payment-trust">
+                  <i className="bi bi-shield-check"></i>
+                  Secure payment powered by PayFast
+                </div>
+
               </div>
-
-              {/* PAY NOW */}
-              <button
-                className="btn btn-success w-100"
-                onClick={handlePayment}
-                disabled={loadingUser}
-              >
-                {loadingUser ? "Loading..." : "Pay Now"}
-              </button>
-
-              {/* BACK */}
-              <button
-                className="btn btn-outline-secondary w-100 mt-2"
-                onClick={() => navigate("/checkout")}
-              >
-                Back to Checkout
-              </button>
             </div>
           </div>
+
         </div>
       </div>
     </div>

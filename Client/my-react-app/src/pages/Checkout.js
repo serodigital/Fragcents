@@ -1,6 +1,8 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContext";
+
 const API_URL = process.env.REACT_APP_API_URL || "";
 
 const Checkout = () => {
@@ -152,7 +154,10 @@ const Checkout = () => {
                 <strong>R{deliveryFee.toFixed(2)}</strong>
               </div>
 
-              <hr />
+                  <strong>
+                    R{totalPrice.toFixed(2)}
+                  </strong>
+                </div>
 
               <div className="d-flex justify-content-between mb-4">
                 <strong>Order Total</strong>
