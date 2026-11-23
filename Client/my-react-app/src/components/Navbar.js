@@ -11,6 +11,24 @@ import {
 } from "react-bootstrap";
 import { useAuth } from "../Context/Auth";
 import { useCart } from "../Context/CartContext";
+import FragcentsLogo from "./Fragcents_Log.png";
+const CartIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="9" cy="20" r="1.5" />
+    <circle cx="18" cy="20" r="1.5" />
+    <path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6" />
+  </svg>
+);
 
 const Navbar = () => {
   const { auth, setAuth } = useAuth();
@@ -50,11 +68,21 @@ const Navbar = () => {
   };
 
   return (
-    <BsNavbar bg="primary" variant="dark" expand="lg">
+    <BsNavbar bg="primary" variant="dark" expand="lg" className="sd-navbar">
       <div className="container">
-        <BsNavbar.Brand as={Link} to="/">
-          Sero Digital
-        </BsNavbar.Brand>
+           <BsNavbar.Brand as={Link} to="/">
+  <img
+    src={FragcentsLogo}
+    alt="FragCents"
+    style={{
+      height: "55px",
+      width: "auto",
+      objectFit: "contain",
+      display: "block",
+    }}
+  />
+</BsNavbar.Brand>
+
 
         <BsNavbar.Toggle aria-controls="navbarNav" />
 
@@ -83,32 +111,32 @@ const Navbar = () => {
               )}
             </NavDropdown>
 
-            <Nav.Link as={Link} to="/cart" className="position-relative">
-              <span className="d-flex align-items-center">
-                <span>Cart 🛒</span>
-                {cart.length > 0 && (
-                  <span
-                    className="badge position-absolute top-2 start-100 translate-middle badge-pill"
-                    style={{ fontSize: "0.90rem" }}
-                  >
-                    {cart.length}
-                  </span>
-                )}
-              </span>
+            <Nav.Link as={Link} to="/cart" className="sd-cart-link">
+              <CartIcon />
+              <span>Cart</span>
+              {cart.length > 0 && (
+                <span className="sd-cart-badge">{cart.length}</span>
+              )}
             </Nav.Link>
 
             <Form
-              className="d-flex mx-2 my-2 my-lg-0"
+              className="sd-nav-search d-flex my-2 my-lg-0 mx-lg-3"
               onSubmit={handleSearchSubmit}
             >
               <FormControl
                 type="text"
                 size="sm"
-                placeholder="Search"
+                placeholder="Search fragrances"
+                aria-label="Search fragrances"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Button variant="light" size="sm" type="submit" className="ms-1">
+              <Button
+                variant="warning"
+                size="sm"
+                type="submit"
+                className="ms-1"
+              >
                 Search
               </Button>
             </Form>
@@ -127,6 +155,7 @@ const Navbar = () => {
                 title={auth.user.name}
                 id="user-dropdown"
                 align="end"
+                className="sd-user-dropdown"
               >
                 <NavDropdown.Item as={Link} to="/dashboard">
                   Dashboard
