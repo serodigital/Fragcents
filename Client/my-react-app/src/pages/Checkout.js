@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContext";
@@ -154,10 +153,7 @@ const Checkout = () => {
                 <strong>R{deliveryFee.toFixed(2)}</strong>
               </div>
 
-                  <strong>
-                    R{totalPrice.toFixed(2)}
-                  </strong>
-                </div>
+              <hr />
 
               <div className="d-flex justify-content-between mb-4">
                 <strong>Order Total</strong>
