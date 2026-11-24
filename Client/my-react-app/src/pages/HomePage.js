@@ -229,60 +229,18 @@ export default function HomePage() {
           margin-bottom: 4px !important;
         }
           
-        /* ---------- Split hero ---------- */
-        .home-page .home-hero {
-          text-align: left;
-          min-height: 0;
-          padding: 48px 16px;
-        }
-        .home-page .home-hero .container { width: 100%; }
-        .home-page .home-hero-grid {
-          display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
-          gap: 48px;
-          align-items: center;
-        }
-        .home-page .home-hero p { margin: 0 0 28px; }
-        .home-page .home-hero-photo img {
-          display: block;
-          width: 100%;
-          max-width: 340px;
-          aspect-ratio: 3 / 4;
-          object-fit: cover;
-          margin: 0 auto;
-          border-radius: 16px;
-          border: 1px solid rgba(205, 184, 138, 0.35);
-          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-        }
-        @media (max-width: 767.98px) {
-          .home-page .home-hero { text-align: center; }
-          .home-page .home-hero-grid {
-            grid-template-columns: 1fr;
-            gap: 28px;
-          }
-          .home-page .home-hero-photo { order: -1; }
-        }
+        
       `}</style>
 
       {/* Hero */}
       <header className="home-hero">
         <div className="container">
-          <div className="home-hero-grid">
-            <div className="home-hero-text">
-              <div className="home-eyebrow">Fine Fragrances</div>
-              <h1>Discover a scent that is truly yours</h1>
-              <p>
-                Carefully chosen perfumes for every mood, moment and memory.
-              </p>
-              <Link to="/shop" className="btn btn-gold btn-lg">
-                Shop Now
-              </Link>
-            </div>
-
-            <div className="home-hero-photo">
-              <img src="/hero.jpg" alt="FragCents fragrance bottle" />
-            </div>
-          </div>
+          <div className="home-eyebrow">Fine Fragrances</div>
+          <h1>Discover a scent that is truly yours</h1>
+          <p>Carefully chosen perfumes for every mood, moment and memory.</p>
+          <Link to="/shop" className="btn btn-gold btn-lg">
+            Shop Now
+          </Link>
         </div>
       </header>
 
